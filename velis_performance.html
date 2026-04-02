@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Velis Electro — Performance Data</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --font: 'DM Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --bg-page: #f0ede8;
+  --bg-card: #ffffff;
+  --bg-sec: #f5f4f1;
+  --bd: #e2ddd6;
+  --bd2: #ccc8c0;
+  --tx: #1a1a1a;
+  --tx2: #6b6660;
+  --tx3: #9e9890;
+  --rad-lg: 14px;
+  --rad-md: 8px;
+  --blue: #185FA5;
+  --blue-bg: #E6F1FB;
+  --purple: #534AB7;
+  --green: #3B6D11;
+  --amber: #EF9F27;
+}
+*,*::before,*::after{box-sizing:border-box;}
+body{margin:0;background:var(--bg-page);font-family:var(--font);color:var(--tx);padding:0 0 48px;}
+.page-wrap{max-width:860px;margin:0 auto;padding:0 16px;}
+
+/* ── Nav ── */
+.nav{background:var(--bg-card);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:10;backdrop-filter:blur(12px);background:rgba(255,255,255,0.92);}
+.nav-inner{max-width:860px;margin:0 auto;padding:0 16px;display:flex;align-items:stretch;}
+.nav-brand{padding:11px 18px 11px 0;font-size:13px;font-weight:700;color:var(--tx);border-right:1px solid var(--bd);margin-right:4px;letter-spacing:-0.02em;display:flex;align-items:center;gap:6px;}
+.nav-brand svg{opacity:0.5;}
+.nav-tab{padding:11px 18px;font-size:12.5px;font-weight:500;color:var(--tx2);text-decoration:none;border-bottom:2px solid transparent;transition:all 0.15s;}
+.nav-tab:hover{color:var(--tx);}
+.nav-tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600;}
+
+/* ── Cards ── */
+.wrap{padding:16px 0;}
+.card{background:var(--bg-card);border:0.5px solid var(--bd);border-radius:var(--rad-lg);padding:1rem 1.25rem;margin-bottom:14px;}
+h3{font-size:15px;font-weight:700;margin:0 0 14px;color:var(--tx);letter-spacing:-0.02em;}
+h4{font-size:10.5px;font-weight:600;color:var(--tx2);margin:0 0 8px;text-transform:uppercase;letter-spacing:0.06em;}
+
+/* ── Slider rows ── */
+.sr{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.sr label{font-size:12px;color:var(--tx2);min-width:210px;font-weight:500;}
+.sr input[type=range]{flex:1;-webkit-appearance:none;height:4px;border-radius:2px;background:#ddd;outline:none;}
+.sr input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#fff;border:1.5px solid #ccc;box-shadow:0 1px 3px rgba(0,0,0,0.15);cursor:pointer;}
+.sv{font-size:12px;font-weight:600;color:var(--tx);min-width:72px;text-align:right;}
+
+/* ── Speed grid ── */
+.speed-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.speed-item{background:var(--bg-sec);border-radius:var(--rad-md);padding:9px 10px;}
+.speed-lbl{font-size:10px;color:var(--tx2);margin:0 0 4px;font-weight:500;}
+.speed-wrap{display:flex;align-items:baseline;gap:3px;}
+.speed-wrap input[type=number]{width:100%;font-size:18px;font-weight:600;color:var(--tx);font-family:var(--font);border:none;background:transparent;outline:none;-moz-appearance:textfield;padding:0;}
+.speed-wrap input[type=number]::-webkit-inner-spin-button,.speed-wrap input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;}
+.speed-unit{font-size:10px;color:var(--tx2);font-weight:500;white-space:nowrap;}
+
+/* ── Tables ── */
+.ptable{width:100%;border-collapse:collapse;font-size:11px;}
+.ptable th{background:var(--bg-sec);font-size:10px;font-weight:600;color:var(--tx2);padding:6px 8px;border:0.5px solid var(--bd);text-align:center;text-transform:uppercase;letter-spacing:0.03em;}
+.ptable td{padding:5px 8px;border:0.5px solid var(--bd);text-align:center;font-weight:500;color:var(--tx);transition:background 0.15s;}
+.ptable tbody tr:hover td{background:#fafaf8;}
+.ptable td.hl{background:rgba(24,95,165,0.10);}
+.ptable td.hl-strong{background:rgba(24,95,165,0.22);color:var(--blue);font-weight:700;}
+.ptable tr.row-sel td{background:var(--blue-bg);font-weight:600;}
+.ptable td.col-first{text-align:left;font-weight:400;color:var(--tx2);font-size:11px;max-width:260px;}
+.ptable td.col-interp{background:#dde8f5;color:var(--blue);font-weight:700;font-size:12px;border-left:2px solid var(--blue);}
+
+/* ── Info / result boxes ── */
+.info{background:var(--bg-sec);border-radius:var(--rad-md);padding:8px 12px;font-size:12px;color:var(--tx2);margin-top:10px;line-height:1.5;}
+.info strong{color:var(--tx);}
+.result-box{background:var(--blue-bg);border:1px solid #c0d8f0;border-radius:var(--rad-md);padding:10px 14px;margin-top:10px;display:flex;align-items:center;gap:10px;}
+.result-val{font-size:22px;font-weight:700;color:var(--blue);letter-spacing:-0.02em;}
+.result-lbl{font-size:11px;color:var(--blue);font-weight:500;opacity:0.8;}
+
+/* ── Power buttons ── */
+.pwr-btns{display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap;}
+.pwr-btn{padding:5px 14px;border-radius:20px;border:1px solid var(--bd);background:var(--bg-sec);font-size:12px;font-weight:600;color:var(--tx2);cursor:pointer;transition:all 0.15s;font-family:var(--font);}
+.pwr-btn:hover{border-color:var(--blue);color:var(--blue);}
+.pwr-btn.active{background:var(--blue);color:#fff;border-color:var(--blue);}
+
+/* ── Summary grid ── */
+.sum-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.sum-item{background:var(--bg-sec);border-radius:var(--rad-md);padding:9px 10px;border-left:3px solid transparent;}
+.sum-item.climb{border-left-color:var(--blue);}
+.sum-item.cruise{border-left-color:var(--purple);}
+.sum-item.desc{border-left-color:var(--green);}
+.sum-lbl{font-size:10px;color:var(--tx2);margin:0 0 2px;font-weight:500;}
+.sum-val{font-size:18px;font-weight:700;color:var(--tx);letter-spacing:-0.02em;}
+.sum-unit{font-size:10px;color:var(--tx2);font-weight:500;}
+
+.note{font-size:10px;color:var(--tx2);line-height:1.6;}
+hr{border:none;border-top:0.5px solid var(--bd);margin:12px 0;}
+.sep{border:none;border-top:0.5px solid var(--bd);margin:4px 0 6px;}
+@media(max-width:600px){.speed-grid{grid-template-columns:1fr 1fr;}.sum-grid{grid-template-columns:1fr 1fr;}.sr label{min-width:140px;}}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <span class="nav-brand">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      Velis Electro
+    </span>
+    <a href="index.html" class="nav-tab">Route Planner</a>
+    <a href="velis_performance.html" class="nav-tab active">Performance Data</a>
+  </div>
+</nav>
+
+<div class="page-wrap"><div class="wrap">
+
+<!-- ═══ SETTINGS FILE ═══ -->
+<div class="card" style="padding:10px 14px;">
+  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+    <span style="font-size:12px;font-weight:600;color:var(--tx2);">Performance settings</span>
+    <button id="perf-save" style="font-size:11px;font-weight:600;font-family:var(--font);padding:5px 12px;border:1px solid var(--blue);border-radius:6px;background:var(--blue);color:#fff;cursor:pointer;">Save to file</button>
+    <button id="perf-load-btn" style="font-size:11px;font-weight:600;font-family:var(--font);padding:5px 12px;border:1px solid var(--bd);border-radius:6px;background:var(--bg-sec);color:var(--tx2);cursor:pointer;">Load from file</button>
+    <input type="file" id="perf-file" accept=".json" style="display:none;">
+    <span id="perf-status" style="font-size:10px;color:var(--tx2);"></span>
+  </div>
+</div>
+
+<!-- ═══ CONDITIONS ═══ -->
+<div class="card">
+  <h3>Conditions</h3>
+  <div class="sr"><label>Outside air temperature (OAT)</label><input type="range" id="oat" min="-30" max="45" step="1" value="15"><span class="sv" id="oat-v">+15 °C</span></div>
+  <div class="sr"><label>Battery state of health (SOH)</label><input type="range" id="soh" min="0" max="100" step="5" value="80"><span class="sv" id="soh-v">80%</span></div>
+  <div class="sr"><label>Reference altitude (for ROC lookup)</label><input type="range" id="refalt" min="0" max="12000" step="25" value="1525"><span class="sv" id="refalt-v">0 ft</span></div>
+  <div class="info" id="isa-box">ISA temperature at altitude: <strong id="isa-temp">—</strong> &nbsp;·&nbsp; ISA deviation: <strong id="isa-dev">—</strong></div>
+</div>
+
+<!-- ═══ SPEEDS ═══ -->
+<div class="card">
+  <h3>Aircraft reference speeds</h3>
+  <div class="speed-grid">
+    <div class="speed-item">
+      <div class="speed-lbl">V<sub>y</sub> &mdash; best rate of climb</div>
+      <div class="speed-wrap"><input type="number" id="vy" value="75" min="40" max="120"><span class="speed-unit">KIAS</span></div>
+    </div>
+    <div class="speed-item">
+      <div class="speed-lbl">V<sub>x</sub> &mdash; best angle of climb</div>
+      <div class="speed-wrap"><input type="number" id="vx" value="57" min="40" max="100"><span class="speed-unit">KIAS</span></div>
+    </div>
+    <div class="speed-item">
+      <div class="speed-lbl">V<sub>glide</sub> &mdash; best glide</div>
+      <div class="speed-wrap"><input type="number" id="vglide" value="70" min="40" max="120"><span class="speed-unit">KIAS</span></div>
+    </div>
+    <div class="speed-item">
+      <div class="speed-lbl">Glide ratio</div>
+      <div class="speed-wrap"><input type="number" id="glide-ratio" value="15" min="5" max="30" step="0.5"><span class="speed-unit">: 1</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ RATE OF CLIMB TABLE ═══ -->
+<div class="card">
+  <h3>Rate of climb &mdash; V<sub>y</sub> = 75 KIAS &middot; 600 kg</h3>
+  <table class="ptable" id="roc-table">
+    <thead>
+      <tr><th rowspan="2">Pressure<br>Altitude (ft)</th><th colspan="5">Rate of Climb [ft/min]</th></tr>
+      <tr><th>ISA &minus;15°C</th><th>ISA &minus;5°C</th><th>ISA</th><th>ISA +5°C</th><th>ISA +15°C</th></tr>
+    </thead>
+    <tbody id="roc-tbody"></tbody>
+  </table>
+  <div class="result-box">
+    <div><div class="result-val" id="roc-result">—</div><div class="result-lbl">ft/min</div></div>
+    <div style="font-size:11px;color:var(--blue);opacity:0.7;">Interpolated ROC at current altitude &amp; OAT</div>
+  </div>
+</div>
+
+<!-- ═══ CRUISE POWER ═══ -->
+<div class="card">
+  <h3>Cruise power setting</h3>
+  <div class="pwr-btns" id="pwr-btns"></div>
+  <table class="ptable" id="pwr-table">
+    <thead><tr><th>Power (kW)</th><th>RPM</th><th>KIAS</th><th>KCAS</th><th>kts</th></tr></thead>
+    <tbody id="pwr-tbody"></tbody>
+  </table>
+  <div class="info">Selected: <strong id="cruise-info">—</strong></div>
+</div>
+
+<!-- ═══ %SOC TABLE ═══ -->
+<div class="card">
+  <h3>%SOC per flight phase</h3>
+  <div class="info" style="margin-bottom:10px;">Interpolated for SOH = <strong id="soh-disp">80%</strong>. Source: POH energy management tables.</div>
+  <table class="ptable" id="soc-table">
+    <thead>
+      <tr><th rowspan="2" style="text-align:left;">Flight phase</th><th rowspan="2" style="background:#dde8f5;color:#0C447C;border-left:2px solid var(--blue);">At SOH</th><th colspan="6">Battery State of Health (%SOH)</th></tr>
+      <tr><th>100</th><th>80</th><th>60</th><th>40</th><th>20</th><th>0</th></tr>
+    </thead>
+    <tbody id="soc-tbody"></tbody>
+  </table>
+</div>
+
+<!-- ═══ COMPUTED SUMMARY ═══ -->
+<div class="card">
+  <h3>Computed performance &mdash; used by route planner</h3>
+  <div class="sum-grid" id="sum-grid"></div>
+  <div class="info" style="margin-top:10px;">Settings are saved automatically to your browser and applied when you open the <a href="index.html">Route Planner</a>.</div>
+</div>
+
+<!-- ═══ NOTES ═══ -->
+<div class="card note">
+  <strong style="color:var(--tx);">Data source &mdash; Pipistrel Velis Electro POH</strong><br>
+  Rate of climb: 600 kg MTOM, V<sub>y</sub> = 75 KIAS, full power 48 kW.
+  %SOC table: energy management section, SOH-dependent.
+  Cruise power: level flight at MTOM.
+  Glide: V<sub>glide</sub> = 70 KIAS, ratio 15:1, 0 kW (power off).
+</div>
+
+</div></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════════
+   DATA TABLES — from Pipistrel Velis Electro POH
+   ══════════════════════════════════════════════════════════════════════ */
+
+let ROC_ALT, ROC_ISA, ROC, PWR, SOH_PTS, SOC_PHASES;
+
+async function loadPOH(){
+  const resp = await fetch('velis_electro_poh.json');
+  const poh = await resp.json();
+  ROC_ALT = poh.roc.altitude_ft;
+  ROC_ISA = poh.roc.isa_dev_c;
+  ROC = poh.roc.fpm;
+  PWR = poh.cruise_power.settings;
+  SOH_PTS = poh.soc.soh_pct;
+  SOC_PHASES = poh.soc.phases.map(p=>({label:p.label, vals:p.vals, grp:p.group.substring(0,2), kw:p.kw}));
+}
+
+let selPwr = 36; // selected cruise power kW
+
+/* ══════════════════════════════════════════════════════════════════════
+   INTERPOLATION
+   ══════════════════════════════════════════════════════════════════════ */
+
+function lerp(a, b, t) { return a + t * (b - a); }
+
+function bracket(pts, v) {
+  const c = Math.max(pts[0], Math.min(pts[pts.length-1], v));
+  for (let i = 0; i < pts.length - 1; i++)
+    if (c <= pts[i+1]) return { i, t: (c - pts[i]) / (pts[i+1] - pts[i]) };
+  return { i: pts.length - 2, t: 1 };
+}
+
+function interpROC(alt, isaDev) {
+  const a = bracket(ROC_ALT, alt);
+  const d = bracket(ROC_ISA, isaDev);
+  const r0 = lerp(ROC[a.i][d.i], ROC[a.i][d.i+1], d.t);
+  const r1 = lerp(ROC[a.i+1][d.i], ROC[a.i+1][d.i+1], d.t);
+  return lerp(r0, r1, a.t);
+}
+
+function interpSOH(vals, soh) {
+  // SOH_PTS is decreasing: [100, 80, 60, 40, 20, 0]
+  soh = Math.max(0, Math.min(100, soh));
+  for (let i = 0; i < SOH_PTS.length - 1; i++) {
+    if (soh >= SOH_PTS[i+1]) {
+      const t = (SOH_PTS[i] - soh) / (SOH_PTS[i] - SOH_PTS[i+1]);
+      return lerp(vals[i], vals[i+1], t);
+    }
+  }
+  return vals[vals.length - 1];
+}
+
+function interpCruiseSpeed(kw) {
+  kw = Math.max(PWR[0].kw, Math.min(PWR[PWR.length-1].kw, kw));
+  for (let i = 0; i < PWR.length - 1; i++) {
+    if (kw <= PWR[i+1].kw) {
+      const t = (kw - PWR[i].kw) / (PWR[i+1].kw - PWR[i].kw);
+      return { kias: lerp(PWR[i].kias, PWR[i+1].kias, t), kcas: lerp(PWR[i].kcas, PWR[i+1].kcas, t) };
+    }
+  }
+  const last = PWR[PWR.length-1];
+  return { kias: last.kias, kcas: last.kcas };
+}
+
+function socCruise10min(kw, soh) {
+  const cp = SOC_PHASES.filter(p => p.grp === 'cr');
+  const pws = cp.map(p => p.kw);
+  kw = Math.max(pws[0], Math.min(pws[pws.length-1], kw));
+  for (let i = 0; i < cp.length - 1; i++) {
+    if (kw <= cp[i+1].kw) {
+      const t = (kw - cp[i].kw) / (cp[i+1].kw - cp[i].kw);
+      return lerp(interpSOH(cp[i].vals, soh), interpSOH(cp[i+1].vals, soh), t);
+    }
+  }
+  return interpSOH(cp[cp.length-1].vals, soh);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   RENDER TABLES
+   ══════════════════════════════════════════════════════════════════════ */
+
+function buildROCTable() {
+  document.getElementById('roc-tbody').innerHTML = ROC_ALT.map((alt, ai) =>
+    `<tr><td style="font-weight:600;background:var(--bg-sec);">${alt.toLocaleString()}</td>` +
+    ROC[ai].map((v, di) => `<td id="rc${ai}${di}">${v}</td>`).join('') + '</tr>'
+  ).join('');
+}
+
+function buildPwrTable() {
+  document.getElementById('pwr-tbody').innerHTML = PWR.map((r, i) =>
+    `<tr id="pr${i}"><td style="font-weight:700;">${r.kw}</td><td>${r.rpm.toLocaleString()}</td>` +
+    `<td>${r.kias}</td><td><em>${r.kcas}</em></td><td>${r.kias}</td></tr>`
+  ).join('');
+  const box = document.getElementById('pwr-btns');
+  box.innerHTML = PWR.map(r =>
+    `<button class="pwr-btn${r.kw===selPwr?' active':''}" data-kw="${r.kw}">${r.kw} kW</button>`
+  ).join('');
+  box.addEventListener('click', e => {
+    const btn = e.target.closest('.pwr-btn');
+    if (!btn) return;
+    selPwr = +btn.dataset.kw;
+    box.querySelectorAll('.pwr-btn').forEach(b => b.classList.toggle('active', +b.dataset.kw===selPwr));
+    save(); update();
+  });
+}
+
+function buildSOCTable() {
+  let prevGrp = '';
+  document.getElementById('soc-tbody').innerHTML = SOC_PHASES.map((p, i) => {
+    const sep = p.grp !== prevGrp && i > 0 ? ' style="border-top:2px solid var(--bd);"' : '';
+    prevGrp = p.grp;
+    return `<tr${sep}><td class="col-first">${p.label}</td><td class="col-interp" id="si${i}">—</td>` +
+      p.vals.map(v => `<td>${v}</td>`).join('') + '</tr>';
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   UPDATE
+   ══════════════════════════════════════════════════════════════════════ */
+
+function update() {
+  const oat    = +document.getElementById('oat').value;
+  const soh    = +document.getElementById('soh').value;
+  const refalt = +document.getElementById('refalt').value;
+  const vy     = +document.getElementById('vy').value;
+  const vglide = +document.getElementById('vglide').value;
+  const gr     = +document.getElementById('glide-ratio').value;
+
+  // Display slider values
+  document.getElementById('oat-v').textContent = (oat>=0?'+':'') + oat + ' °C';
+  document.getElementById('soh-v').textContent = soh + '%';
+  document.getElementById('refalt-v').textContent = refalt.toLocaleString() + ' ft';
+  document.getElementById('soh-disp').textContent = soh + '%';
+
+  // ISA
+  const isaTemp = 15 - 2 * refalt / 1000;
+  const isaDev  = oat - isaTemp;
+  document.getElementById('isa-temp').textContent = isaTemp.toFixed(1) + ' °C';
+  document.getElementById('isa-dev').textContent = (isaDev>=0?'ISA +':'ISA ') + isaDev.toFixed(1) + '°C';
+
+  // ── ROC table highlighting ──
+  const a = bracket(ROC_ALT, Math.max(0, Math.min(12000, refalt)));
+  const d = bracket(ROC_ISA, Math.max(-15, Math.min(15, isaDev)));
+  ROC_ALT.forEach((_, ai) => ROC_ISA.forEach((_, di) => {
+    const cell = document.getElementById(`rc${ai}${di}`);
+    cell.className = '';
+  }));
+  // If ISA dev is within 1°C of a column value, highlight only that column
+  const nearISA = ROC_ISA.find(v => Math.abs(isaDev - v) < 1);
+  const nearIdx = nearISA !== undefined ? ROC_ISA.indexOf(nearISA) : -1;
+  if (nearIdx >= 0) {
+    [[a.i,nearIdx],[a.i+1,nearIdx]].forEach(([ai,di]) => {
+      const cell = document.getElementById(`rc${ai}${di}`);
+      if (cell) cell.className = 'hl';
+    });
+  } else {
+    [[a.i,d.i],[a.i,d.i+1],[a.i+1,d.i],[a.i+1,d.i+1]].forEach(([ai,di]) => {
+      const cell = document.getElementById(`rc${ai}${di}`);
+      if (cell) cell.className = 'hl';
+    });
+  }
+  const roc = interpROC(refalt, isaDev);
+  document.getElementById('roc-result').textContent = Math.round(roc);
+
+  // ── Power table highlighting ──
+  PWR.forEach((_, i) => {
+    document.getElementById(`pr${i}`).className = PWR[i].kw === selPwr ? 'row-sel' : '';
+  });
+  const crSpd = interpCruiseSpeed(selPwr);
+  document.getElementById('cruise-info').textContent =
+    `${selPwr} kW · ${crSpd.kias.toFixed(0)} kts`;
+
+  // ── %SOC interpolated column ──
+  SOC_PHASES.forEach((p, i) => {
+    document.getElementById(`si${i}`).textContent = interpSOH(p.vals, soh).toFixed(1);
+  });
+
+  // ── Computed summary ──
+  const REF_ROC = 600;
+  const climbRef = interpSOH(SOC_PHASES.find(p=>p.grp==='cl').vals, soh);
+  const socClimb1k = climbRef * (REF_ROC / roc);
+  const socCruise  = socCruise10min(Math.min(selPwr, 35), soh);
+  const descFpm    = (vglide * 101.269) / gr;
+  const glideNm1k  = (1000 * gr) / 6076.12;
+  const cruiseKts  = crSpd.kias;
+
+  document.getElementById('sum-grid').innerHTML = [
+    { l:'ROC at conditions',        v:Math.round(roc),         u:'ft/min',  c:'climb' },
+    { l:'Climb speed (V<sub>y</sub>)',          v:vy,                      u:'kts',     c:'climb' },
+    { l:'%SOC per 1,000 ft climb',  v:socClimb1k.toFixed(1),   u:'%SOC',    c:'climb' },
+    { l:'Cruise speed ('+selPwr+' kW)',     v:cruiseKts.toFixed(0),    u:'kts',     c:'cruise' },
+    { l:'%SOC per 10 min cruise',   v:socCruise.toFixed(1),    u:'%SOC',    c:'cruise' },
+    { l:'%SOC per nm cruise',       v:(socCruise/10/(cruiseKts/60)).toFixed(2), u:'%SOC/nm', c:'cruise' },
+    { l:'Descent rate (glide)',     v:Math.round(descFpm),     u:'ft/min',  c:'desc' },
+    { l:'Glide range per 1,000 ft', v:glideNm1k.toFixed(1),   u:'nm',      c:'desc' },
+    { l:'Descent energy',           v:'0',                     u:'%SOC',    c:'desc' },
+  ].map(s => `<div class="sum-item ${s.c}"><div class="sum-lbl">${s.l}</div><div class="sum-val">${s.v}</div><div class="sum-unit">${s.u}</div></div>`).join('');
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   SAVE / LOAD
+   ══════════════════════════════════════════════════════════════════════ */
+
+function save() {
+  const ids = { velis_oat:'oat', velis_soh:'soh', velis_vy:'vy', velis_vx:'vx', velis_vglide:'vglide', velis_glide_ratio:'glide-ratio' };
+  Object.entries(ids).forEach(([k,id]) => localStorage.setItem(k, document.getElementById(id).value));
+  localStorage.setItem('velis_cruise_kw', selPwr);
+}
+
+function load() {
+  const map = { velis_oat:'oat', velis_soh:'soh', velis_vy:'vy', velis_vx:'vx', velis_vglide:'vglide', velis_glide_ratio:'glide-ratio' };
+  Object.entries(map).forEach(([k,id]) => { const v = localStorage.getItem(k); if (v !== null) document.getElementById(id).value = v; });
+  const pw = localStorage.getItem('velis_cruise_kw');
+  if (pw !== null) selPwr = +pw;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   INIT
+   ══════════════════════════════════════════════════════════════════════ */
+
+async function init(){
+  await loadPOH();
+  load();
+  buildROCTable();
+  buildPwrTable();
+  buildSOCTable();
+
+  ['oat','soh','refalt'].forEach(id =>
+    document.getElementById(id).addEventListener('input', () => { save(); update(); })
+  );
+  ['vy','vx','vglide','glide-ratio'].forEach(id =>
+    document.getElementById(id).addEventListener('input', () => { save(); update(); })
+  );
+
+// ── Save / Load performance settings as JSON file ──
+function getPerfState(){
+  return {
+    oat:document.getElementById('oat').value,
+    soh:document.getElementById('soh').value,
+    refalt:document.getElementById('refalt').value,
+    vy:document.getElementById('vy').value,
+    vx:document.getElementById('vx').value,
+    vglide:document.getElementById('vglide').value,
+    glideRatio:document.getElementById('glide-ratio').value,
+    cruiseKw:selPwr
+  };
+}
+function applyPerfState(state){
+  if(state.oat!==undefined) document.getElementById('oat').value=state.oat;
+  if(state.soh!==undefined) document.getElementById('soh').value=state.soh;
+  if(state.refalt!==undefined) document.getElementById('refalt').value=state.refalt;
+  if(state.vy!==undefined) document.getElementById('vy').value=state.vy;
+  if(state.vx!==undefined) document.getElementById('vx').value=state.vx;
+  if(state.vglide!==undefined) document.getElementById('vglide').value=state.vglide;
+  if(state.glideRatio!==undefined) document.getElementById('glide-ratio').value=state.glideRatio;
+  if(state.cruiseKw!==undefined){
+    selPwr=+state.cruiseKw;
+    document.querySelectorAll('.pwr-btn').forEach(b=>b.classList.toggle('active',+b.dataset.kw===selPwr));
+  }
+  save(); update();
+}
+function showPerfStatus(msg){
+  const el=document.getElementById('perf-status');
+  el.textContent=msg;
+  setTimeout(()=>{el.textContent='';},3000);
+}
+
+  document.getElementById('perf-save').addEventListener('click',()=>{
+    const data={type:'velis_performance',savedAt:new Date().toISOString(),settings:getPerfState()};
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download='velis_performance.json'; a.click();
+    URL.revokeObjectURL(url);
+    showPerfStatus('Saved: velis_performance.json');
+  });
+
+  document.getElementById('perf-load-btn').addEventListener('click',()=>{
+    document.getElementById('perf-file').click();
+  });
+  document.getElementById('perf-file').addEventListener('change',(e)=>{
+    const file=e.target.files[0];
+    if(!file) return;
+    const reader=new FileReader();
+    reader.onload=(ev)=>{
+      try{
+        const data=JSON.parse(ev.target.result);
+        applyPerfState(data.settings||data);
+        showPerfStatus('Loaded: '+file.name);
+      }catch(err){
+        showPerfStatus('Error: invalid JSON file');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value='';
+  });
+
+  update();
+}
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+{
+  "aircraft": "Pipistrel Velis Electro",
+  "source": "Pilot Operating Handbook",
+  "battery": {
+    "nominal_kwh": 24.8
+  },
+  "roc": {
+    "description": "Rate of Climb at Vy = 75 KIAS, 600 kg MTOM, full power 48 kW",
+    "altitude_ft": [0, 4000, 8000, 12000],
+    "isa_dev_c": [-15, -5, 0, 5, 15],
+    "fpm": [
+      [683, 658, 647, 636, 615],
+      [602, 580, 570, 560, 541],
+      [439, 423, 415, 408, 393],
+      [276, 265, 260, 255, 246]
+    ]
+  },
+  "cruise_power": {
+    "description": "Level flight at MTOM",
+    "settings": [
+      { "kw": 20, "rpm": 1780, "kias": 71, "kcas": 69 },
+      { "kw": 25, "rpm": 1950, "kias": 79, "kcas": 78 },
+      { "kw": 30, "rpm": 2120, "kias": 87, "kcas": 86 },
+      { "kw": 35, "rpm": 2270, "kias": 92, "kcas": 92 },
+      { "kw": 36, "rpm": 2300, "kias": 93, "kcas": 93 }
+    ]
+  },
+  "soc": {
+    "description": "%SOC per flight phase, indexed by Battery State of Health",
+    "soh_pct": [100, 80, 60, 40, 20, 0],
+    "phases": [
+      { "label": "Takeoff + initial climb to 300 ft AGL (40 sec)",               "group": "takeoff",  "vals": [4, 5, 5, 6, 8, 10] },
+      { "label": "1,000 ft climb at Vy — 48 kW (100 sec @ MTOM)",               "group": "climb",    "vals": [8, 8, 10, 12, 14, 16] },
+      { "label": "10 min cruise — 20 kW (69 KCAS)",  "group": "cruise", "kw": 20, "vals": [18, 19, 22, 26, 31, 37] },
+      { "label": "10 min cruise — 25 kW (78 KCAS)",  "group": "cruise", "kw": 25, "vals": [22, 24, 28, 33, 38, 48] },
+      { "label": "10 min cruise — 30 kW (86 KCAS)",  "group": "cruise", "kw": 30, "vals": [26, 29, 34, 39, 47, 57] },
+      { "label": "10 min cruise — 35 kW (92 KCAS)",  "group": "cruise", "kw": 35, "vals": [31, 35, 38, 45, 55, 66] },
+      { "label": "Touch and go + climb to 300 ft AGL (30 sec)",                  "group": "other",    "vals": [3, 3, 4, 5, 6, 7] },
+      { "label": "Initial takeoff + first traffic pattern",                      "group": "other",    "vals": [11, 12, 14, 16, 19, 23] },
+      { "label": "Touch and go + traffic pattern",                               "group": "other",    "vals": [10, 11, 13, 15, 17, 21] },
+      { "label": "Aborted landing + climb to 1,000 ft AGL — 64 kW (70 sec)",    "group": "other",    "vals": [8, 8, 10, 11, 14, 17] }
+    ]
+  }
+}

@@ -1,0 +1,10 @@
+# User-saved route and settings files
+Storeggpass.json
+velis_performance.json
+*.route.json
+
+# Original Claude fragment (not needed for standalone)
+pipistrel_velis_3leg_v2.html
+
+# macOS
+.DS_Store
