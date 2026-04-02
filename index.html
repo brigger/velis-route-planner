@@ -174,7 +174,7 @@
   <div class="card">
     <h3>Flight profile</h3>
     <div style="overflow-x:auto;">
-      <svg id="svg" viewBox="0 0 760 200" width="100%" style="display:block;min-width:320px;"></svg>
+      <svg id="svg" viewBox="0 0 760 240" width="100%" style="display:block;min-width:320px;"></svg>
     </div>
   </div>
 
@@ -611,70 +611,129 @@ function update(){
   document.getElementById('det-calc').innerHTML=det;
 
   // SVG profile
-  if(leg2On) drawSVG(depAlt,req1,req2,arrAlt,dist1,dist2,dist3,L1_clb.nm,req2>req1?L2_trans.nm:0,req2<=req1?L2_trans.nm:0,L3_dsc.nm,true);
-  else drawSVG(depAlt,req1,0,arrAlt,dist1,0,dist3,L1_clb.nm,0,0,L3_dsc.nm,false);
+  const svgInfo={
+    L1_clbMin:L1_clb.min, L1_cruMin:L1_cru.min, L1_min,
+    L2_transMin:L2_trans.min, L2_cruMin:L2_cru.min, L2_min,
+    L3_dscMin:L3_dsc.min, L3_cruMin:L3_cru.min, L3_min,
+    totalMin, L1_clbNm:L1_clb.nm, L3_dscNm:L3_dsc.nm,
+    L2_transNm:L2_trans.nm
+  };
+  if(leg2On) drawSVG(depAlt,req1,req2,arrAlt,dist1,dist2,dist3,L1_clb.nm,req2>req1?L2_trans.nm:0,req2<=req1?L2_trans.nm:0,L3_dsc.nm,true,svgInfo);
+  else drawSVG(depAlt,req1,0,arrAlt,dist1,0,dist3,L1_clb.nm,0,0,L3_dsc.nm,false,svgInfo);
 }
 
 /* ══════════════════════════════════════════════════════════════════════
    SVG FLIGHT PROFILE
    ══════════════════════════════════════════════════════════════════════ */
-function drawSVG(dep,req1,req2,arr,d1,d2,d3,clb1,clb2,dsc2,dsc3,hasLeg2){
+function drawSVG(dep,req1,req2,arr,d1,d2,d3,clb1,clb2,dsc2,dsc3,hasLeg2,info){
   const svg=document.getElementById('svg');
-  const W=760,H=200,PL=52,PR=20,PT=28,PB=38;
+  const W=760,H=240,PL=52,PR=20,PT=28,PB=78;
   const IW=W-PL-PR,IH=H-PT-PB;
   const total=d1+d2+d3;
   const maxA=Math.max(dep,req1,hasLeg2?req2:0,arr)*1.15;
   function xp(nm){return PL+(nm/total)*IW;}
   function yp(ft){return PT+IH-(ft/maxA)*IH;}
   const tc='#555',gc='rgba(0,0,0,0.06)';
+  function mf(m){const h=Math.floor(m/60),mn=Math.round(m%60);return h>0?h+'h'+mn+'m':mn+'m';}
 
-  let pts;
+  // Profile points
+  let profilePts;
   if(hasLeg2){
     const x0=0,x1=clb1,x2=d1;
     const x3=d1+(req2>req1?clb2:dsc2);
     const x4=d1+d2,x5=d1+d2+dsc3,x6=d1+d2+d3;
-    pts=[[x0,dep],[x1,req1],[x2,req1],[x3,req2],[x4,req2],[x5,arr],[x6,arr]];
+    profilePts=[[x0,dep],[x1,req1],[x2,req1],[x3,req2],[x4,req2],[x5,arr],[x6,arr]];
   } else {
     const x0=0,x1=clb1,x2=d1,x3=d1+dsc3,x4=d1+d3;
-    pts=[[x0,dep],[x1,req1],[x2,req1],[x3,arr],[x4,arr]];
+    profilePts=[[x0,dep],[x1,req1],[x2,req1],[x3,arr],[x4,arr]];
   }
-  const uniq=[pts[0]];
-  for(let i=1;i<pts.length;i++){
-    if(Math.abs(pts[i][0]-uniq[uniq.length-1][0])>0.1||pts[i][1]!==uniq[uniq.length-1][1]) uniq.push(pts[i]);
+  const uniq=[profilePts[0]];
+  for(let i=1;i<profilePts.length;i++){
+    if(Math.abs(profilePts[i][0]-uniq[uniq.length-1][0])>0.1||profilePts[i][1]!==uniq[uniq.length-1][1]) uniq.push(profilePts[i]);
   }
   const linePath=uniq.map((p,i)=>(i===0?'M':'L')+xp(p[0]).toFixed(1)+','+yp(p[1]).toFixed(1)).join(' ');
   const fillPath=linePath+' L'+xp(total).toFixed(1)+','+yp(0).toFixed(1)+' L'+xp(0).toFixed(1)+','+yp(0).toFixed(1)+' Z';
   let h='<defs><clipPath id="pc"><rect x="'+PL+'" y="'+PT+'" width="'+IW+'" height="'+IH+'"/></clipPath></defs>';
+
+  // Altitude grid
   const step=Math.max(req1,req2)>8000?3000:2000;
   for(let a=0;a<=maxA;a+=step){
     const y=yp(a); if(y<PT-2||y>PT+IH+2) continue;
     h+=`<line x1="${PL}" y1="${y.toFixed(1)}" x2="${W-PR}" y2="${y.toFixed(1)}" stroke="${gc}" stroke-width="1"/>`;
     h+=`<text x="${PL-4}" y="${(y+3.5).toFixed(1)}" font-size="9" fill="${tc}" text-anchor="end">${(a/1000).toFixed(0)}k</text>`;
   }
+
+  // Leg dividers
   const dividers=hasLeg2?[[d1,'L1','#185FA5'],[d1+d2,'L2','#534AB7']]:[[d1,'L1','#185FA5']];
   dividers.forEach(([nm,lbl,col])=>{
     const x=xp(nm);
     h+=`<line x1="${x.toFixed(1)}" y1="${PT}" x2="${x.toFixed(1)}" y2="${(PT+IH).toFixed(1)}" stroke="${col}" stroke-width="1" stroke-dasharray="3,3" opacity="0.6"/>`;
   });
+
+  // Fill + line
   h+=`<path d="${fillPath}" fill="rgba(29,158,117,0.09)" clip-path="url(#pc)"/>`;
   h+=`<path d="${linePath}" fill="none" stroke="#1D9E75" stroke-width="2" clip-path="url(#pc)"/>`;
+
+  // Waypoint dots
   const dots=hasLeg2
     ?[[0,dep,'#185FA5'],[d1,req1,'#185FA5'],[d1+d2,req2,'#534AB7'],[d1+d2+d3,arr,'#3B6D11']]
     :[[0,dep,'#185FA5'],[d1,req1,'#185FA5'],[d1+d3,arr,'#3B6D11']];
   dots.forEach(([nm,ft,col])=>{
     h+=`<circle cx="${xp(nm).toFixed(1)}" cy="${yp(ft).toFixed(1)}" r="4" fill="${col}"/>`;
   });
+
+  // Top-of-climb / start-of-descent dots + altitude labels
+  const toc=[[clb1,req1,'#185FA5']]; // TOC leg 1
+  if(hasLeg2){
+    if(req2>req1) toc.push([d1+clb2,req2,'#534AB7']); // TOC leg 2
+    else toc.push([d1+dsc2,req2,'#534AB7']); // start descent leg 2
+    toc.push([d1+d2+dsc3,arr,'#3B6D11']); // end descent leg 3 (before cruise to dest)
+  } else {
+    toc.push([d1+dsc3,arr,'#3B6D11']);
+  }
+  // Only show if not overlapping with waypoint dots (>1nm apart)
+  toc.forEach(([nm,ft,col])=>{
+    const tooClose=dots.some(([dnm])=>Math.abs(nm-dnm)<total*0.03);
+    if(!tooClose){
+      h+=`<circle cx="${xp(nm).toFixed(1)}" cy="${yp(ft).toFixed(1)}" r="3" fill="${col}" opacity="0.6"/>`;
+    }
+  });
+
+  // Altitude labels at peaks
   const peaks=hasLeg2?[[d1,req1,'#185FA5'],[d1+d2,req2,'#534AB7']]:[[d1,req1,'#185FA5']];
   peaks.forEach(([nm,ft,col])=>{
     h+=`<text x="${xp(nm).toFixed(1)}" y="${(yp(ft)-9).toFixed(1)}" font-size="9" fill="${col}" text-anchor="middle" font-weight="500">${ft.toLocaleString()} ft</text>`;
   });
+
+  // Top-of-climb altitude label (if far enough from waypoint label)
+  if(clb1>total*0.05 && clb1<d1*0.85){
+    h+=`<text x="${xp(clb1).toFixed(1)}" y="${(yp(req1)-9).toFixed(1)}" font-size="8" fill="#185FA5" text-anchor="middle" opacity="0.7">TOC ${mf(info.L1_clbMin)}</text>`;
+  }
+
+  // X-axis: waypoint labels (row 1: name, row 2: distance, row 3: cumulative time)
+  const cumT1=info.L1_min;
+  const cumT2=cumT1+info.L2_min;
+  const cumT3=cumT2+info.L3_min;
   const xLabels=hasLeg2
-    ?[[0,'Dep',dep],[d1,'Leg 1',req1],[d1+d2,'Leg 2',req2],[d1+d2+d3,'Dest',arr]]
-    :[[0,'Dep',dep],[d1,'Leg 1',req1],[d1+d3,'Dest',arr]];
-  xLabels.forEach(([nm,lbl,alt])=>{
-    h+=`<text x="${xp(nm).toFixed(1)}" y="${(PT+IH+13).toFixed(1)}" font-size="9" fill="${tc}" text-anchor="middle">${lbl}</text>`;
+    ?[[0,'Dep',0],[d1,'Leg 1',cumT1],[d1+d2,'Leg 2',cumT2],[d1+d2+d3,'Dest',cumT3]]
+    :[[0,'Dep',0],[d1,'Leg 1',cumT1],[d1+d3,'Dest',cumT1+info.L3_min]];
+  xLabels.forEach(([nm,lbl,cumMin])=>{
+    h+=`<text x="${xp(nm).toFixed(1)}" y="${(PT+IH+13).toFixed(1)}" font-size="9" fill="${tc}" text-anchor="middle" font-weight="500">${lbl}</text>`;
     h+=`<text x="${xp(nm).toFixed(1)}" y="${(PT+IH+24).toFixed(1)}" font-size="8" fill="${tc}" text-anchor="middle">${Math.round(nm)} nm</text>`;
+    if(nm>0) h+=`<text x="${xp(nm).toFixed(1)}" y="${(PT+IH+35).toFixed(1)}" font-size="8" fill="${tc}" text-anchor="middle">${mf(cumMin)}</text>`;
   });
+
+  // Leg distance + time annotations (centered between waypoints)
+  const legAnnotations=hasLeg2
+    ?[[0,d1,info.L1_min,'#185FA5'],[d1,d1+d2,info.L2_min,'#534AB7'],[d1+d2,d1+d2+d3,info.L3_min,'#3B6D11']]
+    :[[0,d1,info.L1_min,'#185FA5'],[d1,d1+d3,info.L3_min,'#3B6D11']];
+  legAnnotations.forEach(([from,to,legMin,col])=>{
+    const mid=(from+to)/2;
+    const legDist=to-from;
+    h+=`<text x="${xp(mid).toFixed(1)}" y="${(PT+IH+50).toFixed(1)}" font-size="8" fill="${col}" text-anchor="middle" font-weight="500">${Math.round(legDist)} nm · ${mf(legMin)}</text>`;
+  });
+
+  // Y-axis label
   h+=`<text x="${(PL-36).toFixed(0)}" y="${(PT+IH/2).toFixed(1)}" font-size="9" fill="${tc}" text-anchor="middle" transform="rotate(-90,${PL-36},${(PT+IH/2).toFixed(1)})">Altitude (ft)</text>`;
   svg.innerHTML=h;
 }
