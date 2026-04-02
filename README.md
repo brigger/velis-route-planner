@@ -4,22 +4,47 @@ A browser-based flight energy planner for the Pipistrel Velis Electro, supportin
 
 ## Files
 
-- `pipistrel_velis_3leg_v2.html` — original fragment (requires Claude's UI environment)
-- `pipistrel_velis_3leg_v2_local.html` — standalone version, works directly in any browser
+- `index.html` — route planner (main page)
+- `velis_performance.html` — performance data & settings
+- `velis_electro_poh.json` — POH tables (rate of climb, %SOC, cruise power)
 
 ## How to run locally
 
-Open `pipistrel_velis_3leg_v2_local.html` directly in your browser, **or** use live-server for auto-reload on save:
-
 ```bash
-npx live-server /Users/patrick/Documents/Velis_Pipistrel_Route_Planner --open=pipistrel_velis_3leg_v2_local.html
+npx live-server --open=index.html
 ```
 
-> Requires Node.js. `npx` downloads `live-server` automatically on first run — no install needed.
+## Deployment
 
-The browser will reload instantly every time you save the file.
+- **GitHub**: https://github.com/brigger/velis-route-planner
+- **VPS**: 95.217.222.205 (Ubuntu 24.04, Nginx)
+- **URL**: http://95.217.222.205/velis-planner/
 
-To stop the server: `Ctrl+C`
+### Update VPS after changes
+
+```bash
+git push
+ssh root@95.217.222.205 "cd /var/www/velis-planner && git pull"
+```
+
+### Reboot VPS
+
+```bash
+ssh root@95.217.222.205 "reboot"
+```
+
+Nginx starts automatically on boot.
+
+## TODO — DNS & HTTPS
+
+After maillink.ch updates the DNS (A record for brigger.com → 95.217.222.205):
+
+1. Verify it works: http://www.brigger.com/velis-planner/
+2. Enable HTTPS:
+   ```bash
+   ssh root@95.217.222.205 "certbot --nginx -d brigger.com -d www.brigger.com"
+   ```
+   This automatically gets a free SSL certificate and configures Nginx for HTTPS with auto-redirect.
 
 ## Aircraft model
 
@@ -28,15 +53,20 @@ To stop the server: `Ctrl+C`
 | Parameter | Value |
 |---|---|
 | Nominal battery | 24.8 kWh |
-| Cruise power | 40 kW @ 165 km/h |
-| Climb power | 58 kW @ 270 ft/min SL |
-| Climb ground speed | ~130 km/h |
-| Descent power | 10 kW @ ~150 km/h |
-| Descent rate | 300 ft/min |
-| Service ceiling | ~14,000 ft (density-adjusted) |
+| Climb power | 48 kW at Vy (75 KIAS) |
+| Cruise power | 20–36 kW (selectable) |
+| Descent | Power-off glide, 15:1 ratio at 70 KIAS |
+| ROC | POH table, interpolated by altitude & ISA deviation |
+| %SOC | POH table, interpolated by SOH |
 
 ## How it works
 
-Each leg starts at the altitude where the previous leg ended (chained profile). The model computes energy for climb/descent phases first, then fills the remaining leg distance with cruise. There is no intermediate level cruise between passes — the profile is direct.
+Climb: ROC from POH table (1,000 ft bands, altitude & ISA-deviation interpolated). Energy from %SOC table scaled by actual vs reference ROC (600 ft/min).
 
-Energy is split into usable mission energy and a configurable reserve (default 20% SOC). The planner warns if the route exceeds the service ceiling or if energy margin is tight (< 12%).
+Cruise: speed and %SOC from POH power setting tables.
+
+Descent: power-off glide (0 %SOC), distance from glide ratio.
+
+Includes takeoff (5–10 %SOC) and arrival (straight-in 5% or traffic pattern 13%).
+
+Reserve SOC configurable (default 30%).
