@@ -682,33 +682,49 @@ function drawSVG(dep,req1,req2,arr,d1,d2,d3,clb1,clb2,dsc2,dsc3,hasLeg2,info){
     h+=`<circle cx="${xp(nm).toFixed(1)}" cy="${yp(ft).toFixed(1)}" r="4" fill="${col}"/>`;
   });
 
-  // Top-of-climb / start-of-descent dots + altitude labels
-  const toc=[[clb1,req1,'#185FA5']]; // TOC leg 1
-  if(hasLeg2){
-    if(req2>req1) toc.push([d1+clb2,req2,'#534AB7']); // TOC leg 2
-    else toc.push([d1+dsc2,req2,'#534AB7']); // start descent leg 2
-    toc.push([d1+d2+dsc3,arr,'#3B6D11']); // end descent leg 3 (before cruise to dest)
-  } else {
-    toc.push([d1+dsc3,arr,'#3B6D11']);
-  }
-  // Only show if not overlapping with waypoint dots (>1nm apart)
-  toc.forEach(([nm,ft,col])=>{
-    const tooClose=dots.some(([dnm])=>Math.abs(nm-dnm)<total*0.03);
-    if(!tooClose){
-      h+=`<circle cx="${xp(nm).toFixed(1)}" cy="${yp(ft).toFixed(1)}" r="3" fill="${col}" opacity="0.6"/>`;
-    }
-  });
-
-  // Altitude labels at peaks
+  // Altitude labels at peaks (waypoints)
   const peaks=hasLeg2?[[d1,req1,'#185FA5'],[d1+d2,req2,'#534AB7']]:[[d1,req1,'#185FA5']];
   peaks.forEach(([nm,ft,col])=>{
     h+=`<text x="${xp(nm).toFixed(1)}" y="${(yp(ft)-9).toFixed(1)}" font-size="9" fill="${col}" text-anchor="middle" font-weight="500">${ft.toLocaleString()} ft</text>`;
   });
 
-  // Top-of-climb altitude label (if far enough from waypoint label)
-  if(clb1>total*0.05 && clb1<d1*0.85){
-    h+=`<text x="${xp(clb1).toFixed(1)}" y="${(yp(req1)-9).toFixed(1)}" font-size="8" fill="#185FA5" text-anchor="middle" opacity="0.7">TOC ${mf(info.L1_clbMin)}</text>`;
+  // Transition points: TOC (top of climb) and BOD (bottom of descent)
+  // Each: [nm, ft, col, label, distFromPrevWP, timeFromPrevWP, prevWPnm]
+  const transitions=[];
+  // Leg 1: TOC after departure
+  if(clb1>total*0.02 && Math.abs(clb1-d1)>total*0.03){
+    transitions.push([clb1, req1, '#185FA5', 'TOC', clb1, info.L1_clbMin, 0]);
   }
+  if(hasLeg2){
+    // Leg 2: climb or descent from Leg 1 waypoint
+    if(req2>req1 && clb2>total*0.02 && Math.abs(clb2)>total*0.03 && Math.abs(d1+clb2-(d1+d2))>total*0.03){
+      transitions.push([d1+clb2, req2, '#534AB7', 'TOC', clb2, info.L2_transMin, d1]);
+    } else if(req2<req1 && dsc2>total*0.02 && Math.abs(dsc2)>total*0.03 && Math.abs(d1+dsc2-(d1+d2))>total*0.03){
+      transitions.push([d1+dsc2, req2, '#534AB7', 'BOD', dsc2, info.L2_transMin, d1]);
+    }
+    // Leg 3: end of descent before cruise to dest
+    if(dsc3>total*0.02 && Math.abs(d1+d2+dsc3-(d1+d2))>total*0.03 && Math.abs(d1+d2+dsc3-(d1+d2+d3))>total*0.03){
+      transitions.push([d1+d2+dsc3, arr, '#3B6D11', 'BOD', dsc3, info.L3_dscMin, d1+d2]);
+    }
+  } else {
+    // 2-leg mode: descent in leg 2 (=leg 3)
+    if(dsc3>total*0.02 && Math.abs(d1+dsc3-(d1+d3))>total*0.03 && Math.abs(dsc3)>total*0.03){
+      transitions.push([d1+dsc3, arr, '#3B6D11', 'BOD', dsc3, info.L3_dscMin, d1]);
+    }
+  }
+
+  // Draw transition points: dashed vertical line + dot + label
+  transitions.forEach(([nm,ft,col,label,distFromWP,timeFromWP,prevWP])=>{
+    const x=xp(nm);
+    // Dashed vertical line
+    h+=`<line x1="${x.toFixed(1)}" y1="${PT}" x2="${x.toFixed(1)}" y2="${(PT+IH).toFixed(1)}" stroke="${col}" stroke-width="0.8" stroke-dasharray="2,3" opacity="0.4"/>`;
+    // Dot
+    h+=`<circle cx="${x.toFixed(1)}" cy="${yp(ft).toFixed(1)}" r="3" fill="${col}" opacity="0.7"/>`;
+    // Label above profile: "TOC" or "BOD"
+    h+=`<text x="${x.toFixed(1)}" y="${(yp(ft)-18).toFixed(1)}" font-size="7.5" fill="${col}" text-anchor="middle" font-weight="600" opacity="0.8">${label}</text>`;
+    // Distance + time from previous waypoint
+    h+=`<text x="${x.toFixed(1)}" y="${(yp(ft)-9).toFixed(1)}" font-size="7" fill="${col}" text-anchor="middle" opacity="0.7">${n1(distFromWP)} nm · ${mf(timeFromWP)}</text>`;
+  });
 
   // X-axis: waypoint labels (row 1: name, row 2: distance, row 3: cumulative time)
   const cumT1=info.L1_min;
