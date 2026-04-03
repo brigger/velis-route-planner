@@ -166,7 +166,7 @@
     <div style="margin-top:8px;display:flex;align-items:center;gap:16px;">
       <span style="font-size:12px;color:var(--tx2);font-weight:500;">Arrival:</span>
       <label style="font-size:12px;color:var(--tx2);display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="radio" name="approach" value="straight" style="accent-color:#3B6D11;"> Straight-in (5 %SOC)</label>
-      <label style="font-size:12px;color:var(--tx2);display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="radio" name="approach" value="pattern" checked style="accent-color:#3B6D11;"> Traffic pattern (13 %SOC)</label>
+      <label style="font-size:12px;color:var(--tx2);display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="radio" name="approach" value="pattern" checked style="accent-color:#3B6D11;"> Traffic pattern (12 %SOC)</label>
     </div>
   </div>
 
@@ -451,7 +451,7 @@ function update(){
   const L3_cruDist=Math.max(0,dist3-L3_dsc.nm);
   const L3_cru=calcCruise(L3_cruDist,cruiseKw,cruiseKts,sohPct);
   const approachType=document.querySelector('input[name="approach"]:checked').value;
-  const approachSoc=approachType==='pattern'?13:5;
+  const approachSoc=approachType==='pattern'?12:5;
   const L3_soc=L3_dsc.soc+L3_cru.soc+approachSoc, L3_min=L3_dsc.min+L3_cru.min;
 
   // ── Totals ──
