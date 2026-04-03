@@ -69,11 +69,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 
 <!-- CONDITIONS -->
 <div class="card">
-  <h3>Takeoff conditions</h3>
-  <div class="sr"><label>Pressure altitude (ft)</label><input type="range" id="alt" min="0" max="12000" step="100" value="1525"><span class="sv" id="alt-v">1,525 ft</span></div>
+  <h3>Takeoff and landing conditions</h3>
+  <div class="sr"><label>Pressure altitude (ft)</label><input type="range" id="alt" min="0" max="12000" step="25" value="1525"><span class="sv" id="alt-v">1,525 ft</span></div>
   <div class="sr"><label>Outside air temperature (OAT)</label><input type="range" id="oat" min="-30" max="45" step="1" value="15"><span class="sv" id="oat-v">+15 °C</span></div>
-  <div class="sr"><label>Mass (kg)</label><input type="range" id="mass" min="400" max="600" step="10" value="600"><span class="sv" id="mass-v">600 kg</span></div>
-  <div class="sr"><label>Wind component (kts)</label><input type="range" id="wind" min="-10" max="30" step="1" value="0"><span class="sv" id="wind-v">Calm</span></div>
+<div class="sr"><label>Wind component (kts)</label><input type="range" id="wind" min="-10" max="30" step="1" value="0"><span class="sv" id="wind-v">Calm</span></div>
   <div class="radio-row"><span>Runway surface</span>
     <label><input type="radio" name="surface" value="asphalt" checked style="accent-color:var(--blue);"> Asphalt</label>
     <label><input type="radio" name="surface" value="grass" style="accent-color:var(--green);"> Grass</label>
@@ -83,7 +82,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     <label><input type="radio" name="condition" value="wet"> Wet</label>
   </div>
   <div class="sr"><label>Runway slope (%)</label><input type="range" id="slope" min="-3" max="3" step="0.5" value="0"><span class="sv" id="slope-v">Level</span></div>
-  <div class="info">ISA deviation: <strong id="isa-dev">—</strong> &nbsp;·&nbsp; POH reference: MPTOP (50 kW), Flaps +1, V<sub>lof</sub> = 50 KIAS, V<sub>x</sub> = 60 KIAS</div>
+  <div class="info">ISA deviation: <strong id="isa-dev">—</strong> &nbsp;·&nbsp; Mass: 600 kg &nbsp;·&nbsp; Takeoff: MPTOP (50 kW), Flaps +1, V<sub>lof</sub> = 50 KIAS, V<sub>x</sub> = 60 KIAS &nbsp;·&nbsp; Landing: Flaps +2, V<sub>ldg</sub> = 60 KIAS</div>
 </div>
 
 <!-- RESULT -->
@@ -147,7 +146,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       <tr><td style="text-align:left;">Wet grass</td><td>Add 18% to ground roll on dry grass</td></tr>
       <tr><td style="text-align:left;">Upslope</td><td>Add 22% of SL ground roll per 1% upslope</td></tr>
       <tr><td style="text-align:left;">Downslope</td><td>Subtract 7% of SL ground roll per 1% downslope</td></tr>
-      <tr><td style="text-align:left;">Mass &ne; 600 kg</td><td>Approximation: &times; (mass / 600)&sup2; — <em>not from POH</em></td></tr>
     </tbody>
   </table>
   <div class="card note" style="margin-top:8px;padding:6px 10px;">
@@ -172,7 +170,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       <tr><td style="text-align:left;">Wet grass</td><td>Add 30% to ground roll on dry grass</td></tr>
       <tr><td style="text-align:left;">Downslope</td><td>Add 27% of ground roll per 1% downslope</td></tr>
       <tr><td style="text-align:left;">Upslope</td><td>Subtract 9% of ground roll per 1% upslope</td></tr>
-      <tr><td style="text-align:left;">Mass &ne; 600 kg</td><td>Approximation: &times; (mass / 600)&sup2; — <em>not from POH</em></td></tr>
     </tbody>
   </table>
   <div class="caution" style="margin-top:8px;">Slope corrections should be used with caution — published slope is usually the net slope from one end to the other. Many runways have portions at greater or lesser slopes.</div>
@@ -292,7 +289,7 @@ function update(){
 
   const alt=+document.getElementById('alt').value;
   const oat=+document.getElementById('oat').value;
-  const mass=+document.getElementById('mass').value;
+  const mass=600;
   const wind=+document.getElementById('wind').value;
   const surface=document.querySelector('input[name="surface"]:checked').value;
   const condition=document.querySelector('input[name="condition"]:checked').value;
@@ -301,8 +298,7 @@ function update(){
   // Display values
   document.getElementById('alt-v').textContent=alt.toLocaleString()+' ft';
   document.getElementById('oat-v').textContent=(oat>=0?'+':'')+oat+' °C';
-  document.getElementById('mass-v').textContent=mass+' kg';
-  if(wind===0) document.getElementById('wind-v').textContent='Calm';
+if(wind===0) document.getElementById('wind-v').textContent='Calm';
   else if(wind>0) document.getElementById('wind-v').textContent=wind+' kts HW';
   else document.getElementById('wind-v').textContent=Math.abs(wind)+' kts TW';
   if(slope===0) document.getElementById('slope-v').textContent='Level';
@@ -326,38 +322,23 @@ function update(){
   const dSL=bracket(isaPts,isaDev);
   const baseSL_GR=lerp(grTableSL[dSL.i],grTableSL[dSL.i+1],dSL.t);
 
-  // 2. Mass correction: (mass/600)²
-  const massFactor=(mass/600)*(mass/600);
-  const massGR=baseGR*massFactor;
-  const massOB=baseOB*massFactor;
-  const massSL_GR=baseSL_GR*massFactor;
-
-  // 3. Wind correction
+  // 2. Wind correction
   let windFactor=1;
-  if(wind>0){
-    // Headwind: subtract 10% per 12 kts
-    windFactor=1-(wind/12)*0.10;
-  }else if(wind<0){
-    // Tailwind: add 10% per 2 kts, max 10 kts
-    const tw=Math.min(Math.abs(wind),10);
-    windFactor=1+(tw/2)*0.10;
-  }
-  const windGR=massGR*windFactor;
-  const windOB=massOB*windFactor;
+  if(wind>0) windFactor=1-(wind/12)*0.10;
+  else if(wind<0){const tw=Math.min(Math.abs(wind),10);windFactor=1+(tw/2)*0.10;}
+  const windGR=baseGR*windFactor;
+  const windOB=baseOB*windFactor;
 
-  // 4. Wet grass correction (only for grass surface, wet condition)
+  // 3. Wet grass correction (only for grass surface, wet condition)
   let wetFactor=1;
   if(surface==='grass'&&condition==='wet') wetFactor=1.18;
   const wetGR=windGR*wetFactor;
-  const wetOB=windOB; // wet only affects ground roll
+  const wetOB=windOB;
 
-  // 5. Slope correction (based on SL ground roll)
+  // 4. Slope correction (based on SL ground roll)
   let slopeAdd=0;
-  if(slope>0){
-    slopeAdd=massSL_GR*0.22*slope;
-  }else if(slope<0){
-    slopeAdd=massSL_GR*(-0.07)*Math.abs(slope);
-  }
+  if(slope>0) slopeAdd=baseSL_GR*0.22*slope;
+  else if(slope<0) slopeAdd=baseSL_GR*(-0.07)*Math.abs(slope);
   const finalGR=Math.max(0,wetGR+slopeAdd);
   const finalOB=Math.max(0,wetOB+slopeAdd);
 
@@ -391,18 +372,10 @@ function update(){
   det+=`<div class="det-line" style="padding-left:28px;">50 ft obstacle = <span class="det-res">${n0(baseOB)} m</span></div>`;
   det+=`</div>`;
 
-  if(mass!==600){
-    det+=`<div class="det-phase"><div class="det-head">2. Mass correction (${mass} kg)</div>`;
-    det+=`<div class="det-line">Factor = (${mass} / 600)&sup2; = <strong>${massFactor.toFixed(3)}</strong> &nbsp; <em style="font-size:10px;">(approximation, not from POH)</em></div>`;
-    det+=`<div class="det-line" style="padding-left:28px;">Ground roll = ${n0(baseGR)} &times; ${massFactor.toFixed(3)} = <span class="det-res">${n0(massGR)} m</span></div>`;
-    det+=`<div class="det-line" style="padding-left:28px;">50 ft obstacle = ${n0(baseOB)} &times; ${massFactor.toFixed(3)} = <span class="det-res">${n0(massOB)} m</span></div>`;
-    det+=`</div>`;
-  }
-
   if(wind!==0){
-    const stepNum=mass!==600?3:2;
-    const prevGR=mass!==600?massGR:baseGR;
-    const prevOB=mass!==600?massOB:baseOB;
+    const stepNum=2;
+    const prevGR=baseGR;
+    const prevOB=baseOB;
     det+=`<div class="det-phase"><div class="det-head">${stepNum}. Wind correction (${wind>0?wind+' kts headwind':Math.abs(wind)+' kts tailwind'})</div>`;
     if(wind>0){
       det+=`<div class="det-line">Headwind: subtract 10% per 12 kts &rarr; factor = 1 &minus; (${wind}/12 &times; 0.10) = <strong>${windFactor.toFixed(3)}</strong></div>`;
@@ -417,7 +390,6 @@ function update(){
 
   if(surface==='grass'&&condition==='wet'){
     let stepNum=2;
-    if(mass!==600) stepNum++;
     if(wind!==0) stepNum++;
     det+=`<div class="det-phase"><div class="det-head">${stepNum}. Wet grass correction</div>`;
     det+=`<div class="det-line">Add 18% to ground roll &rarr; factor = <strong>1.18</strong></div>`;
@@ -428,14 +400,13 @@ function update(){
 
   if(slope!==0){
     let stepNum=2;
-    if(mass!==600) stepNum++;
     if(wind!==0) stepNum++;
     if(surface==='grass'&&condition==='wet') stepNum++;
     const dir=slope>0?'upslope':'downslope';
     const pct=slope>0?22:7;
     det+=`<div class="det-phase"><div class="det-head">${stepNum}. Runway slope (${Math.abs(slope)}% ${dir})</div>`;
-    det+=`<div class="det-line">SL ground roll (${surface}) at ISA ${isaDev>=0?'+':''}${n1(isaDev)}°C = ${n0(massSL_GR)} m</div>`;
-    det+=`<div class="det-line">${slope>0?'Add':'Subtract'} ${pct}% of SL ground roll per 1% = ${n0(massSL_GR)} &times; ${(pct/100).toFixed(2)} &times; ${Math.abs(slope)} = <strong>${slope>0?'+':'&minus;'}${n0(Math.abs(slopeAdd))} m</strong></div>`;
+    det+=`<div class="det-line">SL ground roll (${surface}) at ISA ${isaDev>=0?'+':''}${n1(isaDev)}°C = ${n0(baseSL_GR)} m</div>`;
+    det+=`<div class="det-line">${slope>0?'Add':'Subtract'} ${pct}% of SL ground roll per 1% = ${n0(baseSL_GR)} &times; ${(pct/100).toFixed(2)} &times; ${Math.abs(slope)} = <strong>${slope>0?'+':'&minus;'}${n0(Math.abs(slopeAdd))} m</strong></div>`;
     det+=`<div class="det-line" style="padding-left:28px;">Ground roll = ${n0(wetGR)} ${slope>0?'+':'&minus;'} ${n0(Math.abs(slopeAdd))} = <span class="det-res">${n0(finalGR)} m</span></div>`;
     det+=`<div class="det-line" style="padding-left:28px;">50 ft obstacle = ${n0(wetOB)} ${slope>0?'+':'&minus;'} ${n0(Math.abs(slopeAdd))} = <span class="det-res">${n0(finalOB)} m</span></div>`;
     det+=`</div>`;
@@ -457,16 +428,12 @@ function update(){
   const ldBaseGR=interp2D(ldGrTable,ld.altitude_ft,ld.isa_dev_c,alt,isaDev);
   const ldBaseOB=interp2D(ldObTable,ld.altitude_ft,ld.isa_dev_c,alt,isaDev);
 
-  // 2. Mass correction
-  const ldMassGR=ldBaseGR*massFactor;
-  const ldMassOB=ldBaseOB*massFactor;
-
-  // 3. Wind correction (13 kts per 10% for landing headwind)
+  // 2. Wind correction (13 kts per 10% for landing headwind)
   let ldWindFactor=1;
   if(wind>0) ldWindFactor=1-(wind/13)*0.10;
   else if(wind<0){const tw=Math.min(Math.abs(wind),10);ldWindFactor=1+(tw/2)*0.10;}
-  const ldWindGR=ldMassGR*ldWindFactor;
-  const ldWindOB=ldMassOB*ldWindFactor;
+  const ldWindGR=ldBaseGR*ldWindFactor;
+  const ldWindOB=ldBaseOB*ldWindFactor;
 
   // 4. Wet grass (30% for landing)
   let ldWetFactor=1;
@@ -477,11 +444,9 @@ function update(){
   // 5. Slope (reversed: downslope=longer, upslope=shorter for landing)
   let ldSlopeAdd=0;
   if(slope<0){
-    // Downslope (landing direction) = longer landing
-    ldSlopeAdd=ldMassGR*0.27*Math.abs(slope);
+    ldSlopeAdd=ldBaseGR*0.27*Math.abs(slope);
   }else if(slope>0){
-    // Upslope = shorter landing
-    ldSlopeAdd=-ldMassGR*0.09*slope;
+    ldSlopeAdd=-ldBaseGR*0.09*slope;
   }
   const ldFinalGR=Math.max(0,ldWetGR+ldSlopeAdd);
   const ldFinalOB=Math.max(0,ldWetOB+ldSlopeAdd);
@@ -501,17 +466,10 @@ function update(){
   ldet+=`<div class="det-line" style="padding-left:28px;">Ground roll = <span class="det-res">${n0(ldBaseGR)} m</span></div>`;
   ldet+=`<div class="det-line" style="padding-left:28px;">50 ft obstacle = <span class="det-res">${n0(ldBaseOB)} m</span></div></div>`;
 
-  if(mass!==600){
-    ldet+=`<div class="det-phase"><div class="det-head">2. Mass correction (${mass} kg)</div>`;
-    ldet+=`<div class="det-line">Factor = (${mass} / 600)&sup2; = <strong>${massFactor.toFixed(3)}</strong> &nbsp; <em style="font-size:10px;">(approximation)</em></div>`;
-    ldet+=`<div class="det-line" style="padding-left:28px;">Ground roll = ${n0(ldBaseGR)} &times; ${massFactor.toFixed(3)} = <span class="det-res">${n0(ldMassGR)} m</span></div>`;
-    ldet+=`<div class="det-line" style="padding-left:28px;">50 ft obstacle = ${n0(ldBaseOB)} &times; ${massFactor.toFixed(3)} = <span class="det-res">${n0(ldMassOB)} m</span></div></div>`;
-  }
-
   if(wind!==0){
-    let sn=mass!==600?3:2;
-    const prevGR=mass!==600?ldMassGR:ldBaseGR;
-    const prevOB=mass!==600?ldMassOB:ldBaseOB;
+    let sn=2;
+    const prevGR=ldBaseGR;
+    const prevOB=ldBaseOB;
     ldet+=`<div class="det-phase"><div class="det-head">${sn}. Wind correction (${wind>0?wind+' kts headwind':Math.abs(wind)+' kts tailwind'})</div>`;
     if(wind>0) ldet+=`<div class="det-line">Headwind: subtract 10% per 13 kts &rarr; factor = ${ldWindFactor.toFixed(3)}</div>`;
     else ldet+=`<div class="det-line">Tailwind: add 10% per 2 kts &rarr; factor = ${ldWindFactor.toFixed(3)}</div>`;
@@ -520,20 +478,20 @@ function update(){
   }
 
   if(surface==='grass'&&condition==='wet'){
-    let sn=2;if(mass!==600)sn++;if(wind!==0)sn++;
+    let sn=2;if(wind!==0)sn++;
     ldet+=`<div class="det-phase"><div class="det-head">${sn}. Wet grass correction</div>`;
     ldet+=`<div class="det-line">Add 30% to ground roll &rarr; factor = <strong>1.30</strong></div>`;
     ldet+=`<div class="det-line" style="padding-left:28px;">Ground roll = ${n0(ldWindGR)} &times; 1.30 = <span class="det-res">${n0(ldWetGR)} m</span></div></div>`;
   }
 
   if(slope!==0){
-    let sn=2;if(mass!==600)sn++;if(wind!==0)sn++;if(surface==='grass'&&condition==='wet')sn++;
+    let sn=2;if(wind!==0)sn++;if(surface==='grass'&&condition==='wet')sn++;
     const dir=slope>0?'upslope':'downslope';
     ldet+=`<div class="det-phase"><div class="det-head">${sn}. Runway slope (${Math.abs(slope)}% ${dir})</div>`;
     if(slope<0){
-      ldet+=`<div class="det-line">Downslope (landing): add 27% of ground roll per 1% = ${n0(ldMassGR)} &times; 0.27 &times; ${Math.abs(slope)} = <strong>+${n0(Math.abs(ldSlopeAdd))} m</strong></div>`;
+      ldet+=`<div class="det-line">Downslope (landing): add 27% of ground roll per 1% = ${n0(ldBaseGR)} &times; 0.27 &times; ${Math.abs(slope)} = <strong>+${n0(Math.abs(ldSlopeAdd))} m</strong></div>`;
     }else{
-      ldet+=`<div class="det-line">Upslope (landing): subtract 9% of ground roll per 1% = ${n0(ldMassGR)} &times; 0.09 &times; ${slope} = <strong>&minus;${n0(Math.abs(ldSlopeAdd))} m</strong></div>`;
+      ldet+=`<div class="det-line">Upslope (landing): subtract 9% of ground roll per 1% = ${n0(ldBaseGR)} &times; 0.09 &times; ${slope} = <strong>&minus;${n0(Math.abs(ldSlopeAdd))} m</strong></div>`;
     }
     ldet+=`<div class="det-line" style="padding-left:28px;">Ground roll = ${n0(ldWetGR)} ${ldSlopeAdd>=0?'+':'&minus;'} ${n0(Math.abs(ldSlopeAdd))} = <span class="det-res">${n0(ldFinalGR)} m</span></div>`;
     ldet+=`<div class="det-line" style="padding-left:28px;">50 ft obstacle = ${n0(ldWetOB)} ${ldSlopeAdd>=0?'+':'&minus;'} ${n0(Math.abs(ldSlopeAdd))} = <span class="det-res">${n0(ldFinalOB)} m</span></div></div>`;
@@ -599,7 +557,7 @@ async function init(){
   buildDistTables('poh-tables',POH.takeoff,'to');
   buildDistTables('poh-tables-ld',POH.landing,'ld');
 
-  ['alt','oat','mass','wind','slope'].forEach(id=>
+  ['alt','oat','wind','slope'].forEach(id=>
     document.getElementById(id).addEventListener('input',update)
   );
   document.querySelectorAll('input[name="surface"],input[name="condition"]').forEach(r=>
