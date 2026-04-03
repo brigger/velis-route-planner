@@ -109,8 +109,8 @@ hr{border:none;border-top:0.5px solid var(--bd);margin:12px 0;}
       Velis Electro
     </span>
     <a href="index.html" class="nav-tab">Route Planner</a>
-    <a href="velis_performance.html" class="nav-tab active">Performance</a>
     <a href="velis_takeoff.html" class="nav-tab">Takeoff &amp; Landing</a>
+    <a href="velis_performance.html" class="nav-tab active">Performance</a>
   </div>
 </nav>
 
@@ -127,13 +127,10 @@ hr{border:none;border-top:0.5px solid var(--bd);margin:12px 0;}
   </div>
 </div>
 
-<!-- ═══ CONDITIONS ═══ -->
-<div class="card">
-  <h3>Conditions</h3>
-  <div class="sr"><label>Outside air temperature (OAT)</label><input type="range" id="oat" min="-30" max="45" step="1" value="15"><span class="sv" id="oat-v">+15 °C</span></div>
-  <div class="sr"><label>Battery state of health (SOH)</label><input type="range" id="soh" min="0" max="100" step="5" value="80"><span class="sv" id="soh-v">80%</span></div>
-  <div class="sr"><label>Reference altitude (for ROC lookup)</label><input type="range" id="refalt" min="0" max="12000" step="25" value="1525"><span class="sv" id="refalt-v">0 ft</span></div>
-  <div class="info" id="isa-box">ISA temperature at altitude: <strong id="isa-temp">—</strong> &nbsp;·&nbsp; ISA deviation: <strong id="isa-dev">—</strong></div>
+<!-- ═══ CONDITIONS (read from Route Planner via localStorage) ═══ -->
+<div class="info" id="conditions-info" style="margin-bottom:14px;padding:8px 14px;border:0.5px solid var(--bd);border-radius:var(--rad-md);">
+  Using: OAT <strong id="info-oat">+15°C</strong>, SOH <strong id="info-soh">95%</strong>, Alt <strong id="info-alt">1,525 ft</strong> &mdash; set in <a href="index.html" style="color:var(--blue);">Route Planner</a>
+  &nbsp;·&nbsp; ISA temp: <strong id="isa-temp">—</strong> &nbsp;·&nbsp; ISA deviation: <strong id="isa-dev">—</strong>
 </div>
 
 <!-- ═══ SPEEDS ═══ -->
@@ -339,17 +336,17 @@ function buildSOCTable() {
    ══════════════════════════════════════════════════════════════════════ */
 
 function update() {
-  const oat    = +document.getElementById('oat').value;
-  const soh    = +document.getElementById('soh').value;
-  const refalt = +document.getElementById('refalt').value;
+  const oat    = parseFloat(localStorage.getItem('velis_oat') ?? '15');
+  const soh    = parseFloat(localStorage.getItem('velis_soh') ?? '95');
+  const refalt = parseFloat(localStorage.getItem('velis_dep_alt') ?? '1525');
   const vy     = +document.getElementById('vy').value;
   const vglide = +document.getElementById('vglide').value;
   const gr     = +document.getElementById('glide-ratio').value;
 
-  // Display slider values
-  document.getElementById('oat-v').textContent = (oat>=0?'+':'') + oat + ' °C';
-  document.getElementById('soh-v').textContent = soh + '%';
-  document.getElementById('refalt-v').textContent = refalt.toLocaleString() + ' ft';
+  // Display conditions info
+  document.getElementById('info-oat').textContent = (oat>=0?'+':'') + oat + '°C';
+  document.getElementById('info-soh').textContent = soh + '%';
+  document.getElementById('info-alt').textContent = refalt.toLocaleString() + ' ft';
   document.getElementById('soh-disp').textContent = soh + '%';
 
   // ISA
@@ -422,13 +419,13 @@ function update() {
    ══════════════════════════════════════════════════════════════════════ */
 
 function save() {
-  const ids = { velis_oat:'oat', velis_soh:'soh', velis_vy:'vy', velis_vx:'vx', velis_vglide:'vglide', velis_glide_ratio:'glide-ratio' };
+  const ids = { velis_vy:'vy', velis_vx:'vx', velis_vglide:'vglide', velis_glide_ratio:'glide-ratio' };
   Object.entries(ids).forEach(([k,id]) => localStorage.setItem(k, document.getElementById(id).value));
   localStorage.setItem('velis_cruise_kw', selPwr);
 }
 
 function load() {
-  const map = { velis_oat:'oat', velis_soh:'soh', velis_vy:'vy', velis_vx:'vx', velis_vglide:'vglide', velis_glide_ratio:'glide-ratio' };
+  const map = { velis_vy:'vy', velis_vx:'vx', velis_vglide:'vglide', velis_glide_ratio:'glide-ratio' };
   Object.entries(map).forEach(([k,id]) => { const v = localStorage.getItem(k); if (v !== null) document.getElementById(id).value = v; });
   const pw = localStorage.getItem('velis_cruise_kw');
   if (pw !== null) selPwr = +pw;
@@ -445,19 +442,15 @@ async function init(){
   buildPwrTable();
   buildSOCTable();
 
-  ['oat','soh','refalt'].forEach(id =>
-    document.getElementById(id).addEventListener('input', () => { save(); update(); })
-  );
   ['vy','vx','vglide','glide-ratio'].forEach(id =>
     document.getElementById(id).addEventListener('input', () => { save(); update(); })
   );
+  // Listen for localStorage changes from Route Planner (e.g. OAT, SOH, altitude)
+  window.addEventListener('storage', () => { update(); });
 
 // ── Save / Load performance settings as JSON file ──
 function getPerfState(){
   return {
-    oat:document.getElementById('oat').value,
-    soh:document.getElementById('soh').value,
-    refalt:document.getElementById('refalt').value,
     vy:document.getElementById('vy').value,
     vx:document.getElementById('vx').value,
     vglide:document.getElementById('vglide').value,
@@ -466,9 +459,6 @@ function getPerfState(){
   };
 }
 function applyPerfState(state){
-  if(state.oat!==undefined) document.getElementById('oat').value=state.oat;
-  if(state.soh!==undefined) document.getElementById('soh').value=state.soh;
-  if(state.refalt!==undefined) document.getElementById('refalt').value=state.refalt;
   if(state.vy!==undefined) document.getElementById('vy').value=state.vy;
   if(state.vx!==undefined) document.getElementById('vx').value=state.vx;
   if(state.vglide!==undefined) document.getElementById('vglide').value=state.vglide;
