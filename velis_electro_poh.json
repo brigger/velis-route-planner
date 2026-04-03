@@ -85,5 +85,49 @@
       "downslope_sub_pct_of_sl_gr_per_1pct": 7
     },
     "caution": "MTOP must be limited to 90 seconds"
+  },
+  "landing": {
+    "description": "Landing distance, Flaps +2, Power CUT OFF, 600 kg, dry runway, brakes 1s after touchdown",
+    "conditions": {
+      "flaps": "+2",
+      "power": "CUT OFF",
+      "mass_kg": 600,
+      "speed_at_50ft_kias": 60,
+      "brakes": "applied 1s after touch down"
+    },
+    "altitude_ft": [0, 4000, 8000, 12000],
+    "isa_dev_c": [-15, -5, 0, 5, 15],
+    "asphalt_ground_roll_m": [
+      [170, 180, 183, 186, 196],
+      [182, 199, 206, 213, 232],
+      [205, 225, 233, 241, 263],
+      [232, 255, 264, 274, 299]
+    ],
+    "asphalt_50ft_m": [
+      [516, 526, 537, 553, 569],
+      [557, 568, 580, 597, 615],
+      [598, 610, 623, 642, 660],
+      [639, 653, 666, 686, 706]
+    ],
+    "grass_ground_roll_m": [
+      [180, 190, 193, 196, 207],
+      [192, 210, 217, 225, 245],
+      [216, 237, 246, 254, 277],
+      [245, 268, 278, 289, 315]
+    ],
+    "grass_50ft_m": [
+      [552, 564, 575, 592, 610],
+      [596, 609, 621, 640, 658],
+      [640, 654, 667, 687, 707],
+      [684, 699, 713, 734, 756]
+    ],
+    "corrections": {
+      "headwind_subtract_pct_per_13kts": 10,
+      "tailwind_add_pct_per_2kts": 10,
+      "tailwind_max_kts": 10,
+      "wet_grass_add_ground_roll_pct": 30,
+      "downslope_add_pct_of_gr_per_1pct": 27,
+      "upslope_sub_pct_of_gr_per_1pct": 9
+    }
   }
 }
