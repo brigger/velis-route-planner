@@ -99,15 +99,46 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   <div class="caution">MTOP must be limited to 90 seconds (see POH Section 2 — Limitations).</div>
 </div>
 
-<!-- POH TABLE -->
+<!-- LANDING RESULT (right after takeoff) -->
+<div class="card">
+  <h3>Landing distance</h3>
+  <div style="overflow-x:auto;">
+    <svg id="svg-ld" viewBox="0 0 700 160" width="100%" style="display:block;min-width:320px;"></svg>
+  </div>
+  <div class="result-grid">
+    <div class="res-box" style="border-left-color:#534AB7;"><div class="res-lbl">Ground roll</div><div class="res-val" id="rl-gr">—</div><div class="res-unit">metres</div></div>
+    <div class="res-box" style="border-left-color:#EF9F27;"><div class="res-lbl">Distance after clearing 50 ft obstacle</div><div class="res-val" id="rl-50">—</div><div class="res-unit">metres</div></div>
+  </div>
+  <div class="info">POH reference: Flaps +2, Power CUT OFF, 60 KIAS at 50 ft, brakes 1s after touchdown</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- REFERENCE DATA (tables, corrections, detailed calculations)   -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+
+<div style="border-top:2px solid var(--bd);margin:24px 0 16px;"></div>
+
+<!-- TAKEOFF DETAILED CALCULATION -->
+<div class="card">
+  <h3>Takeoff — detailed calculation</h3>
+  <div id="det-calc"></div>
+</div>
+
+<!-- LANDING DETAILED CALCULATION -->
+<div class="card">
+  <h3>Landing — detailed calculation</h3>
+  <div id="det-calc-ld"></div>
+</div>
+
+<!-- TAKEOFF POH TABLE -->
 <div class="card">
   <h3>POH takeoff distance tables — 600 kg, dry runway</h3>
   <div id="poh-tables"></div>
 </div>
 
-<!-- CORRECTION FACTORS -->
+<!-- TAKEOFF CORRECTION FACTORS -->
 <div class="card">
-  <h3>Correction factors (from POH)</h3>
+  <h3>Takeoff correction factors (from POH)</h3>
   <table class="ptable" style="max-width:500px;">
     <thead><tr><th>Factor</th><th>Correction</th></tr></thead>
     <tbody>
@@ -119,36 +150,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       <tr><td style="text-align:left;">Mass &ne; 600 kg</td><td>Approximation: &times; (mass / 600)&sup2; — <em>not from POH</em></td></tr>
     </tbody>
   </table>
-</div>
-
-<!-- DETAILED CALCULATION -->
-<div class="card">
-  <h3>Detailed calculation</h3>
-  <div id="det-calc"></div>
-</div>
-
-<div class="card note">
-  <strong style="color:var(--tx);">Source — Pipistrel Velis Electro POH, Section 5.6</strong><br>
-  Take off performance data extrapolated from flight test results. Values are estimations of actual take off roll and total distance to clear a 50 ft obstacle (ground roll plus climb distance).
-</div>
-
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<!-- LANDING DISTANCE -->
-<!-- ═══════════════════════════════════════════════════════════════ -->
-
-<div style="border-top:2px solid var(--bd);margin:24px 0 16px;"></div>
-
-<!-- LANDING RESULT -->
-<div class="card">
-  <h3>Landing distance</h3>
-  <div style="overflow-x:auto;">
-    <svg id="svg-ld" viewBox="0 0 700 160" width="100%" style="display:block;min-width:320px;"></svg>
+  <div class="card note" style="margin-top:8px;padding:6px 10px;">
+    <strong style="color:var(--tx);">Source — POH Section 5.6.</strong> MTOP must be limited to 90 seconds.
   </div>
-  <div class="result-grid">
-    <div class="res-box" style="border-left-color:#534AB7;"><div class="res-lbl">Ground roll</div><div class="res-val" id="rl-gr">—</div><div class="res-unit">metres</div></div>
-    <div class="res-box" style="border-left-color:#EF9F27;"><div class="res-lbl">Distance after clearing 50 ft obstacle</div><div class="res-val" id="rl-50">—</div><div class="res-unit">metres</div></div>
-  </div>
-  <div class="info">POH reference: Flaps +2, Power CUT OFF, 60 KIAS at 50 ft, brakes 1s after touchdown</div>
 </div>
 
 <!-- LANDING POH TABLE -->
@@ -172,17 +176,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     </tbody>
   </table>
   <div class="caution" style="margin-top:8px;">Slope corrections should be used with caution — published slope is usually the net slope from one end to the other. Many runways have portions at greater or lesser slopes.</div>
-</div>
-
-<!-- LANDING DETAILED CALCULATION -->
-<div class="card">
-  <h3>Landing — detailed calculation</h3>
-  <div id="det-calc-ld"></div>
-</div>
-
-<div class="card note">
-  <strong style="color:var(--tx);">Source — Pipistrel Velis Electro POH, Section 5.10</strong><br>
-  Landing performance data extrapolated from flight test results. Values are estimations of actual landing roll and total landing distance after clearing a 50 ft obstacle (ground roll included).
+  <div class="card note" style="margin-top:8px;padding:6px 10px;">
+    <strong style="color:var(--tx);">Source — POH Section 5.10.</strong> Brakes applied 1s after touch down.
+  </div>
 </div>
 
 </div></div>
