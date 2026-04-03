@@ -3,27 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Velis Electro — 3-Leg Route Planner</title>
+<title>Velis Electro — Route Planner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --font: 'DM Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    --bg-page: #f0ede8;
-    --bg-card: #ffffff;
-    --bg-sec: #f5f4f1;
-    --bd: #e2ddd6;
-    --bd2: #ccc8c0;
-    --tx: #1a1a1a;
-    --tx2: #6b6660;
-    --rad-lg: 14px;
-    --rad-md: 8px;
-    --blue: #185FA5;
-  }
+  :root{--font:'DM Sans',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;--bg-page:#f0ede8;--bg-card:#fff;--bg-sec:#f5f4f1;--bd:#e2ddd6;--bd2:#ccc8c0;--tx:#1a1a1a;--tx2:#6b6660;--rad-lg:14px;--rad-md:8px;--blue:#185FA5;}
   *,*::before,*::after{box-sizing:border-box;}
   body{margin:0;background:var(--bg-page);font-family:var(--font);color:var(--tx);padding:0 0 48px;}
   .page-wrap{max-width:860px;margin:0 auto;padding:0 16px;}
-
   .nav{background:var(--bg-card);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:10;backdrop-filter:blur(12px);background:rgba(255,255,255,0.92);}
   .nav-inner{max-width:860px;margin:0 auto;padding:0 16px;display:flex;align-items:stretch;}
   .nav-brand{padding:11px 18px 11px 0;font-size:13px;font-weight:700;color:var(--tx);border-right:1px solid var(--bd);margin-right:4px;letter-spacing:-0.02em;display:flex;align-items:center;gap:6px;}
@@ -31,23 +18,17 @@
   .nav-tab{padding:11px 18px;font-size:12.5px;font-weight:500;color:var(--tx2);text-decoration:none;border-bottom:2px solid transparent;transition:all 0.15s;}
   .nav-tab:hover{color:var(--tx);}
   .nav-tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600;}
-
-  .perf-banner{background:var(--bg-sec);border:0.5px solid var(--bd);border-radius:var(--rad-md);padding:6px 12px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px;}
-  .perf-banner .tags{display:flex;gap:6px;flex-wrap:wrap;}
+  .perf-banner{background:var(--bg-sec);border:0.5px solid var(--bd);border-radius:var(--rad-md);padding:6px 12px;margin-bottom:14px;display:flex;align-items:center;flex-wrap:wrap;gap:6px;}
   .perf-tag{font-size:10px;font-weight:600;color:var(--tx2);background:var(--bg-card);border:0.5px solid var(--bd);border-radius:12px;padding:2px 8px;}
-  .perf-link{font-size:10px;font-weight:600;color:var(--blue);text-decoration:none;}
-  .perf-link:hover{text-decoration:underline;}
-
   .wrap{padding:16px 0;}
   .card{background:var(--bg-card);border:0.5px solid var(--bd);border-radius:var(--rad-lg);padding:1rem 1.25rem;margin-bottom:14px;}
   h3{font-size:15px;font-weight:700;margin:0 0 12px;color:var(--tx);letter-spacing:-0.02em;}
   h4{font-size:10.5px;font-weight:600;color:var(--tx2);margin:0 0 8px;text-transform:uppercase;letter-spacing:0.06em;}
-  .leg-badge{font-size:11px;font-weight:500;padding:2px 10px;border-radius:20px;display:inline-block;margin-bottom:10px;}
+  .leg-badge{font-size:11px;font-weight:500;padding:2px 10px;border-radius:20px;display:inline-block;}
   .sr{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
   .sr label{font-size:12px;color:var(--tx2);min-width:200px;font-weight:500;}
   .sv{font-size:12px;font-weight:600;color:var(--tx);min-width:72px;text-align:right;}
   .g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px;}
-  .g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:10px;}
   .met{background:var(--bg-sec);border-radius:var(--rad-md);padding:9px 11px;}
   .met-l{font-size:10px;color:var(--tx2);margin:0 0 2px;}
   .met-v{font-size:18px;font-weight:600;margin:0;color:var(--tx);}
@@ -66,7 +47,6 @@
   .msg-ok{background:#EAF3DE;color:#27500A;border:0.5px solid #C0DD97;}
   .msg-warn{background:#FAEEDA;color:#633806;border:0.5px solid #FAC775;}
   .msg-err{background:#FCEBEB;color:#791F1F;border:0.5px solid #F7C1C1;}
-  hr{border:none;border-top:0.5px solid var(--bd);margin:10px 0;}
   .note{font-size:10px;color:var(--tx2);line-height:1.6;}
   .soc-strip{display:flex;align-items:stretch;gap:0;margin:10px 0 4px;}
   .soc-wp{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
@@ -76,47 +56,36 @@
   .soc-kwh{font-size:9px;color:var(--tx2);}
   .soc-label{font-size:9px;color:var(--tx2);text-align:center;line-height:1.2;max-width:52px;}
   .chain-note{font-size:12px;color:var(--tx2);background:var(--bg-sec);border-radius:var(--rad-md);padding:5px 10px;margin-bottom:8px;}
-
-  /* Detail breakdown */
   .det-phase{margin-bottom:10px;}
   .det-head{font-size:12px;font-weight:600;color:var(--tx);margin-bottom:1px;}
   .det-line{font-size:11px;color:var(--tx2);padding-left:16px;line-height:1.7;}
   .det-res{font-weight:700;color:var(--tx);text-decoration:underline;}
   .det-sep{border:none;border-top:1px solid var(--bd);margin:10px 0 8px;}
   .det-total{font-size:12px;margin-bottom:3px;display:flex;justify-content:space-between;}
-  .det-total strong{color:var(--tx);}
-
-  .card-disabled #leg2-body{opacity:0.35;pointer-events:none;}
-
+  .add-btn{display:block;margin:0 auto 14px;padding:6px 18px;font-size:12px;font-weight:600;font-family:var(--font);color:var(--blue);background:var(--bg-card);border:1.5px dashed var(--blue);border-radius:var(--rad-md);cursor:pointer;opacity:0.7;transition:opacity 0.15s;}
+  .add-btn:hover{opacity:1;}
+  .del-btn{font-size:14px;font-weight:700;color:var(--tx2);background:none;border:1px solid var(--bd);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;line-height:1;transition:all 0.15s;}
+  .del-btn:hover{color:#791F1F;border-color:#791F1F;background:#FCEBEB;}
   input[type=range]{-webkit-appearance:none;height:4px;border-radius:2px;background:#ddd;outline:none;flex:1;}
   input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#fff;border:1.5px solid #ccc;box-shadow:0 1px 3px rgba(0,0,0,0.15);cursor:pointer;}
   input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#fff;border:1.5px solid #ccc;box-shadow:0 1px 3px rgba(0,0,0,0.15);cursor:pointer;}
-  @media(max-width:540px){.g4{grid-template-columns:1fr 1fr;}.g3{grid-template-columns:1fr;}.sr label{min-width:130px;}}
+  @media(max-width:540px){.g4{grid-template-columns:1fr 1fr;}.sr label{min-width:130px;}}
 </style>
 </head>
 <body>
 
-<nav class="nav">
-  <div class="nav-inner">
-    <span class="nav-brand">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-      Velis Electro
-    </span>
-    <a href="index.html" class="nav-tab active">Route Planner</a>
-    <a href="velis_takeoff.html" class="nav-tab">Takeoff &amp; Landing</a>
-    <a href="velis_performance.html" class="nav-tab">Performance</a>
-  </div>
-</nav>
+<nav class="nav"><div class="nav-inner">
+  <span class="nav-brand"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>Velis Electro</span>
+  <a href="index.html" class="nav-tab active">Route Planner</a>
+  <a href="velis_takeoff.html" class="nav-tab">Takeoff &amp; Landing</a>
+  <a href="velis_performance.html" class="nav-tab">Performance</a>
+</div></nav>
 
 <div class="page-wrap"><div class="wrap">
-
   <div style="font-size:10px;color:var(--tx2);text-align:center;margin-bottom:8px;font-style:italic;">Corrections for wind components not (yet) included in calculations</div>
+  <div class="perf-banner"><div class="tags" id="perf-tags"></div></div>
 
-  <div class="perf-banner">
-    <div class="tags" id="perf-tags"></div>
-  </div>
-
-  <!-- SAVED ROUTES -->
+  <!-- SAVE/LOAD ROUTES -->
   <div class="card" style="padding:10px 14px;">
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
       <input id="route-name" type="text" placeholder="Route name" style="flex:1;min-width:160px;font-size:12px;font-family:var(--font);padding:5px 8px;border:1px solid var(--bd);border-radius:6px;background:var(--bg-card);color:var(--tx);outline:none;">
@@ -130,42 +99,31 @@
 
   <!-- BATTERY -->
   <div class="card">
-    <h3>Battery condition</h3>
+    <h3>Battery &amp; conditions</h3>
     <div class="sr"><label>State of health (SOH)</label><input type="range" id="soh" min="60" max="100" step="1" value="95"><span class="sv" id="soh-v">95%</span></div>
     <div class="sr"><label>State of charge at departure (SOC)</label><input type="range" id="soc0" min="50" max="100" step="1" value="100"><span class="sv" id="soc0-v">100%</span></div>
-    <div class="sr"><label>Minimum reserve SOC</label><input type="range" id="res" min="10" max="40" step="1" value="30"><span class="sv" id="res-v">20%</span></div>
+    <div class="sr"><label>Minimum reserve SOC</label><input type="range" id="res" min="10" max="40" step="1" value="30"><span class="sv" id="res-v">30%</span></div>
     <div class="sr"><label>Outside air temperature (OAT)</label><input type="range" id="oat" min="-30" max="45" step="1" value="15"><span class="sv" id="oat-v">+15 °C</span></div>
   </div>
 
-  <!-- LEG 1 -->
+  <!-- DEPARTURE -->
   <div class="card">
-    <div class="leg-badge" style="background:#E6F1FB;color:#0C447C;">Leg 1 — Departure to Leg 1</div>
-    <div class="sr"><label>Departure altitude (ft AMSL)</label><input type="range" id="dep" min="0" max="8000" step="25" value="1525"><span class="sv" id="dep-v">1,525 ft</span></div>
-    <div class="sr"><label>Leg 1 altitude (ft AMSL)</label><input type="range" id="p1alt" min="500" max="15000" step="100" value="5200"><span class="sv" id="p1alt-v">5,200 ft</span></div>
-    <input type="hidden" id="p1clr" value="0">
-    <div class="sr"><label>Distance to leg 1 (nm)</label><input type="range" id="d1" min="2" max="120" step="1" value="27"><span class="sv" id="d1-v">27 nm</span></div>
+    <div class="leg-badge" style="background:#E6F1FB;color:#0C447C;margin-bottom:10px;">Departure</div>
+    <div class="sr"><label>Departure altitude (ft AMSL)</label><input type="range" id="dep-alt" min="0" max="8000" step="25" value="1525"><span class="sv" id="dep-alt-v">1,525 ft</span></div>
   </div>
 
-  <!-- LEG 2 -->
-  <div class="card" id="leg2-card">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
-      <div class="leg-badge" style="background:#EEEDFE;color:#3C3489;margin-bottom:0;">Leg 2 — Leg 1 to Leg 2</div>
-      <label style="font-size:11px;color:var(--tx2);display:flex;align-items:center;gap:4px;cursor:pointer;user-select:none;"><input type="checkbox" id="leg2-on" checked style="accent-color:#534AB7;"> Enabled</label>
-    </div>
-    <div id="leg2-body">
-    <div class="chain-note" id="chain1-note">Starting altitude: Leg 1 altitude (set above)</div>
-    <div class="sr"><label>Leg 2 altitude (ft AMSL)</label><input type="range" id="p2alt" min="500" max="15000" step="100" value="3900"><span class="sv" id="p2alt-v">3,900 ft</span></div>
-    <input type="hidden" id="p2clr" value="0">
-    <div class="sr"><label>Leg 2 distance (nm)</label><input type="range" id="d2" min="2" max="120" step="1" value="22"><span class="sv" id="d2-v">22 nm</span></div>
-    </div>
-  </div>
+  <!-- DYNAMIC LEG CARDS -->
+  <div id="legs-container"></div>
 
-  <!-- LEG 3 -->
-  <div class="card" id="leg3-card">
-    <div class="leg-badge" style="background:#EAF3DE;color:#27500A;" id="leg3-badge">Leg 3 — Leg 2 to Destination</div>
-    <div class="chain-note" id="chain2-note">Starting altitude: Leg 2 altitude (set above)</div>
-    <div class="sr"><label>Destination altitude (ft AMSL)</label><input type="range" id="arr" min="0" max="8000" step="25" value="1525"><span class="sv" id="arr-v">1,525 ft</span></div>
-    <div class="sr"><label>Leg 3 distance (nm)</label><input type="range" id="d3" min="2" max="120" step="1" value="22"><span class="sv" id="d3-v">22 nm</span></div>
+  <!-- ADD LEG BUTTON -->
+  <button class="add-btn" id="add-leg-btn">+ Add intermediate leg</button>
+
+  <!-- DESTINATION -->
+  <div class="card" id="dest-card">
+    <div class="leg-badge" style="background:#EAF3DE;color:#27500A;margin-bottom:10px;" id="dest-badge">Destination</div>
+    <div class="chain-note" id="dest-chain">Starting altitude: —</div>
+    <div class="sr"><label>Destination altitude (ft AMSL)</label><input type="range" id="arr-alt" min="0" max="8000" step="25" value="1525"><span class="sv" id="arr-alt-v">1,525 ft</span></div>
+    <div class="sr"><label>Distance to destination (nm)</label><input type="range" id="arr-dist" min="2" max="120" step="1" value="22"><span class="sv" id="arr-dist-v">22 nm</span></div>
     <div style="margin-top:8px;display:flex;align-items:center;gap:16px;">
       <span style="font-size:12px;color:var(--tx2);font-weight:500;">Arrival:</span>
       <label style="font-size:12px;color:var(--tx2);display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="radio" name="approach" value="straight" style="accent-color:#3B6D11;"> Straight-in (5 %SOC)</label>
@@ -173,26 +131,14 @@
     </div>
   </div>
 
-  <!-- PROFILE SVG -->
-  <div class="card">
-    <h3>Flight profile</h3>
-    <div style="overflow-x:auto;">
-      <svg id="svg" viewBox="0 0 760 240" width="100%" style="display:block;min-width:320px;"></svg>
-    </div>
-  </div>
+  <!-- FLIGHT PROFILE -->
+  <div class="card"><h3>Flight profile</h3><div style="overflow-x:auto;"><svg id="svg" viewBox="0 0 760 240" width="100%" style="display:block;min-width:320px;"></svg></div></div>
 
   <!-- SOC WATERFALL -->
-  <div class="card">
-    <h3>SOC at each waypoint</h3>
-    <div class="soc-strip" id="soc-strip"></div>
-    <div style="font-size:10px;color:var(--tx2);margin-top:4px;">% of usable capacity remaining. Amber band = reserve floor.</div>
-  </div>
+  <div class="card"><h3>SOC at each waypoint</h3><div class="soc-strip" id="soc-strip"></div><div style="font-size:10px;color:var(--tx2);margin-top:4px;">% of usable capacity remaining. Amber band = reserve floor.</div></div>
 
   <!-- SEGMENTS -->
-  <div class="card">
-    <h3>Segment breakdown</h3>
-    <div class="g3" id="seg-grid"></div>
-  </div>
+  <div class="card"><h3>Segment breakdown</h3><div id="seg-grid" style="display:grid;gap:8px;"></div></div>
 
   <!-- SUMMARY -->
   <div class="card">
@@ -204,648 +150,482 @@
       <div class="met"><p class="met-l">Total flight time</p><p class="met-v" id="r-time">—</p><span class="met-u">h:mm</span></div>
     </div>
     <h4>Energy distribution</h4>
-    <div class="phase-track">
-      <div class="ps" id="pt-c1" style="background:#185FA5;"></div>
-      <div class="ps" id="pt-o1" style="background:#378ADD;"></div>
-      <div class="ps" id="pt-c2" style="background:#534AB7;"></div>
-      <div class="ps" id="pt-o2" style="background:#7F77DD;"></div>
-      <div class="ps" id="pt-c3" style="background:#3B6D11;"></div>
-      <div class="ps" id="pt-o3" style="background:#639922;"></div>
-      <div class="ps" id="pt-res" style="background:#EF9F27;"></div>
-      <div class="ps" id="pt-over" style="background:#E24B4A;"></div>
-    </div>
-    <div class="legend-row">
-      <div class="li"><div class="ld" style="background:#185FA5;"></div>Climb 1</div>
-      <div class="li"><div class="ld" style="background:#378ADD;"></div>Cruise 1</div>
-      <div class="li"><div class="ld" style="background:#534AB7;"></div>Climb 2</div>
-      <div class="li"><div class="ld" style="background:#7F77DD;"></div>Cruise 2</div>
-      <div class="li"><div class="ld" style="background:#3B6D11;"></div>Desc 3</div>
-      <div class="li"><div class="ld" style="background:#639922;"></div>Cruise 3</div>
-      <div class="li"><div class="ld" style="background:#EF9F27;"></div>Reserve</div>
-      <div class="li"><div class="ld" style="background:#E24B4A;"></div>Deficit</div>
-    </div>
-    <div class="msg msg-ok"  id="msg-ok"></div>
+    <div class="phase-track" id="phase-track"></div>
+    <div class="legend-row" id="legend-row"></div>
+    <div class="msg msg-ok" id="msg-ok"></div>
     <div class="msg msg-warn" id="msg-warn"></div>
     <div class="msg msg-err" id="msg-err"></div>
   </div>
 
-  <!-- DETAILED %SOC CALCULATION -->
-  <div class="card">
-    <h3>Detailed %SOC calculation</h3>
-    <div class="note" style="margin-bottom:10px;" id="det-header">All values from POH tables, interpolated at SOH = <strong>—</strong></div>
-    <div id="det-calc"></div>
-  </div>
+  <!-- DETAILED CALC -->
+  <div class="card"><h3>Detailed %SOC calculation</h3><div class="note" style="margin-bottom:10px;" id="det-header"></div><div id="det-calc"></div></div>
 
   <div class="card note">
     <strong style="color:var(--tx);">Model — Pipistrel Velis Electro</strong><br>
-    Nominal: 24.8 kWh. Climb: 48 kW at V<sub>y</sub>, ROC from POH table (altitude &amp; ISA-deviation interpolated).
-    Cruise: power &amp; speed from POH table. Descent: power-off glide (15:1 ratio at V<sub>glide</sub>, 0 kW).
-    %SOC consumption from POH energy tables, scaled by actual conditions.
-    <a href="velis_performance.html" style="color:var(--blue);">View performance data &rarr;</a>
+    Nominal: 24.8 kWh. Climb: 48 kW at V<sub>y</sub>, ROC from POH table (1,000 ft bands, altitude &amp; ISA interpolated).
+    Cruise: power &amp; speed from POH table. Descent: power-off glide (15:1, 0 kW).
+    %SOC from POH energy tables, scaled by actual conditions.
   </div>
 </div></div>
 
 <script>
-/* ══════════════════════════════════════════════════════════════════════
-   POH DATA — loaded from velis_electro_poh.json
-   ══════════════════════════════════════════════════════════════════════ */
-const NM_FT = 6076.12;
-let NOM, ROC_ALT, ROC_ISA, ROC, PWR, SOH_PTS, SOC_CLIMB_1K, SOC_TAKEOFF, SOC_CRUISE;
+/* ═══ POH DATA ═══ */
+const NM_FT=6076.12, REF_ROC=600;
+let NOM,ROC_ALT,ROC_ISA,ROC_DATA,PWR,SOH_PTS,SOC_CLIMB_1K,SOC_TAKEOFF,SOC_CRUISE;
 
 async function loadPOH(){
-  const resp = await fetch('velis_electro_poh.json');
-  const poh = await resp.json();
-  NOM = poh.battery.nominal_kwh;
-  ROC_ALT = poh.roc.altitude_ft;
-  ROC_ISA = poh.roc.isa_dev_c;
-  ROC = poh.roc.fpm;
-  PWR = poh.cruise_power.settings;
-  SOH_PTS = poh.soc.soh_pct;
-  const phases = poh.soc.phases;
-  SOC_TAKEOFF = phases.find(p=>p.group==='takeoff').vals;
-  SOC_CLIMB_1K = phases.find(p=>p.group==='climb').vals;
-  SOC_CRUISE = {};
-  phases.filter(p=>p.group==='cruise').forEach(p=>{ SOC_CRUISE[p.kw]=p.vals; });
+  const p=await(await fetch('velis_electro_poh.json')).json();
+  NOM=p.battery.nominal_kwh; ROC_ALT=p.roc.altitude_ft; ROC_ISA=p.roc.isa_dev_c; ROC_DATA=p.roc.fpm;
+  PWR=p.cruise_power.settings; SOH_PTS=p.soc.soh_pct;
+  const ph=p.soc.phases;
+  SOC_TAKEOFF=ph.find(x=>x.group==='takeoff').vals;
+  SOC_CLIMB_1K=ph.find(x=>x.group==='climb').vals;
+  SOC_CRUISE={}; ph.filter(x=>x.group==='cruise').forEach(x=>{SOC_CRUISE[x.kw]=x.vals;});
 }
 
-/* ══════════════════════════════════════════════════════════════════════
-   INTERPOLATION
-   ══════════════════════════════════════════════════════════════════════ */
+/* ═══ INTERPOLATION ═══ */
 function lerp(a,b,t){return a+t*(b-a);}
-function bracket(pts,v){
-  const c=Math.max(pts[0],Math.min(pts[pts.length-1],v));
-  for(let i=0;i<pts.length-1;i++) if(c<=pts[i+1]) return {i,t:(c-pts[i])/(pts[i+1]-pts[i])};
-  return {i:pts.length-2,t:1};
-}
-function interpROC(alt,isaDev){
-  const a=bracket(ROC_ALT,alt),d=bracket(ROC_ISA,isaDev);
-  return lerp(lerp(ROC[a.i][d.i],ROC[a.i][d.i+1],d.t),lerp(ROC[a.i+1][d.i],ROC[a.i+1][d.i+1],d.t),a.t);
-}
-function interpSOH(vals,soh){
-  soh=Math.max(0,Math.min(100,soh));
-  for(let i=0;i<SOH_PTS.length-1;i++) if(soh>=SOH_PTS[i+1]){
-    return lerp(vals[i],vals[i+1],(SOH_PTS[i]-soh)/(SOH_PTS[i]-SOH_PTS[i+1]));
-  }
-  return vals[vals.length-1];
-}
-function interpCruiseKts(kw){
-  kw=Math.max(PWR[0].kw,Math.min(PWR[PWR.length-1].kw,kw));
-  for(let i=0;i<PWR.length-1;i++) if(kw<=PWR[i+1].kw){
-    return lerp(PWR[i].kias,PWR[i+1].kias,(kw-PWR[i].kw)/(PWR[i+1].kw-PWR[i].kw));
-  }
-  return PWR[PWR.length-1].kias;
-}
-function socCruise10min(kw,soh){
-  const pws=Object.keys(SOC_CRUISE).map(Number).sort((a,b)=>a-b);
-  kw=Math.max(pws[0],Math.min(pws[pws.length-1],kw));
-  for(let i=0;i<pws.length-1;i++) if(kw<=pws[i+1]){
-    const t=(kw-pws[i])/(pws[i+1]-pws[i]);
-    return lerp(interpSOH(SOC_CRUISE[pws[i]],soh),interpSOH(SOC_CRUISE[pws[i+1]],soh),t);
-  }
-  return interpSOH(SOC_CRUISE[pws[pws.length-1]],soh);
-}
-// ISA deviation is constant with altitude (standard lapse rate assumed).
-// Computed once at the surface where OAT is measured.
-function getIsaDev(oat,surfaceAlt){return oat-(15-2*surfaceAlt/1000);}
+function bracket(pts,v){const c=Math.max(pts[0],Math.min(pts[pts.length-1],v));for(let i=0;i<pts.length-1;i++)if(c<=pts[i+1])return{i,t:(c-pts[i])/(pts[i+1]-pts[i])};return{i:pts.length-2,t:1};}
+function interpROC(a,d){const A=bracket(ROC_ALT,a),D=bracket(ROC_ISA,d);return lerp(lerp(ROC_DATA[A.i][D.i],ROC_DATA[A.i][D.i+1],D.t),lerp(ROC_DATA[A.i+1][D.i],ROC_DATA[A.i+1][D.i+1],D.t),A.t);}
+function interpSOH(v,s){s=Math.max(0,Math.min(100,s));for(let i=0;i<SOH_PTS.length-1;i++)if(s>=SOH_PTS[i+1])return lerp(v[i],v[i+1],(SOH_PTS[i]-s)/(SOH_PTS[i]-SOH_PTS[i+1]));return v[v.length-1];}
+function interpCruiseKts(kw){kw=Math.max(PWR[0].kw,Math.min(PWR[PWR.length-1].kw,kw));for(let i=0;i<PWR.length-1;i++)if(kw<=PWR[i+1].kw)return lerp(PWR[i].kias,PWR[i+1].kias,(kw-PWR[i].kw)/(PWR[i+1].kw-PWR[i].kw));return PWR[PWR.length-1].kias;}
+function socCruise10min(kw,s){const ps=Object.keys(SOC_CRUISE).map(Number).sort((a,b)=>a-b);kw=Math.max(ps[0],Math.min(ps[ps.length-1],kw));for(let i=0;i<ps.length-1;i++)if(kw<=ps[i+1]){const t=(kw-ps[i])/(ps[i+1]-ps[i]);return lerp(interpSOH(SOC_CRUISE[ps[i]],s),interpSOH(SOC_CRUISE[ps[i+1]],s),t);}return interpSOH(SOC_CRUISE[ps[ps.length-1]],s);}
+function getIsaDev(oat,sAlt){return oat-(15-2*sAlt/1000);}
 
-/* ══════════════════════════════════════════════════════════════════════
-   PHASE CALCS  (distances in nm, speeds in kts, altitude in ft)
-   ══════════════════════════════════════════════════════════════════════ */
-const REF_ROC = 600; // ft/min (100 sec per 1000 ft reference)
+/* ═══ PHASE CALCULATIONS ═══ */
+function calcClimb(from,to,oat,sohPct,vyKts,surfAlt){
+  if(to<=from)return{min:0,soc:0,nm:0,delta:0,bands:[],isaDev:0,refSoc:0};
+  const delta=to-from,refSoc=interpSOH(SOC_CLIMB_1K,sohPct),isaDev=getIsaDev(oat,surfAlt);
+  let alt=from,tMin=0,tSoc=0,tNm=0;const bands=[];
+  while(alt<to){const top=Math.min(alt+1000,to),bd=top-alt,mid=(alt+top)/2,roc=interpROC(mid,isaDev),mn=bd/roc,nm=vyKts*(mn/60),sc=(bd/1000)*refSoc*(REF_ROC/roc);
+    bands.push({from:alt,to:top,delta:bd,roc:Math.round(roc),min:mn,nm,soc:sc});tMin+=mn;tSoc+=sc;tNm+=nm;alt=top;}
+  return{min:tMin,soc:tSoc,nm:tNm,delta,bands,isaDev,refSoc};
+}
+function calcDescent(from,to,gr,vKts){if(from<=to)return{min:0,soc:0,nm:0,delta:0};const d=from-to,nm=(d*gr)/NM_FT,mn=(nm/vKts)*60;return{min:mn,soc:0,nm,delta:d};}
+function calcCruise(dist,kw,kts,soh){if(dist<=0)return{min:0,soc:0,soc10:0};const mn=(dist/kts)*60,s10=socCruise10min(Math.min(kw,35),soh);return{min:mn,soc:(mn/10)*s10,soc10:s10};}
 
-function calcClimb(from,to,oat,sohPct,vyKts,surfaceAlt){
-  if(to<=from) return {min:0,soc:0,nm:0,delta:0,bands:[],isaDev:0};
-  const delta=to-from;
-  const refSoc=interpSOH(SOC_CLIMB_1K,sohPct);
-  const isaDev=getIsaDev(oat,surfaceAlt);
-  const BAND=1000;
-  let alt=from, totalMin=0, totalSoc=0, totalNm=0;
-  const bands=[];
-  while(alt<to){
-    const top=Math.min(alt+BAND,to);
-    const bandDelta=top-alt;
-    const mid=(alt+top)/2;
-    const roc=interpROC(mid,isaDev);
-    const min=bandDelta/roc;
-    const nm=vyKts*(min/60);
-    const soc=(bandDelta/1000)*refSoc*(REF_ROC/roc);
-    bands.push({from:alt,to:top,delta:bandDelta,mid,roc:Math.round(roc),min,nm,soc});
-    totalMin+=min; totalSoc+=soc; totalNm+=nm;
-    alt=top;
-  }
-  return {min:totalMin,soc:totalSoc,nm:totalNm,delta,bands,refSoc,isaDev};
-}
-function calcDescent(from,to,glideR,vglideKts){
-  if(from<=to) return {min:0,soc:0,nm:0,delta:0};
-  const delta=from-to;
-  const nm=(delta*glideR)/NM_FT;
-  const min=(nm/vglideKts)*60;
-  return {min,soc:0,nm,delta};
-}
-function calcCruise(distNm,cruiseKw,cruiseKts,sohPct){
-  if(distNm<=0) return {min:0,soc:0,soc10:0};
-  const min=(distNm/cruiseKts)*60;
-  const soc10=socCruise10min(Math.min(cruiseKw,35),sohPct);
-  const soc=(min/10)*soc10;
-  return {min,soc,soc10};
-}
-
-function renderClimbBands(clb,refSocVal){
-  const isaDev=clb.isaDev;
-  let h=`<div class="det-line" style="padding-left:28px;font-size:10px;color:var(--tx2);">ISA deviation: ${isaDev>=0?'+':''}${isaDev.toFixed(1)}°C (constant with altitude)</div>`;
-  clb.bands.forEach(b=>{
-    h+=`<div class="det-line" style="padding-left:28px;font-size:10px;">${b.from.toLocaleString()}→${b.to.toLocaleString()} ft: ROC=${b.roc} ft/min · ${n1(b.min)} min · ${n1(b.delta/1000)}×${n1(refSocVal)}×(${REF_ROC}/${b.roc}) = ${n1(b.soc)} %SOC</div>`;
-  });
-  return h;
-}
-
-function minsFmt(m){const h=Math.floor(m/60),mn=Math.round(m%60);return h>0?h+'h '+mn+'min':mn+' min';}
-function timeFmt(m){const h=Math.floor(m/60),mn=Math.round(m%60);return h+':'+(mn<10?'0':'')+mn;}
-function socColor(p){return p<=15?'#E24B4A':p<=30?'#EF9F27':'#1D9E75';}
+/* ═══ FORMAT ═══ */
+function n0(v){return Math.round(v);}
 function n1(v){return v.toFixed(1);}
-function n2(v){return v.toFixed(2);}
+function mf(m){const h=Math.floor(m/60),mn=Math.round(m%60);return h>0?h+'h '+mn+'min':mn+' min';}
+function tf(m){const h=Math.floor(m/60),mn=Math.round(m%60);return h+':'+(mn<10?'0':'')+mn;}
+function socColor(p){return p<=15?'#E24B4A':p<=30?'#EF9F27':'#1D9E75';}
+function mfShort(m){const h=Math.floor(m/60),mn=Math.round(m%60);return h>0?h+'h'+mn+'m':mn+'m';}
 
-/* ══════════════════════════════════════════════════════════════════════
-   MAIN UPDATE
-   ══════════════════════════════════════════════════════════════════════ */
+/* ═══ LEG COLORS ═══ */
+const LCOL=[
+  {bg:'#E6F1FB',tx:'#0C447C',c1:'#185FA5',c2:'#378ADD'},
+  {bg:'#EEEDFE',tx:'#3C3489',c1:'#534AB7',c2:'#7F77DD'},
+  {bg:'#FFF3E0',tx:'#E65100',c1:'#E65100',c2:'#FF9800'},
+  {bg:'#FCE4EC',tx:'#880E4F',c1:'#C62828',c2:'#EF5350'},
+  {bg:'#E0F2F1',tx:'#004D40',c1:'#00695C',c2:'#26A69A'},
+  {bg:'#F3E5F5',tx:'#4A148C',c1:'#6A1B9A',c2:'#AB47BC'},
+];
+const DEST_COL={bg:'#EAF3DE',tx:'#27500A',c1:'#3B6D11',c2:'#639922'};
+function lc(i){return LCOL[i%LCOL.length];}
+
+/* ═══ ROUTE STATE ═══ */
+let legs=[{alt:5200,dist:27}]; // at least one intermediate waypoint
+
+function renderLegs(){
+  const c=document.getElementById('legs-container');
+  let html='';
+  legs.forEach((leg,i)=>{
+    const col=lc(i);
+    const legNum=i+1;
+    const canDel=legs.length>1;
+    html+=`<div class="card" data-leg="${i}">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <div class="leg-badge" style="background:${col.bg};color:${col.tx};">Leg ${legNum}</div>
+        ${canDel?`<button class="del-btn" data-idx="${i}" title="Remove leg">&times;</button>`:''}
+      </div>
+      <div class="chain-note leg-chain" data-idx="${i}">Starting altitude: —</div>
+      <div class="sr"><label>Leg ${legNum} altitude (ft AMSL)</label><input type="range" class="leg-alt" data-idx="${i}" min="500" max="15000" step="100" value="${leg.alt}"><span class="sv leg-alt-v" data-idx="${i}">${leg.alt.toLocaleString()} ft</span></div>
+      <div class="sr"><label>Leg ${legNum} distance (nm)</label><input type="range" class="leg-dist" data-idx="${i}" min="2" max="120" step="1" value="${leg.dist}"><span class="sv leg-dist-v" data-idx="${i}">${leg.dist} nm</span></div>
+    </div>`;
+  });
+  c.innerHTML=html;
+  // Attach listeners
+  c.querySelectorAll('.leg-alt,.leg-dist').forEach(el=>el.addEventListener('input',onLegInput));
+  c.querySelectorAll('.del-btn').forEach(el=>el.addEventListener('click',onDeleteLeg));
+}
+
+function onLegInput(e){
+  const i=+e.target.dataset.idx;
+  if(e.target.classList.contains('leg-alt')){
+    legs[i].alt=+e.target.value;
+    document.querySelector(`.leg-alt-v[data-idx="${i}"]`).textContent=legs[i].alt.toLocaleString()+' ft';
+  }else{
+    legs[i].dist=+e.target.value;
+    document.querySelector(`.leg-dist-v[data-idx="${i}"]`).textContent=legs[i].dist+' nm';
+  }
+  saveState(); update();
+}
+
+function onDeleteLeg(e){
+  const i=+e.target.dataset.idx;
+  if(legs.length<=1)return;
+  legs.splice(i,1);
+  renderLegs(); saveState(); update();
+}
+
+document.getElementById('add-leg-btn').addEventListener('click',()=>{
+  const lastAlt=legs.length>0?legs[legs.length-1].alt:3000;
+  legs.push({alt:Math.max(1000,lastAlt-1000),dist:20});
+  renderLegs(); saveState(); update();
+});
+
+/* ═══ MAIN UPDATE ═══ */
 function update(){
-  // Performance settings
-  const oat      =+document.getElementById('oat').value;
-  const cruiseKw =parseFloat(localStorage.getItem('velis_cruise_kw')?? '36');
-  const vyKts    =parseFloat(localStorage.getItem('velis_vy')?? '75');
-  const vglideKts=parseFloat(localStorage.getItem('velis_vglide')?? '70');
-  const glideR   =parseFloat(localStorage.getItem('velis_glide_ratio')?? '15');
+  const cruiseKw=parseFloat(localStorage.getItem('velis_cruise_kw')??'36');
+  const vyKts=parseFloat(localStorage.getItem('velis_vy')??'75');
+  const vglideKts=parseFloat(localStorage.getItem('velis_vglide')??'70');
+  const glideR=parseFloat(localStorage.getItem('velis_glide_ratio')??'15');
   const cruiseKts=interpCruiseKts(cruiseKw);
 
-  document.getElementById('perf-tags').innerHTML=
-    `<span class="perf-tag">Cruise ${cruiseKw} kW · ${cruiseKts.toFixed(0)} kts</span>`+
-    `<span class="perf-tag">V<sub>y</sub> ${vyKts} kts</span>`+
-    `<span class="perf-tag">Glide ${glideR}:1</span>`;
-
-  // Leg 2 toggle
-  const leg2On=document.getElementById('leg2-on').checked;
-  document.getElementById('leg2-card').className=leg2On?'card':'card card-disabled';
-  document.getElementById('leg3-badge').textContent=leg2On?'Leg 3 — Leg 2 to Destination':'Leg 2 — Leg 1 to Destination';
-  document.getElementById('leg3-card').querySelector('.leg-badge').style.background=leg2On?'#EAF3DE':'#EEEDFE';
-  document.getElementById('leg3-card').querySelector('.leg-badge').style.color=leg2On?'#27500A':'#3C3489';
-
-  // Slider values
-  const soh   =+document.getElementById('soh').value/100;
-  const soc0  =+document.getElementById('soc0').value/100;
+  const soh=+document.getElementById('soh').value/100;
+  const soc0=+document.getElementById('soc0').value/100;
   const resPct=+document.getElementById('res').value/100;
-  const depAlt=+document.getElementById('dep').value;
-  const p1alt =+document.getElementById('p1alt').value;
-  const p1clr =+document.getElementById('p1clr').value;
-  const dist1 =+document.getElementById('d1').value; // nm
-  const p2alt =+document.getElementById('p2alt').value;
-  const p2clr =+document.getElementById('p2clr').value;
-  const dist2 =+document.getElementById('d2').value; // nm
-  const arrAlt=+document.getElementById('arr').value;
-  const dist3 =+document.getElementById('d3').value; // nm
-  const sohPct=soh*100;
+  const oat=+document.getElementById('oat').value;
+  const depAlt=+document.getElementById('dep-alt').value;
+  const arrAlt=+document.getElementById('arr-alt').value;
+  const arrDist=+document.getElementById('arr-dist').value;
+  const approach=document.querySelector('input[name="approach"]:checked').value;
+  const approachSoc=approach==='pattern'?12:5;
+  const sohPct=soh*100, usable=NOM*soh;
 
+  // Save to localStorage for other pages
   localStorage.setItem('velis_soh',Math.round(sohPct));
   localStorage.setItem('velis_oat',oat);
   localStorage.setItem('velis_dep_alt',depAlt);
 
   // Display
-  document.getElementById('oat-v').textContent  =(oat>=0?'+':'')+oat+' °C';
-  document.getElementById('soh-v').textContent  =Math.round(sohPct)+'%';
-  document.getElementById('soc0-v').textContent =Math.round(soc0*100)+'%';
-  document.getElementById('res-v').textContent  =Math.round(resPct*100)+'%';
-  document.getElementById('dep-v').textContent  =depAlt.toLocaleString()+' ft';
-  document.getElementById('p1alt-v').textContent=p1alt.toLocaleString()+' ft';
-  document.getElementById('d1-v').textContent   =dist1+' nm';
-  document.getElementById('p2alt-v').textContent=p2alt.toLocaleString()+' ft';
-  document.getElementById('d2-v').textContent   =dist2+' nm';
-  document.getElementById('arr-v').textContent  =arrAlt.toLocaleString()+' ft';
-  document.getElementById('d3-v').textContent   =dist3+' nm';
+  document.getElementById('soh-v').textContent=Math.round(sohPct)+'%';
+  document.getElementById('soc0-v').textContent=Math.round(soc0*100)+'%';
+  document.getElementById('res-v').textContent=Math.round(resPct*100)+'%';
+  document.getElementById('oat-v').textContent=(oat>=0?'+':'')+oat+' °C';
+  document.getElementById('dep-alt-v').textContent=depAlt.toLocaleString()+' ft';
+  document.getElementById('arr-alt-v').textContent=arrAlt.toLocaleString()+' ft';
+  document.getElementById('arr-dist-v').textContent=arrDist+' nm';
 
-  const req1=p1alt+p1clr, req2=p2alt+p2clr;
-  document.getElementById('chain1-note').textContent='Starting altitude: '+req1.toLocaleString()+' ft (Leg 1 altitude)';
-  if(leg2On) document.getElementById('chain2-note').textContent='Starting altitude: '+req2.toLocaleString()+' ft (Leg 2 altitude)';
-  else document.getElementById('chain2-note').textContent='Starting altitude: '+req1.toLocaleString()+' ft (Leg 1 altitude)';
+  // Perf banner
+  document.getElementById('perf-tags').innerHTML=
+    `<span class="perf-tag">Cruise ${cruiseKw} kW · ${cruiseKts.toFixed(0)} kts</span>`+
+    `<span class="perf-tag">V<sub>y</sub> ${vyKts} kts</span>`+
+    `<span class="perf-tag">Glide ${glideR}:1</span>`;
 
-  const usable=NOM*soh;
+  // Chain notes for legs
+  let prevAlt=depAlt;
+  legs.forEach((leg,i)=>{
+    const cn=document.querySelector(`.leg-chain[data-idx="${i}"]`);
+    if(cn) cn.textContent='Starting altitude: '+prevAlt.toLocaleString()+' ft';
+    prevAlt=leg.alt;
+  });
+  document.getElementById('dest-chain').textContent='Starting altitude: '+prevAlt.toLocaleString()+' ft';
+  const destLegNum=legs.length+1;
+  document.getElementById('dest-badge').textContent='Leg '+destLegNum+' — Destination';
 
-  // ── TAKEOFF ──
+  // ═══ CALCULATIONS ═══
   const toSoc=interpSOH(SOC_TAKEOFF,sohPct);
+  const refClimb=interpSOH(SOC_CLIMB_1K,sohPct);
+  const cru10=socCruise10min(Math.min(cruiseKw,35),sohPct);
 
-  // ── LEG 1 ──
-  const L1_clb=calcClimb(depAlt,req1,oat,sohPct,vyKts,depAlt);
-  const L1_cruDist=Math.max(0,dist1-L1_clb.nm);
-  const L1_cru=calcCruise(L1_cruDist,cruiseKw,cruiseKts,sohPct);
-  const L1_soc=toSoc+L1_clb.soc+L1_cru.soc, L1_min=L1_clb.min+L1_cru.min;
+  const results=[];
+  prevAlt=depAlt;
+  // Intermediate legs
+  legs.forEach((leg,i)=>{
+    let trans;
+    if(leg.alt>prevAlt) trans=calcClimb(prevAlt,leg.alt,oat,sohPct,vyKts,depAlt);
+    else trans=calcDescent(prevAlt,leg.alt,glideR,vglideKts);
+    const cruDist=Math.max(0,leg.dist-trans.nm);
+    const cru=calcCruise(cruDist,cruiseKw,cruiseKts,sohPct);
+    let soc=trans.soc+cru.soc;
+    if(i===0) soc+=toSoc; // takeoff on first leg
+    results.push({trans,cru,cruDist,soc,min:trans.min+cru.min,isClimb:leg.alt>prevAlt,wpAlt:leg.alt,prevAlt,dist:leg.dist});
+    prevAlt=leg.alt;
+  });
+  // Final leg to destination
+  const fTrans=calcDescent(prevAlt,arrAlt,glideR,vglideKts);
+  const fCruDist=Math.max(0,arrDist-fTrans.nm);
+  const fCru=calcCruise(fCruDist,cruiseKw,cruiseKts,sohPct);
+  results.push({trans:fTrans,cru:fCru,cruDist:fCruDist,soc:fTrans.soc+fCru.soc+approachSoc,min:fTrans.min+fCru.min,isClimb:arrAlt>prevAlt,wpAlt:arrAlt,prevAlt,dist:arrDist});
 
-  // ── LEG 2 (skipped if disabled) ──
-  let L2_trans,L2_cruDist,L2_cru,L2_soc=0,L2_min=0;
-  if(leg2On){
-    if(req2>req1) L2_trans=calcClimb(req1,req2,oat,sohPct,vyKts,depAlt);
-    else L2_trans=calcDescent(req1,req2,glideR,vglideKts);
-    L2_cruDist=Math.max(0,dist2-L2_trans.nm);
-    L2_cru=calcCruise(L2_cruDist,cruiseKw,cruiseKts,sohPct);
-    L2_soc=L2_trans.soc+L2_cru.soc; L2_min=L2_trans.min+L2_cru.min;
-  } else {
-    L2_trans={min:0,soc:0,nm:0,roc:0,refSoc:0,delta:0};
-    L2_cruDist=0; L2_cru={min:0,soc:0,soc10:0};
-  }
-
-  // ── LEG 3 (starts from Leg 1 if Leg 2 disabled) ──
-  const L3_startAlt=leg2On?req2:req1;
-  const L3_dsc=calcDescent(L3_startAlt,arrAlt,glideR,vglideKts);
-  const L3_cruDist=Math.max(0,dist3-L3_dsc.nm);
-  const L3_cru=calcCruise(L3_cruDist,cruiseKw,cruiseKts,sohPct);
-  const approachType=document.querySelector('input[name="approach"]:checked').value;
-  const approachSoc=approachType==='pattern'?12:5;
-  const L3_soc=L3_dsc.soc+L3_cru.soc+approachSoc, L3_min=L3_dsc.min+L3_cru.min;
-
-  // ── Totals ──
-  const totalSoc=L1_soc+L2_soc+L3_soc;
+  const totalSoc=results.reduce((s,r)=>s+r.soc,0);
   const totalKwh=(totalSoc/100)*usable;
-  const totalDist=dist1+(leg2On?dist2:0)+dist3;
-  const totalMin=L1_min+L2_min+L3_min;
+  const totalDist=results.reduce((s,r)=>s+r.dist,0);
+  const totalMin=results.reduce((s,r)=>s+r.min,0);
   const startSocPct=soc0*100;
-  const socs=leg2On
-    ?[startSocPct,Math.max(0,startSocPct-L1_soc),Math.max(0,startSocPct-L1_soc-L2_soc),Math.max(0,startSocPct-L1_soc-L2_soc-L3_soc)]
-    :[startSocPct,Math.max(0,startSocPct-L1_soc),Math.max(0,startSocPct-L1_soc-L3_soc)];
 
-  // Summary metrics
+  // SOC at each waypoint
+  const socs=[startSocPct];
+  let run=startSocPct;
+  results.forEach(r=>{run=Math.max(0,run-r.soc);socs.push(run);});
+
+  // Summary
   document.getElementById('r-usable').textContent=usable.toFixed(1);
   document.getElementById('r-used').textContent=totalKwh.toFixed(1);
   document.getElementById('r-dist').textContent=Math.round(totalDist);
-  document.getElementById('r-time').textContent=timeFmt(totalMin);
+  document.getElementById('r-time').textContent=tf(totalMin);
 
-  // Phase track
-  function socToKwh(s){return (s/100)*usable;}
-  function pw(kwh){return (Math.max(0,Math.min(kwh/usable,1))*100).toFixed(1)+'%';}
+  // Phase track + legend
+  const socToKwh=s=>(s/100)*usable;
+  const pw=k=>(Math.max(0,Math.min(k/usable,1))*100).toFixed(1)+'%';
   const reserveKwh=usable*resPct, startKwh=usable*soc0, mission=startKwh-reserveKwh;
-  document.getElementById('pt-c1').style.width=pw(socToKwh(L1_clb.soc)); document.getElementById('pt-c1').textContent=L1_clb.soc>6?'C1':'';
-  document.getElementById('pt-o1').style.width=pw(socToKwh(L1_cru.soc)); document.getElementById('pt-o1').textContent=L1_cru.soc>5?'O1':'';
-  document.getElementById('pt-c2').style.width=pw(socToKwh(L2_trans.soc)); document.getElementById('pt-c2').textContent=L2_trans.soc>5?(req2>req1?'C2':'D2'):'';
-  document.getElementById('pt-o2').style.width=pw(socToKwh(L2_cru.soc)); document.getElementById('pt-o2').textContent=L2_cru.soc>5?'O2':'';
-  document.getElementById('pt-c3').style.width=pw(socToKwh(L3_dsc.soc)); document.getElementById('pt-c3').textContent=L3_dsc.soc>5?'D3':'';
-  document.getElementById('pt-o3').style.width=pw(socToKwh(L3_cru.soc)); document.getElementById('pt-o3').textContent=L3_cru.soc>5?'O3':'';
-  document.getElementById('pt-res').style.width=pw(reserveKwh); document.getElementById('pt-res').textContent=resPct>0.07?'Res':'';
+  let ptHTML='',lgHTML='';
+  results.forEach((r,i)=>{
+    const col=i<results.length-1?lc(i):DEST_COL;
+    const ln=i+1;
+    ptHTML+=`<div class="ps" style="background:${col.c1};width:${pw(socToKwh(r.trans.soc))};">${r.trans.soc>5?(r.isClimb?'C':'D')+ln:''}</div>`;
+    ptHTML+=`<div class="ps" style="background:${col.c2};width:${pw(socToKwh(r.cru.soc))};">${r.cru.soc>5?'O'+ln:''}</div>`;
+    lgHTML+=`<div class="li"><div class="ld" style="background:${col.c1};"></div>${r.isClimb?'Climb':'Desc'} ${ln}</div>`;
+    lgHTML+=`<div class="li"><div class="ld" style="background:${col.c2};"></div>Cruise ${ln}</div>`;
+  });
+  ptHTML+=`<div class="ps" style="background:#EF9F27;width:${pw(reserveKwh)};">${resPct>0.07?'Res':''}</div>`;
   const deficit=Math.max(0,totalKwh-mission);
-  document.getElementById('pt-over').style.width=deficit>0?pw(Math.min(deficit,usable)):'0%';
+  if(deficit>0)ptHTML+=`<div class="ps" style="background:#E24B4A;width:${pw(Math.min(deficit,usable))};">Def</div>`;
+  lgHTML+=`<div class="li"><div class="ld" style="background:#EF9F27;"></div>Reserve</div>`;
+  lgHTML+=`<div class="li"><div class="ld" style="background:#E24B4A;"></div>Deficit</div>`;
+  document.getElementById('phase-track').innerHTML=ptHTML;
+  document.getElementById('legend-row').innerHTML=lgHTML;
 
   // Messages
   ['msg-ok','msg-warn','msg-err'].forEach(id=>document.getElementById(id).style.display='none');
   const margin=mission-totalKwh;
   const marginPct=mission>0?Math.round(margin/mission*100):0;
-  if(req1>12000||req2>12000){
-    document.getElementById('msg-err').textContent='Required altitude exceeds ROC table limit (12,000 ft).';
-    document.getElementById('msg-err').style.display='block';
-  }else if(L1_clb.nm>dist1){
-    document.getElementById('msg-err').textContent='Leg 1: climb distance ('+n1(L1_clb.nm)+' nm) exceeds leg distance ('+dist1+' nm).';
-    document.getElementById('msg-err').style.display='block';
-  }else if(margin<0){
-    document.getElementById('msg-err').textContent='Not feasible. Deficit: '+n1(Math.abs(margin))+' kWh. Need '+n1(totalKwh)+' kWh, have '+n1(mission)+' kWh mission energy.';
-    document.getElementById('msg-err').style.display='block';
-  }else if(marginPct<=12){
-    document.getElementById('msg-warn').textContent='Tight. '+n1(margin)+' kWh ('+marginPct+'%) spare. Arrival SOC: '+Math.round(socs[socs.length-1])+'%.';
-    document.getElementById('msg-warn').style.display='block';
-  }else{
-    document.getElementById('msg-ok').textContent='Feasible. Margin: '+n1(margin)+' kWh ('+marginPct+'%). Arrival SOC: '+Math.round(socs[socs.length-1])+'%.';
-    document.getElementById('msg-ok').style.display='block';
-  }
+  const arrSoc=socs[socs.length-1];
+  if(margin<0){document.getElementById('msg-err').textContent='Not feasible. Deficit: '+n1(Math.abs(margin))+' kWh.';document.getElementById('msg-err').style.display='block';}
+  else if(marginPct<=12){document.getElementById('msg-warn').textContent='Tight. '+n1(margin)+' kWh ('+marginPct+'%) spare. Arrival SOC: '+Math.round(arrSoc)+'%.';document.getElementById('msg-warn').style.display='block';}
+  else{document.getElementById('msg-ok').textContent='Feasible. Margin: '+n1(margin)+' kWh ('+marginPct+'%). Arrival SOC: '+Math.round(arrSoc)+'%.';document.getElementById('msg-ok').style.display='block';}
 
   // Segment cards
-  const segs=[
-    {title:'Leg 1',col:'#185FA5',rows:[
-      ['Climb',minsFmt(L1_clb.min)+' / '+n1(L1_clb.nm)+' nm'],
-      ['Cruise',minsFmt(L1_cru.min)+' / '+n1(L1_cruDist)+' nm'],
-      ['Energy',n1(L1_soc)+' %SOC ('+n2(socToKwh(L1_soc))+' kWh)'],
-    ]},
-    ...(leg2On?[{title:'Leg 2',col:'#534AB7',rows:[
-      [req2>req1?'Climb':'Descent',minsFmt(L2_trans.min)+' / '+n1(L2_trans.nm)+' nm'],
-      ['Cruise',minsFmt(L2_cru.min)+' / '+n1(L2_cruDist)+' nm'],
-      ['Energy',n1(L2_soc)+' %SOC ('+n2(socToKwh(L2_soc))+' kWh)'],
-    ]}]:[]),
-    {title:leg2On?'Leg 3':'Leg 2',col:'#3B6D11',rows:[
-      ['Descent',minsFmt(L3_dsc.min)+' / '+n1(L3_dsc.nm)+' nm'],
-      ['Cruise',minsFmt(L3_cru.min)+' / '+n1(L3_cruDist)+' nm'],
-      ['Energy',n1(L3_soc)+' %SOC ('+n2(socToKwh(L3_soc))+' kWh)'],
-    ]},
-  ];
-  document.getElementById('seg-grid').innerHTML=segs.map(s=>`
-    <div class="seg-box" style="border-color:${s.col};"><div class="seg-title" style="color:${s.col};">${s.title}</div>
-    ${s.rows.map(([k,v])=>`<div class="seg-row"><span class="seg-k">${k}</span><span class="seg-v">${v}</span></div>`).join('')}</div>`).join('');
+  const sgHTML=results.map((r,i)=>{
+    const col=i<results.length-1?lc(i):DEST_COL;
+    const ln=i+1;
+    return `<div class="seg-box" style="border-color:${col.c1};"><div class="seg-title" style="color:${col.c1};">Leg ${ln}${i===results.length-1?' (Dest)':''}</div>
+      <div class="seg-row"><span class="seg-k">${r.isClimb?'Climb':'Descent'}</span><span class="seg-v">${mf(r.trans.min)} / ${n1(r.trans.nm)} nm</span></div>
+      <div class="seg-row"><span class="seg-k">Cruise</span><span class="seg-v">${mf(r.cru.min)} / ${n1(r.cruDist)} nm</span></div>
+      <div class="seg-row"><span class="seg-k">Energy</span><span class="seg-v">${n1(r.soc)} %SOC (${(socToKwh(r.soc)).toFixed(2)} kWh)</span></div></div>`;
+  }).join('');
+  document.getElementById('seg-grid').style.gridTemplateColumns=`repeat(${Math.min(results.length,3)},1fr)`;
+  document.getElementById('seg-grid').innerHTML=sgHTML;
 
   // SOC strip
-  const wps=leg2On?['Departure','Leg 1','Leg 2','Destination']:['Departure','Leg 1','Destination'];
+  const wpNames=['Departure',...legs.map((_,i)=>'Leg '+(i+1)),'Destination'];
   const strip=document.getElementById('soc-strip');
   strip.innerHTML='';
   socs.forEach((pct,i)=>{
-    const cp=Math.max(0,Math.min(100,pct));
-    const fillH=Math.round(cp*0.6), resH=Math.round(resPct*100*0.6), col=socColor(cp);
-    const wp=document.createElement('div'); wp.className='soc-wp';
-    wp.innerHTML=`<div class="soc-bar-wrap"><div style="position:absolute;bottom:0;left:0;width:100%;height:${resH}px;background:#EF9F27;opacity:0.4;"></div><div style="width:100%;height:${fillH}px;background:${col};transition:height 0.3s;"></div></div><div class="soc-pct" style="color:${col};">${Math.round(cp)}%</div><div class="soc-kwh">${(cp/100*usable).toFixed(1)} kWh</div><div class="soc-label">${wps[i]}</div>`;
+    const cp=Math.max(0,Math.min(100,pct)),fillH=Math.round(cp*0.6),resH=Math.round(resPct*100*0.6),col=socColor(cp);
+    const wp=document.createElement('div');wp.className='soc-wp';
+    wp.innerHTML=`<div class="soc-bar-wrap"><div style="position:absolute;bottom:0;left:0;width:100%;height:${resH}px;background:#EF9F27;opacity:0.4;"></div><div style="width:100%;height:${fillH}px;background:${col};transition:height 0.3s;"></div></div><div class="soc-pct" style="color:${col};">${Math.round(cp)}%</div><div class="soc-kwh">${(cp/100*usable).toFixed(1)} kWh</div><div class="soc-label">${wpNames[i]}</div>`;
     strip.appendChild(wp);
     if(i<socs.length-1){const a=document.createElement('div');a.className='soc-arrow';a.textContent='\u2192';strip.appendChild(a);}
   });
 
-  // ═══ DETAILED %SOC CALCULATION ═══
+  // ═══ SVG PROFILE ═══
+  drawSVG(depAlt,arrAlt,results);
+
+  // ═══ DETAILED CALCULATION ═══
   document.getElementById('det-header').innerHTML='All values from POH tables, interpolated at SOH = <strong>'+Math.round(sohPct)+'%</strong>';
-  const refClimb=interpSOH(SOC_CLIMB_1K,sohPct);
-  const cru10=socCruise10min(Math.min(cruiseKw,35),sohPct);
-  let det='';
-  let running=startSocPct;
-
-  // Takeoff + Leg 1
-  det+=`<div class="det-phase"><div class="det-head" style="color:#185FA5;">Leg 1 — Departure to Leg 1</div>`;
-  // Takeoff
-  det+=`<div class="det-line">A) Takeoff + initial climb to 300 ft AGL (40 sec) = <span class="det-res">${n1(toSoc)} %SOC</span></div>`;
-  // Climb
-  det+=`<div class="det-line">B) Climb (V<sub>y</sub>) at 48 kW from ${depAlt.toLocaleString()} to ${req1.toLocaleString()} ft (${L1_clb.delta.toLocaleString()} ft)</div>`;
-  det+=renderClimbBands(L1_clb,refClimb);
-  det+=`<div class="det-line" style="padding-left:28px;">Total climb: ${n1(L1_clb.min)} min &nbsp;·&nbsp; ${n1(L1_clb.nm)} nm &nbsp;·&nbsp; <span class="det-res">${n1(L1_clb.soc)} %SOC</span></div>`;
-  // Cruise
-  det+=`<div class="det-line">C) Cruise at ${cruiseKw} kW (${Math.round(cruiseKts)} kts) for ${n1(L1_cru.min)} min (${n1(L1_cruDist)} nm)</div>`;
-  det+=`<div class="det-line" style="padding-left:28px;">(${n1(L1_cru.min)} / 10) &times; ${n1(cru10)} = <span class="det-res">${n1(L1_cru.soc)} %SOC</span></div>`;
-  running-=L1_soc;
-  det+=`<div class="det-line" style="margin-top:2px;"><strong>Leg 1 total = <span class="det-res">${n1(L1_soc)} %SOC</span> &nbsp;·&nbsp; SOC remaining: ${n1(Math.max(0,running))}%</strong></div></div>`;
-
-  // Leg 2 (if enabled)
-  let stepLetter='D';
-  if(leg2On){
-    det+=`<div class="det-phase"><div class="det-head" style="color:#534AB7;">Leg 2 — Leg 1 to Leg 2</div>`;
-    if(req2>req1){
-      det+=`<div class="det-line">${stepLetter}) Climb (V<sub>y</sub>) at 48 kW from ${req1.toLocaleString()} to ${req2.toLocaleString()} ft (${L2_trans.delta.toLocaleString()} ft)</div>`;
-      det+=renderClimbBands(L2_trans,refClimb);
-      det+=`<div class="det-line" style="padding-left:28px;">Total climb: ${n1(L2_trans.min)} min &nbsp;·&nbsp; ${n1(L2_trans.nm)} nm &nbsp;·&nbsp; <span class="det-res">${n1(L2_trans.soc)} %SOC</span></div>`;
+  let det='',step='A',running2=startSocPct;
+  results.forEach((r,i)=>{
+    const col=i<results.length-1?lc(i):DEST_COL;
+    const ln=i+1;
+    const isLast=i===results.length-1;
+    det+=`<div class="det-phase"><div class="det-head" style="color:${col.c1};">Leg ${ln}${isLast?' — to Destination':''}</div>`;
+    if(i===0){det+=`<div class="det-line">${step}) Takeoff + initial climb to 300 ft AGL = <span class="det-res">${n1(toSoc)} %SOC</span></div>`;step=String.fromCharCode(step.charCodeAt(0)+1);}
+    if(r.isClimb&&r.trans.bands){
+      det+=`<div class="det-line">${step}) Climb (V<sub>y</sub>) at 48 kW from ${r.prevAlt.toLocaleString()} to ${r.wpAlt.toLocaleString()} ft (${r.trans.delta.toLocaleString()} ft)</div>`;
+      det+=`<div class="det-line" style="padding-left:28px;font-size:10px;color:var(--tx2);">ISA deviation: ${r.trans.isaDev>=0?'+':''}${r.trans.isaDev.toFixed(1)}°C (constant)</div>`;
+      r.trans.bands.forEach(b=>{det+=`<div class="det-line" style="padding-left:28px;font-size:10px;">${b.from.toLocaleString()}\u2192${b.to.toLocaleString()} ft: ROC=${b.roc} ft/min \u00b7 ${n1(b.min)} min \u00b7 ${n1(b.delta/1000)}\u00d7${n1(refClimb)}\u00d7(${REF_ROC}/${b.roc}) = ${n1(b.soc)} %SOC</div>`;});
+      det+=`<div class="det-line" style="padding-left:28px;">Total climb: ${n1(r.trans.min)} min \u00b7 ${n1(r.trans.nm)} nm \u00b7 <span class="det-res">${n1(r.trans.soc)} %SOC</span></div>`;
     }else{
-      det+=`<div class="det-line">${stepLetter}) Descent (glide ${glideR}:1) from ${req1.toLocaleString()} to ${req2.toLocaleString()} ft (${L2_trans.delta.toLocaleString()} ft) = <span class="det-res">0 %SOC</span></div>`;
-      det+=`<div class="det-line" style="padding-left:28px;">Glide distance = ${n1(L2_trans.nm)} nm</div>`;
+      det+=`<div class="det-line">${step}) Descent (glide ${glideR}:1) from ${r.prevAlt.toLocaleString()} to ${r.wpAlt.toLocaleString()} ft (${r.trans.delta.toLocaleString()} ft) = <span class="det-res">0 %SOC</span></div>`;
+      det+=`<div class="det-line" style="padding-left:28px;">Glide distance = ${n1(r.trans.nm)} nm</div>`;
     }
-    stepLetter='E';
-    det+=`<div class="det-line">${stepLetter}) Cruise at ${cruiseKw} kW for ${n1(L2_cru.min)} min (${n1(L2_cruDist)} nm)</div>`;
-    det+=`<div class="det-line" style="padding-left:28px;">(${n1(L2_cru.min)} / 10) &times; ${n1(cru10)} = <span class="det-res">${n1(L2_cru.soc)} %SOC</span></div>`;
-    running-=L2_soc;
-    det+=`<div class="det-line" style="margin-top:2px;"><strong>Leg 2 total = <span class="det-res">${n1(L2_soc)} %SOC</span> &nbsp;·&nbsp; SOC remaining: ${n1(Math.max(0,running))}%</strong></div></div>`;
-    stepLetter='F';
-  }
-
-  // Leg 3 (or Leg 2 if Leg 2 disabled)
-  const L3label=leg2On?'Leg 3 — Leg 2 to Destination':'Leg 2 — Leg 1 to Destination';
-  const L3from=leg2On?req2:req1;
-  det+=`<div class="det-phase"><div class="det-head" style="color:#3B6D11;">${L3label}</div>`;
-  det+=`<div class="det-line">${stepLetter}) Descent (glide ${glideR}:1) from ${L3from.toLocaleString()} to ${arrAlt.toLocaleString()} ft (${L3_dsc.delta.toLocaleString()} ft) = <span class="det-res">0 %SOC</span></div>`;
-  det+=`<div class="det-line" style="padding-left:28px;">Glide distance = ${n1(L3_dsc.nm)} nm</div>`;
-  stepLetter=String.fromCharCode(stepLetter.charCodeAt(0)+1);
-  det+=`<div class="det-line">${stepLetter}) Cruise at ${cruiseKw} kW for ${n1(L3_cru.min)} min (${n1(L3_cruDist)} nm)</div>`;
-  det+=`<div class="det-line" style="padding-left:28px;">(${n1(L3_cru.min)} / 10) &times; ${n1(cru10)} = <span class="det-res">${n1(L3_cru.soc)} %SOC</span></div>`;
-  stepLetter=String.fromCharCode(stepLetter.charCodeAt(0)+1);
-  const approachLabel=approachType==='pattern'?'Traffic pattern (1,000 ft)':'Straight-in approach';
-  det+=`<div class="det-line">${stepLetter}) ${approachLabel} = <span class="det-res">${approachSoc} %SOC</span></div>`;
-  running-=L3_soc;
-  det+=`<div class="det-line" style="margin-top:2px;"><strong>${leg2On?'Leg 3':'Leg 2'} total = <span class="det-res">${n1(L3_soc)} %SOC</span> &nbsp;·&nbsp; SOC remaining: ${n1(Math.max(0,running))}%</strong></div></div>`;
-
-  // Running total
+    step=String.fromCharCode(step.charCodeAt(0)+1);
+    det+=`<div class="det-line">${step}) Cruise at ${cruiseKw} kW (${Math.round(cruiseKts)} kts) for ${n1(r.cru.min)} min (${n1(r.cruDist)} nm)</div>`;
+    det+=`<div class="det-line" style="padding-left:28px;">(${n1(r.cru.min)} / 10) \u00d7 ${n1(cru10)} = <span class="det-res">${n1(r.cru.soc)} %SOC</span></div>`;
+    step=String.fromCharCode(step.charCodeAt(0)+1);
+    if(isLast){
+      const appLabel=approach==='pattern'?'Traffic pattern (1,000 ft)':'Straight-in approach';
+      det+=`<div class="det-line">${step}) ${appLabel} = <span class="det-res">${approachSoc} %SOC</span></div>`;
+      step=String.fromCharCode(step.charCodeAt(0)+1);
+    }
+    running2-=r.soc;
+    det+=`<div class="det-line" style="margin-top:2px;"><strong>Leg ${ln} total = <span class="det-res">${n1(r.soc)} %SOC</span> \u00b7 SOC remaining: ${n1(Math.max(0,running2))}%</strong></div></div>`;
+  });
   det+=`<hr class="det-sep">`;
   det+=`<div class="det-total"><span>SOC at departure</span><strong>${n1(startSocPct)}% (${n1(usable*soc0)} kWh)</strong></div>`;
-  det+=`<div class="det-total"><span>&minus; Leg 1</span><strong>${n1(L1_soc)}%</strong></div>`;
-  if(leg2On) det+=`<div class="det-total"><span>&minus; Leg 2</span><strong>${n1(L2_soc)}%</strong></div>`;
-  det+=`<div class="det-total"><span>&minus; ${leg2On?'Leg 3':'Leg 2'}</span><strong>${n1(L3_soc)}%</strong></div>`;
+  results.forEach((r,i)=>det+=`<div class="det-total"><span>\u2212 Leg ${i+1}</span><strong>${n1(r.soc)}%</strong></div>`);
   det+=`<hr class="det-sep">`;
-  det+=`<div class="det-total"><span><strong>SOC at destination</strong></span><strong style="color:${socColor(socs[socs.length-1])};">${n1(socs[socs.length-1])}% (${n1(socs[socs.length-1]/100*usable)} kWh)</strong></div>`;
+  det+=`<div class="det-total"><span><strong>SOC at destination</strong></span><strong style="color:${socColor(arrSoc)};">${n1(arrSoc)}% (${n1(arrSoc/100*usable)} kWh)</strong></div>`;
   det+=`<div class="det-total"><span>Reserve requirement</span><strong>${Math.round(resPct*100)}% (${n1(reserveKwh)} kWh)</strong></div>`;
-  det+=`<div class="det-total"><span><strong>Margin above reserve</strong></span><strong style="color:${margin>=0?'#27500A':'#791F1F'};">${n1(socs[socs.length-1]-resPct*100)}% (${n1(margin)} kWh)</strong></div>`;
+  det+=`<div class="det-total"><span><strong>Margin above reserve</strong></span><strong style="color:${margin>=0?'#27500A':'#791F1F'};">${n1(arrSoc-resPct*100)}% (${n1(margin)} kWh)</strong></div>`;
   det+=`<div class="det-total"><span>Total %SOC used</span><strong>${n1(totalSoc)}%</strong></div>`;
-
   document.getElementById('det-calc').innerHTML=det;
-
-  // SVG profile
-  const svgInfo={
-    L1_clbMin:L1_clb.min, L1_cruMin:L1_cru.min, L1_min,
-    L2_transMin:L2_trans.min, L2_cruMin:L2_cru.min, L2_min,
-    L3_dscMin:L3_dsc.min, L3_cruMin:L3_cru.min, L3_min,
-    totalMin, L1_clbNm:L1_clb.nm, L3_dscNm:L3_dsc.nm,
-    L2_transNm:L2_trans.nm
-  };
-  if(leg2On) drawSVG(depAlt,req1,req2,arrAlt,dist1,dist2,dist3,L1_clb.nm,req2>req1?L2_trans.nm:0,req2<=req1?L2_trans.nm:0,L3_dsc.nm,true,svgInfo);
-  else drawSVG(depAlt,req1,0,arrAlt,dist1,0,dist3,L1_clb.nm,0,0,L3_dsc.nm,false,svgInfo);
 }
 
-/* ══════════════════════════════════════════════════════════════════════
-   SVG FLIGHT PROFILE
-   ══════════════════════════════════════════════════════════════════════ */
-function drawSVG(dep,req1,req2,arr,d1,d2,d3,clb1,clb2,dsc2,dsc3,hasLeg2,info){
+/* ═══ SVG ═══ */
+function drawSVG(depAlt,arrAlt,results){
   const svg=document.getElementById('svg');
   const W=760,H=240,PL=52,PR=20,PT=28,PB=78;
   const IW=W-PL-PR,IH=H-PT-PB;
-  const total=d1+d2+d3;
-  const maxA=Math.max(dep,req1,hasLeg2?req2:0,arr)*1.15;
-  function xp(nm){return PL+(nm/total)*IW;}
+  const totalDist=results.reduce((s,r)=>s+r.dist,0);
+  const allAlts=[depAlt,...results.map(r=>r.wpAlt)];
+  const maxA=Math.max(...allAlts)*1.15;
+  function xp(nm){return PL+(nm/totalDist)*IW;}
   function yp(ft){return PT+IH-(ft/maxA)*IH;}
   const tc='#555',gc='rgba(0,0,0,0.06)';
-  function mf(m){const h=Math.floor(m/60),mn=Math.round(m%60);return h>0?h+'h'+mn+'m':mn+'m';}
 
-  // Profile points
-  let profilePts;
-  if(hasLeg2){
-    const x0=0,x1=clb1,x2=d1;
-    const x3=d1+(req2>req1?clb2:dsc2);
-    const x4=d1+d2,x5=d1+d2+dsc3,x6=d1+d2+d3;
-    profilePts=[[x0,dep],[x1,req1],[x2,req1],[x3,req2],[x4,req2],[x5,arr],[x6,arr]];
-  } else {
-    const x0=0,x1=clb1,x2=d1,x3=d1+dsc3,x4=d1+d3;
-    profilePts=[[x0,dep],[x1,req1],[x2,req1],[x3,arr],[x4,arr]];
-  }
-  const uniq=[profilePts[0]];
-  for(let i=1;i<profilePts.length;i++){
-    if(Math.abs(profilePts[i][0]-uniq[uniq.length-1][0])>0.1||profilePts[i][1]!==uniq[uniq.length-1][1]) uniq.push(profilePts[i]);
-  }
+  // Build profile points
+  let cumDist=0;
+  const pts=[[0,depAlt]];
+  results.forEach(r=>{
+    const transEnd=cumDist+r.trans.nm;
+    if(transEnd>cumDist+0.1) pts.push([transEnd,r.wpAlt]);
+    cumDist+=r.dist;
+    pts.push([cumDist,r.wpAlt]);
+  });
+  const uniq=[pts[0]];
+  for(let i=1;i<pts.length;i++){if(Math.abs(pts[i][0]-uniq[uniq.length-1][0])>0.1||pts[i][1]!==uniq[uniq.length-1][1])uniq.push(pts[i]);}
   const linePath=uniq.map((p,i)=>(i===0?'M':'L')+xp(p[0]).toFixed(1)+','+yp(p[1]).toFixed(1)).join(' ');
-  const fillPath=linePath+' L'+xp(total).toFixed(1)+','+yp(0).toFixed(1)+' L'+xp(0).toFixed(1)+','+yp(0).toFixed(1)+' Z';
+  const fillPath=linePath+' L'+xp(totalDist).toFixed(1)+','+yp(0).toFixed(1)+' L'+xp(0).toFixed(1)+','+yp(0).toFixed(1)+' Z';
   let h='<defs><clipPath id="pc"><rect x="'+PL+'" y="'+PT+'" width="'+IW+'" height="'+IH+'"/></clipPath></defs>';
 
-  // Altitude grid
-  const step=Math.max(req1,req2)>8000?3000:2000;
-  for(let a=0;a<=maxA;a+=step){
-    const y=yp(a); if(y<PT-2||y>PT+IH+2) continue;
-    h+=`<line x1="${PL}" y1="${y.toFixed(1)}" x2="${W-PR}" y2="${y.toFixed(1)}" stroke="${gc}" stroke-width="1"/>`;
-    h+=`<text x="${PL-4}" y="${(y+3.5).toFixed(1)}" font-size="9" fill="${tc}" text-anchor="end">${(a/1000).toFixed(0)}k</text>`;
-  }
+  // Grid
+  const step=maxA>8000?3000:2000;
+  for(let a=0;a<=maxA;a+=step){const y=yp(a);if(y<PT-2||y>PT+IH+2)continue;h+=`<line x1="${PL}" y1="${y.toFixed(1)}" x2="${W-PR}" y2="${y.toFixed(1)}" stroke="${gc}" stroke-width="1"/><text x="${PL-4}" y="${(y+3.5).toFixed(1)}" font-size="9" fill="${tc}" text-anchor="end">${(a/1000).toFixed(0)}k</text>`;}
 
-  // Leg dividers
-  const dividers=hasLeg2?[[d1,'L1','#185FA5'],[d1+d2,'L2','#534AB7']]:[[d1,'L1','#185FA5']];
-  dividers.forEach(([nm,lbl,col])=>{
-    const x=xp(nm);
-    h+=`<line x1="${x.toFixed(1)}" y1="${PT}" x2="${x.toFixed(1)}" y2="${(PT+IH).toFixed(1)}" stroke="${col}" stroke-width="1" stroke-dasharray="3,3" opacity="0.6"/>`;
+  // Waypoint dividers
+  cumDist=0;
+  results.forEach((r,i)=>{
+    cumDist+=r.dist;
+    if(i<results.length-1){
+      const col=lc(i);
+      h+=`<line x1="${xp(cumDist).toFixed(1)}" y1="${PT}" x2="${xp(cumDist).toFixed(1)}" y2="${(PT+IH).toFixed(1)}" stroke="${col.c1}" stroke-width="1" stroke-dasharray="3,3" opacity="0.6"/>`;
+    }
   });
 
   // Fill + line
   h+=`<path d="${fillPath}" fill="rgba(29,158,117,0.09)" clip-path="url(#pc)"/>`;
   h+=`<path d="${linePath}" fill="none" stroke="#1D9E75" stroke-width="2" clip-path="url(#pc)"/>`;
 
-  // Waypoint dots
-  const dots=hasLeg2
-    ?[[0,dep,'#185FA5'],[d1,req1,'#185FA5'],[d1+d2,req2,'#534AB7'],[d1+d2+d3,arr,'#3B6D11']]
-    :[[0,dep,'#185FA5'],[d1,req1,'#185FA5'],[d1+d3,arr,'#3B6D11']];
-  dots.forEach(([nm,ft,col])=>{
-    h+=`<circle cx="${xp(nm).toFixed(1)}" cy="${yp(ft).toFixed(1)}" r="4" fill="${col}"/>`;
+  // Waypoint dots + altitude labels
+  cumDist=0;
+  h+=`<circle cx="${xp(0).toFixed(1)}" cy="${yp(depAlt).toFixed(1)}" r="4" fill="#185FA5"/>`;
+  results.forEach((r,i)=>{
+    cumDist+=r.dist;
+    const col=i<results.length-1?lc(i):DEST_COL;
+    h+=`<circle cx="${xp(cumDist).toFixed(1)}" cy="${yp(r.wpAlt).toFixed(1)}" r="4" fill="${col.c1}"/>`;
+    if(i<results.length-1) h+=`<text x="${xp(cumDist).toFixed(1)}" y="${(yp(r.wpAlt)-9).toFixed(1)}" font-size="9" fill="${col.c1}" text-anchor="middle" font-weight="500">${r.wpAlt.toLocaleString()} ft</text>`;
   });
 
-  // Altitude labels at peaks (waypoints)
-  const peaks=hasLeg2?[[d1,req1,'#185FA5'],[d1+d2,req2,'#534AB7']]:[[d1,req1,'#185FA5']];
-  peaks.forEach(([nm,ft,col])=>{
-    h+=`<text x="${xp(nm).toFixed(1)}" y="${(yp(ft)-9).toFixed(1)}" font-size="9" fill="${col}" text-anchor="middle" font-weight="500">${ft.toLocaleString()} ft</text>`;
+  // TOC/BOD transition points
+  cumDist=0;
+  results.forEach((r,i)=>{
+    const transNm=r.trans.nm;
+    const transPos=cumDist+transNm;
+    if(transNm>totalDist*0.02 && Math.abs(transNm-r.dist)>totalDist*0.03){
+      const col=i<results.length-1?lc(i):DEST_COL;
+      const label=r.isClimb?'TOC':'BOD';
+      h+=`<line x1="${xp(transPos).toFixed(1)}" y1="${PT}" x2="${xp(transPos).toFixed(1)}" y2="${(PT+IH).toFixed(1)}" stroke="${col.c1}" stroke-width="0.8" stroke-dasharray="2,3" opacity="0.4"/>`;
+      h+=`<circle cx="${xp(transPos).toFixed(1)}" cy="${yp(r.wpAlt).toFixed(1)}" r="3" fill="${col.c1}" opacity="0.7"/>`;
+      h+=`<text x="${xp(transPos).toFixed(1)}" y="${(yp(r.wpAlt)-18).toFixed(1)}" font-size="7.5" fill="${col.c1}" text-anchor="middle" font-weight="600" opacity="0.8">${label}</text>`;
+      h+=`<text x="${xp(transPos).toFixed(1)}" y="${(yp(r.wpAlt)-9).toFixed(1)}" font-size="7" fill="${col.c1}" text-anchor="middle" opacity="0.7">${n1(transNm)} nm \u00b7 ${mfShort(r.trans.min)}</text>`;
+    }
+    cumDist+=r.dist;
   });
 
-  // Transition points: TOC (top of climb) and BOD (bottom of descent)
-  // Each: [nm, ft, col, label, distFromPrevWP, timeFromPrevWP, prevWPnm]
-  const transitions=[];
-  // Leg 1: TOC after departure
-  if(clb1>total*0.02 && Math.abs(clb1-d1)>total*0.03){
-    transitions.push([clb1, req1, '#185FA5', 'TOC', clb1, info.L1_clbMin, 0]);
-  }
-  if(hasLeg2){
-    // Leg 2: climb or descent from Leg 1 waypoint
-    if(req2>req1 && clb2>total*0.02 && Math.abs(clb2)>total*0.03 && Math.abs(d1+clb2-(d1+d2))>total*0.03){
-      transitions.push([d1+clb2, req2, '#534AB7', 'TOC', clb2, info.L2_transMin, d1]);
-    } else if(req2<req1 && dsc2>total*0.02 && Math.abs(dsc2)>total*0.03 && Math.abs(d1+dsc2-(d1+d2))>total*0.03){
-      transitions.push([d1+dsc2, req2, '#534AB7', 'BOD', dsc2, info.L2_transMin, d1]);
-    }
-    // Leg 3: end of descent before cruise to dest
-    if(dsc3>total*0.02 && Math.abs(d1+d2+dsc3-(d1+d2))>total*0.03 && Math.abs(d1+d2+dsc3-(d1+d2+d3))>total*0.03){
-      transitions.push([d1+d2+dsc3, arr, '#3B6D11', 'BOD', dsc3, info.L3_dscMin, d1+d2]);
-    }
-  } else {
-    // 2-leg mode: descent in leg 2 (=leg 3)
-    if(dsc3>total*0.02 && Math.abs(d1+dsc3-(d1+d3))>total*0.03 && Math.abs(dsc3)>total*0.03){
-      transitions.push([d1+dsc3, arr, '#3B6D11', 'BOD', dsc3, info.L3_dscMin, d1]);
-    }
-  }
-
-  // Draw transition points: dashed vertical line + dot + label
-  transitions.forEach(([nm,ft,col,label,distFromWP,timeFromWP,prevWP])=>{
-    const x=xp(nm);
-    // Dashed vertical line
-    h+=`<line x1="${x.toFixed(1)}" y1="${PT}" x2="${x.toFixed(1)}" y2="${(PT+IH).toFixed(1)}" stroke="${col}" stroke-width="0.8" stroke-dasharray="2,3" opacity="0.4"/>`;
-    // Dot
-    h+=`<circle cx="${x.toFixed(1)}" cy="${yp(ft).toFixed(1)}" r="3" fill="${col}" opacity="0.7"/>`;
-    // Label above profile: "TOC" or "BOD"
-    h+=`<text x="${x.toFixed(1)}" y="${(yp(ft)-18).toFixed(1)}" font-size="7.5" fill="${col}" text-anchor="middle" font-weight="600" opacity="0.8">${label}</text>`;
-    // Distance + time from previous waypoint
-    h+=`<text x="${x.toFixed(1)}" y="${(yp(ft)-9).toFixed(1)}" font-size="7" fill="${col}" text-anchor="middle" opacity="0.7">${n1(distFromWP)} nm · ${mf(timeFromWP)}</text>`;
+  // X-axis labels
+  cumDist=0;let cumMin=0;
+  const xLabels=[[0,'Dep',0]];
+  results.forEach((r,i)=>{
+    cumDist+=r.dist;cumMin+=r.min;
+    const label=i<results.length-1?'Leg '+(i+1):'Dest';
+    xLabels.push([cumDist,label,cumMin]);
   });
-
-  // X-axis: waypoint labels (row 1: name, row 2: distance, row 3: cumulative time)
-  const cumT1=info.L1_min;
-  const cumT2=cumT1+info.L2_min;
-  const cumT3=cumT2+info.L3_min;
-  const xLabels=hasLeg2
-    ?[[0,'Dep',0],[d1,'Leg 1',cumT1],[d1+d2,'Leg 2',cumT2],[d1+d2+d3,'Dest',cumT3]]
-    :[[0,'Dep',0],[d1,'Leg 1',cumT1],[d1+d3,'Dest',cumT1+info.L3_min]];
-  xLabels.forEach(([nm,lbl,cumMin])=>{
+  xLabels.forEach(([nm,lbl,cm])=>{
     h+=`<text x="${xp(nm).toFixed(1)}" y="${(PT+IH+13).toFixed(1)}" font-size="9" fill="${tc}" text-anchor="middle" font-weight="500">${lbl}</text>`;
     h+=`<text x="${xp(nm).toFixed(1)}" y="${(PT+IH+24).toFixed(1)}" font-size="8" fill="${tc}" text-anchor="middle">${Math.round(nm)} nm</text>`;
-    if(nm>0) h+=`<text x="${xp(nm).toFixed(1)}" y="${(PT+IH+35).toFixed(1)}" font-size="8" fill="${tc}" text-anchor="middle">${mf(cumMin)}</text>`;
+    if(nm>0)h+=`<text x="${xp(nm).toFixed(1)}" y="${(PT+IH+35).toFixed(1)}" font-size="8" fill="${tc}" text-anchor="middle">${mfShort(cm)}</text>`;
   });
 
-  // Leg distance + time annotations (centered between waypoints)
-  const legAnnotations=hasLeg2
-    ?[[0,d1,info.L1_min,'#185FA5'],[d1,d1+d2,info.L2_min,'#534AB7'],[d1+d2,d1+d2+d3,info.L3_min,'#3B6D11']]
-    :[[0,d1,info.L1_min,'#185FA5'],[d1,d1+d3,info.L3_min,'#3B6D11']];
-  legAnnotations.forEach(([from,to,legMin,col])=>{
-    const mid=(from+to)/2;
-    const legDist=to-from;
-    h+=`<text x="${xp(mid).toFixed(1)}" y="${(PT+IH+50).toFixed(1)}" font-size="8" fill="${col}" text-anchor="middle" font-weight="500">${Math.round(legDist)} nm · ${mf(legMin)}</text>`;
+  // Leg annotations
+  cumDist=0;cumMin=0;
+  results.forEach((r,i)=>{
+    const col=i<results.length-1?lc(i):DEST_COL;
+    const mid=cumDist+r.dist/2;
+    h+=`<text x="${xp(mid).toFixed(1)}" y="${(PT+IH+50).toFixed(1)}" font-size="8" fill="${col.c1}" text-anchor="middle" font-weight="500">${Math.round(r.dist)} nm \u00b7 ${mfShort(r.min)}</text>`;
+    cumDist+=r.dist;
   });
 
-  // Y-axis label
   h+=`<text x="${(PL-36).toFixed(0)}" y="${(PT+IH/2).toFixed(1)}" font-size="9" fill="${tc}" text-anchor="middle" transform="rotate(-90,${PL-36},${(PT+IH/2).toFixed(1)})">Altitude (ft)</text>`;
   svg.innerHTML=h;
 }
 
-// ── Save / Load route planner state ──
-const ids=['soh','soc0','res','oat','dep','p1alt','d1','p2alt','d2','arr','d3'];
-
-function saveState(){
-  const state={};
-  ids.forEach(id=>state[id]=document.getElementById(id).value);
-  state.leg2On=document.getElementById('leg2-on').checked;
-  state.approach=document.querySelector('input[name="approach"]:checked').value;
-  localStorage.setItem('velis_route_state',JSON.stringify(state));
+/* ═══ STATE ═══ */
+function getFullState(){
+  return{soh:document.getElementById('soh').value,soc0:document.getElementById('soc0').value,
+    res:document.getElementById('res').value,oat:document.getElementById('oat').value,
+    depAlt:document.getElementById('dep-alt').value,arrAlt:document.getElementById('arr-alt').value,
+    arrDist:document.getElementById('arr-dist').value,
+    approach:document.querySelector('input[name="approach"]:checked').value,
+    legs:JSON.parse(JSON.stringify(legs))};
 }
-
+function applyFullState(s){
+  if(s.soh!==undefined)document.getElementById('soh').value=s.soh;
+  if(s.soc0!==undefined)document.getElementById('soc0').value=s.soc0;
+  if(s.res!==undefined)document.getElementById('res').value=s.res;
+  if(s.oat!==undefined)document.getElementById('oat').value=s.oat;
+  if(s.depAlt!==undefined)document.getElementById('dep-alt').value=s.depAlt;
+  if(s.arrAlt!==undefined)document.getElementById('arr-alt').value=s.arrAlt;
+  if(s.arrDist!==undefined)document.getElementById('arr-dist').value=s.arrDist;
+  if(s.approach)document.querySelector(`input[name="approach"][value="${s.approach}"]`).checked=true;
+  if(s.legs&&Array.isArray(s.legs)&&s.legs.length>0) legs=s.legs;
+  renderLegs(); saveState(); update();
+}
+function saveState(){localStorage.setItem('velis_route_state',JSON.stringify(getFullState()));}
 function loadState(){
-  const raw=localStorage.getItem('velis_route_state');
-  if(!raw) return;
-  try{
-    const state=JSON.parse(raw);
-    ids.forEach(id=>{if(state[id]!==undefined) document.getElementById(id).value=state[id];});
-    if(state.leg2On!==undefined) document.getElementById('leg2-on').checked=state.leg2On;
-    if(state.approach) document.querySelector(`input[name="approach"][value="${state.approach}"]`).checked=true;
+  const raw=localStorage.getItem('velis_route_state');if(!raw)return;
+  try{const s=JSON.parse(raw);
+    ['soh','soc0','res','oat'].forEach(id=>{if(s[id]!==undefined)document.getElementById(id).value=s[id];});
+    if(s.depAlt!==undefined)document.getElementById('dep-alt').value=s.depAlt;
+    if(s.arrAlt!==undefined)document.getElementById('arr-alt').value=s.arrAlt;
+    if(s.arrDist!==undefined)document.getElementById('arr-dist').value=s.arrDist;
+    if(s.approach)document.querySelector(`input[name="approach"][value="${s.approach}"]`).checked=true;
+    if(s.legs&&Array.isArray(s.legs)&&s.legs.length>0) legs=s.legs;
   }catch(e){}
 }
 
+/* ═══ INIT ═══ */
 async function init(){
   await loadPOH();
   loadState();
-  ids.forEach(id=>document.getElementById(id).addEventListener('input',()=>{saveState();update();}));
-  document.getElementById('leg2-on').addEventListener('change',()=>{saveState();update();});
+  renderLegs();
+  ['soh','soc0','res','oat','dep-alt','arr-alt','arr-dist'].forEach(id=>
+    document.getElementById(id).addEventListener('input',()=>{saveState();update();}));
   document.querySelectorAll('input[name="approach"]').forEach(r=>r.addEventListener('change',()=>{saveState();update();}));
 
-// ── Save / Load routes as JSON files ──
-function getCurrentState(){
-  const state={};
-  ids.forEach(id=>state[id]=document.getElementById(id).value);
-  state.leg2On=document.getElementById('leg2-on').checked;
-  state.approach=document.querySelector('input[name="approach"]:checked').value;
-  return state;
-}
-function applyState(state){
-  ids.forEach(id=>{if(state[id]!==undefined) document.getElementById(id).value=state[id];});
-  if(state.leg2On!==undefined) document.getElementById('leg2-on').checked=state.leg2On;
-  if(state.approach) document.querySelector(`input[name="approach"][value="${state.approach}"]`).checked=true;
-  saveState();
-  update();
-}
-function showStatus(msg){
-  const el=document.getElementById('route-status');
-  el.textContent=msg;
-  setTimeout(()=>{el.textContent='';},3000);
-}
-
-  // Save: download JSON file
+  // Route save/load
   document.getElementById('route-save').addEventListener('click',()=>{
     const name=document.getElementById('route-name').value.trim();
     if(!name){document.getElementById('route-name').focus();return;}
-    const data={name,savedAt:new Date().toISOString(),route:getCurrentState()};
+    const data={name,savedAt:new Date().toISOString(),route:getFullState()};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url;
-    a.download=name.replace(/[^a-zA-Z0-9_\- ]/g,'').replace(/\s+/g,'_')+'.json';
-    a.click();
-    URL.revokeObjectURL(url);
-    showStatus('Saved: '+a.download);
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    a.download=name.replace(/[^a-zA-Z0-9_\- ]/g,'').replace(/\s+/g,'_')+'.json';a.click();
+    URL.revokeObjectURL(a.href);
+    const el=document.getElementById('route-status');el.textContent='Saved: '+a.download;setTimeout(()=>el.textContent='',3000);
   });
-
-  // Load: open file picker
-  document.getElementById('route-load').addEventListener('click',()=>{
-    document.getElementById('route-file').click();
-  });
-  document.getElementById('route-file').addEventListener('change',(e)=>{
-    const file=e.target.files[0];
-    if(!file) return;
+  document.getElementById('route-load').addEventListener('click',()=>document.getElementById('route-file').click());
+  document.getElementById('route-file').addEventListener('change',e=>{
+    const file=e.target.files[0];if(!file)return;
     const reader=new FileReader();
-    reader.onload=(ev)=>{
-      try{
-        const data=JSON.parse(ev.target.result);
-        const state=data.route||data;
-        applyState(state);
-        const routeName=data.name||file.name.replace('.json','');
-        document.getElementById('route-name').value=routeName;
-        showStatus('Loaded: '+routeName);
-      }catch(err){
-        showStatus('Error: invalid JSON file');
-      }
-    };
-    reader.readAsText(file);
-    e.target.value='';
+    reader.onload=ev=>{try{const data=JSON.parse(ev.target.result);applyFullState(data.route||data);
+      document.getElementById('route-name').value=data.name||file.name.replace('.json','');
+      const el=document.getElementById('route-status');el.textContent='Loaded: '+(data.name||file.name);setTimeout(()=>el.textContent='',3000);
+    }catch(err){const el=document.getElementById('route-status');el.textContent='Error: invalid file';setTimeout(()=>el.textContent='',3000);}};
+    reader.readAsText(file);e.target.value='';
   });
 
   update();
