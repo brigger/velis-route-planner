@@ -274,7 +274,9 @@ function update(){
   // 1. Base interpolation from table
   const baseGR=interp2D(grTable,altPts,isaPts,alt,isaDev);
   const baseOB=interp2D(obTable,altPts,isaPts,alt,isaDev);
-  const baseSL_GR=interp2D([grTableSL],new Float64Array([0]),isaPts,0,isaDev); // SL ground roll for slope calc
+  // SL ground roll for slope correction: 1D interpolation on ISA dev only
+  const dSL=bracket(isaPts,isaDev);
+  const baseSL_GR=lerp(grTableSL[dSL.i],grTableSL[dSL.i+1],dSL.t);
 
   // 2. Mass correction: (mass/600)²
   const massFactor=(mass/600)*(mass/600);
