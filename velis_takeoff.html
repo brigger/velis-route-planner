@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Velis Electro — Takeoff Distance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--font:'DM Sans',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;--bg-page:#f0ede8;--bg-card:#fff;--bg-sec:#f5f4f1;--bd:#e2ddd6;--bd2:#ccc8c0;--tx:#1a1a1a;--tx2:#6b6660;--rad-lg:14px;--rad-md:8px;--blue:#185FA5;--green:#3B6D11;--amber:#EF9F27;}
+*,*::before,*::after{box-sizing:border-box;}
+body{margin:0;background:var(--bg-page);font-family:var(--font);color:var(--tx);padding:0 0 48px;}
+.page-wrap{max-width:860px;margin:0 auto;padding:0 16px;}
+.nav{background:var(--bg-card);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:10;backdrop-filter:blur(12px);background:rgba(255,255,255,0.92);}
+.nav-inner{max-width:860px;margin:0 auto;padding:0 16px;display:flex;align-items:stretch;}
+.nav-brand{padding:11px 18px 11px 0;font-size:13px;font-weight:700;color:var(--tx);border-right:1px solid var(--bd);margin-right:4px;letter-spacing:-0.02em;display:flex;align-items:center;gap:6px;}
+.nav-brand svg{opacity:0.5;}
+.nav-tab{padding:11px 18px;font-size:12.5px;font-weight:500;color:var(--tx2);text-decoration:none;border-bottom:2px solid transparent;transition:all 0.15s;}
+.nav-tab:hover{color:var(--tx);}
+.nav-tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600;}
+.wrap{padding:16px 0;}
+.card{background:var(--bg-card);border:0.5px solid var(--bd);border-radius:var(--rad-lg);padding:1rem 1.25rem;margin-bottom:14px;}
+h3{font-size:15px;font-weight:700;margin:0 0 12px;color:var(--tx);letter-spacing:-0.02em;}
+.sr{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.sr label{font-size:12px;color:var(--tx2);min-width:180px;font-weight:500;}
+.sv{font-size:12px;font-weight:600;color:var(--tx);min-width:72px;text-align:right;}
+input[type=range]{-webkit-appearance:none;height:4px;border-radius:2px;background:#ddd;outline:none;flex:1;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#fff;border:1.5px solid #ccc;box-shadow:0 1px 3px rgba(0,0,0,0.15);cursor:pointer;}
+.radio-row{display:flex;align-items:center;gap:16px;margin-bottom:7px;}
+.radio-row span{font-size:12px;color:var(--tx2);font-weight:500;min-width:180px;}
+.radio-row label{font-size:12px;color:var(--tx2);display:flex;align-items:center;gap:4px;cursor:pointer;}
+.result-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+.res-box{background:var(--bg-sec);border-radius:var(--rad-md);padding:12px 14px;border-left:3px solid var(--blue);}
+.res-box.climb{border-left-color:var(--green);}
+.res-lbl{font-size:10px;color:var(--tx2);font-weight:500;margin:0 0 2px;}
+.res-val{font-size:24px;font-weight:700;color:var(--tx);letter-spacing:-0.02em;}
+.res-unit{font-size:10px;color:var(--tx2);font-weight:500;}
+.ptable{width:100%;border-collapse:collapse;font-size:11px;margin-top:6px;}
+.ptable th{background:var(--bg-sec);font-size:10px;font-weight:600;color:var(--tx2);padding:5px 8px;border:0.5px solid var(--bd);text-align:center;text-transform:uppercase;letter-spacing:0.03em;}
+.ptable td{padding:5px 8px;border:0.5px solid var(--bd);text-align:center;font-weight:500;color:var(--tx);transition:background 0.15s;}
+.ptable td.hl{background:rgba(24,95,165,0.10);}
+.info{background:var(--bg-sec);border-radius:var(--rad-md);padding:8px 12px;font-size:12px;color:var(--tx2);margin-top:10px;line-height:1.5;}
+.info strong{color:var(--tx);}
+.det-phase{margin-bottom:10px;}
+.det-head{font-size:12px;font-weight:600;color:var(--tx);margin-bottom:1px;}
+.det-line{font-size:11px;color:var(--tx2);padding-left:16px;line-height:1.7;}
+.det-res{font-weight:700;color:var(--tx);text-decoration:underline;}
+.det-sep{border:none;border-top:1px solid var(--bd);margin:10px 0 8px;}
+.note{font-size:10px;color:var(--tx2);line-height:1.6;}
+.caution{background:#FAEEDA;color:#633806;border:0.5px solid #FAC775;border-radius:var(--rad-md);padding:8px 12px;font-size:11px;margin-top:8px;font-weight:500;}
+@media(max-width:540px){.result-grid{grid-template-columns:1fr;}.sr label,.radio-row span{min-width:130px;}}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <span class="nav-brand">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      Velis Electro
+    </span>
+    <a href="index.html" class="nav-tab">Route Planner</a>
+    <a href="velis_performance.html" class="nav-tab">Performance</a>
+    <a href="velis_takeoff.html" class="nav-tab active">Takeoff &amp; Landing</a>
+  </div>
+</nav>
+
+<div class="page-wrap"><div class="wrap">
+
+<!-- CONDITIONS -->
+<div class="card">
+  <h3>Takeoff conditions</h3>
+  <div class="sr"><label>Pressure altitude (ft)</label><input type="range" id="alt" min="0" max="12000" step="100" value="1525"><span class="sv" id="alt-v">1,525 ft</span></div>
+  <div class="sr"><label>Outside air temperature (OAT)</label><input type="range" id="oat" min="-30" max="45" step="1" value="15"><span class="sv" id="oat-v">+15 °C</span></div>
+  <div class="sr"><label>Mass (kg)</label><input type="range" id="mass" min="400" max="600" step="10" value="600"><span class="sv" id="mass-v">600 kg</span></div>
+  <div class="sr"><label>Wind component (kts)</label><input type="range" id="wind" min="-10" max="30" step="1" value="0"><span class="sv" id="wind-v">Calm</span></div>
+  <div class="radio-row"><span>Runway surface</span>
+    <label><input type="radio" name="surface" value="asphalt" checked style="accent-color:var(--blue);"> Asphalt</label>
+    <label><input type="radio" name="surface" value="grass" style="accent-color:var(--green);"> Grass</label>
+  </div>
+  <div class="radio-row"><span>Runway condition</span>
+    <label><input type="radio" name="condition" value="dry" checked> Dry</label>
+    <label><input type="radio" name="condition" value="wet"> Wet</label>
+  </div>
+  <div class="sr"><label>Runway slope (%)</label><input type="range" id="slope" min="-3" max="3" step="0.5" value="0"><span class="sv" id="slope-v">Level</span></div>
+  <div class="info">ISA deviation: <strong id="isa-dev">—</strong> &nbsp;·&nbsp; POH reference: MPTOP (50 kW), Flaps +1, V<sub>lof</sub> = 50 KIAS, V<sub>x</sub> = 60 KIAS</div>
+</div>
+
+<!-- RESULT -->
+<div class="card">
+  <h3>Takeoff distance</h3>
+  <div style="overflow-x:auto;">
+    <svg id="svg-to" viewBox="0 0 700 160" width="100%" style="display:block;min-width:320px;"></svg>
+  </div>
+  <div class="result-grid">
+    <div class="res-box"><div class="res-lbl">Ground roll</div><div class="res-val" id="r-gr">—</div><div class="res-unit">metres</div></div>
+    <div class="res-box climb"><div class="res-lbl">Distance to clear 50 ft obstacle</div><div class="res-val" id="r-50">—</div><div class="res-unit">metres</div></div>
+  </div>
+  <div class="caution">MTOP must be limited to 90 seconds (see POH Section 2 — Limitations).</div>
+</div>
+
+<!-- POH TABLE -->
+<div class="card">
+  <h3>POH takeoff distance tables — 600 kg, dry runway</h3>
+  <div id="poh-tables"></div>
+</div>
+
+<!-- CORRECTION FACTORS -->
+<div class="card">
+  <h3>Correction factors (from POH)</h3>
+  <table class="ptable" style="max-width:500px;">
+    <thead><tr><th>Factor</th><th>Correction</th></tr></thead>
+    <tbody>
+      <tr><td style="text-align:left;">Headwind</td><td>Subtract 10% per 12 kts headwind</td></tr>
+      <tr><td style="text-align:left;">Tailwind</td><td>Add 10% per 2 kts tailwind (max 10 kts)</td></tr>
+      <tr><td style="text-align:left;">Wet grass</td><td>Add 18% to ground roll on dry grass</td></tr>
+      <tr><td style="text-align:left;">Upslope</td><td>Add 22% of SL ground roll per 1% upslope</td></tr>
+      <tr><td style="text-align:left;">Downslope</td><td>Subtract 7% of SL ground roll per 1% downslope</td></tr>
+      <tr><td style="text-align:left;">Mass &ne; 600 kg</td><td>Approximation: &times; (mass / 600)&sup2; — <em>not from POH</em></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- DETAILED CALCULATION -->
+<div class="card">
+  <h3>Detailed calculation</h3>
+  <div id="det-calc"></div>
+</div>
+
+<div class="card note">
+  <strong style="color:var(--tx);">Source — Pipistrel Velis Electro POH, Section 5.6</strong><br>
+  Take off performance data extrapolated from flight test results. Values are estimations of actual take off roll and total distance to clear a 50 ft obstacle (ground roll plus climb distance).
+</div>
+
+</div></div>
+
+<script>
+let POH;
+
+async function loadPOH(){
+  const r=await fetch('velis_electro_poh.json');
+  POH=await r.json();
+}
+
+function lerp(a,b,t){return a+t*(b-a);}
+function bracket(pts,v){
+  const c=Math.max(pts[0],Math.min(pts[pts.length-1],v));
+  for(let i=0;i<pts.length-1;i++) if(c<=pts[i+1]) return {i,t:(c-pts[i])/(pts[i+1]-pts[i])};
+  return {i:pts.length-2,t:1};
+}
+
+function interp2D(table,altPts,isaPts,alt,isaDev){
+  const a=bracket(altPts,alt), d=bracket(isaPts,isaDev);
+  return lerp(
+    lerp(table[a.i][d.i],table[a.i][d.i+1],d.t),
+    lerp(table[a.i+1][d.i],table[a.i+1][d.i+1],d.t),
+    a.t
+  );
+}
+
+function n0(v){return Math.round(v);}
+function n1(v){return v.toFixed(1);}
+
+function buildTables(){
+  const to=POH.takeoff;
+  const altPts=to.altitude_ft;
+  const isaPts=to.isa_dev_c;
+  const tables=[
+    {label:'Asphalt',gr:to.asphalt_ground_roll_m,ob:to.asphalt_50ft_m},
+    {label:'Grass',gr:to.grass_ground_roll_m,ob:to.grass_50ft_m},
+  ];
+  let html='';
+  altPts.forEach((alt,ai)=>{
+    html+=`<div style="margin-bottom:12px;"><div style="font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:4px;">${alt===0?'Sea Level':alt.toLocaleString()+' ft'}</div>`;
+    html+=`<table class="ptable"><thead><tr><th>Surface</th><th>Distance</th>`;
+    isaPts.forEach(d=>html+=`<th>ISA ${d>=0?'+':''}${d}°C</th>`);
+    html+=`</tr></thead><tbody>`;
+    tables.forEach(t=>{
+      html+=`<tr><td rowspan="2" style="font-weight:600;">${t.label}</td><td>Ground roll</td>`;
+      t.gr[ai].forEach((v,di)=>html+=`<td id="c-${t.label[0]}g${ai}${di}">${v}</td>`);
+      html+=`</tr><tr><td>50 ft obst.</td>`;
+      t.ob[ai].forEach((v,di)=>html+=`<td id="c-${t.label[0]}o${ai}${di}">${v}</td>`);
+      html+=`</tr>`;
+    });
+    html+=`</tbody></table></div>`;
+  });
+  document.getElementById('poh-tables').innerHTML=html;
+}
+
+function drawSVG(gr,total){
+  const svg=document.getElementById('svg-to');
+  const W=700,H=160,ML=40,MR=40,MT=20,MB=30;
+  const IW=W-ML-MR;
+  // Scale: total distance = full width
+  const scale=IW/Math.max(total,1);
+  const grW=gr*scale;
+  const climbW=(total-gr)*scale;
+  const runY=H-MB-20;
+  const obstY=MT+20;
+  const obstH=runY-obstY;
+
+  let h='';
+  // Runway
+  h+=`<rect x="${ML}" y="${runY}" width="${IW}" height="3" fill="#ccc" rx="1"/>`;
+  // Ground roll (green bar on runway)
+  h+=`<rect x="${ML}" y="${runY-4}" width="${grW}" height="6" fill="${'#185FA5'}" rx="2" opacity="0.7"/>`;
+  // Ground roll arrow
+  if(grW>60){
+    h+=`<line x1="${ML}" y1="${runY+16}" x2="${ML+grW}" y2="${runY+16}" stroke="#185FA5" stroke-width="1"/>`;
+    h+=`<polygon points="${ML},${runY+13} ${ML+6},${runY+16} ${ML},${runY+19}" fill="#185FA5"/>`;
+    h+=`<polygon points="${ML+grW},${runY+13} ${ML+grW-6},${runY+16} ${ML+grW},${runY+19}" fill="#185FA5"/>`;
+    h+=`<text x="${ML+grW/2}" y="${runY+28}" font-size="9" fill="#185FA5" text-anchor="middle" font-weight="600">Ground Roll: ${n0(gr)} m</text>`;
+  }
+  // Climb path (curved line from liftoff to 50ft)
+  const liftX=ML+grW;
+  const obstX=ML+grW+climbW;
+  const cpX=liftX+(obstX-liftX)*0.5;
+  const cpY=runY-(obstH*0.3);
+  h+=`<path d="M${liftX},${runY} Q${cpX},${cpY} ${obstX},${obstY}" fill="none" stroke="#3B6D11" stroke-width="2"/>`;
+  // 50ft obstacle line
+  h+=`<line x1="${obstX}" y1="${runY}" x2="${obstX}" y2="${obstY}" stroke="#EF9F27" stroke-width="1.5" stroke-dasharray="4,3"/>`;
+  h+=`<text x="${obstX+8}" y="${obstY+obstH/2+4}" font-size="9" fill="#EF9F27" font-weight="600">50 ft</text>`;
+  // Total distance arrow
+  h+=`<line x1="${ML}" y1="${MT+6}" x2="${obstX}" y2="${MT+6}" stroke="#3B6D11" stroke-width="1"/>`;
+  h+=`<polygon points="${ML},${MT+3} ${ML+6},${MT+6} ${ML},${MT+9}" fill="#3B6D11"/>`;
+  h+=`<polygon points="${obstX},${MT+3} ${obstX-6},${MT+6} ${obstX},${MT+9}" fill="#3B6D11"/>`;
+  h+=`<text x="${(ML+obstX)/2}" y="${MT}" font-size="9" fill="#3B6D11" text-anchor="middle" font-weight="600">Distance to clear 50 ft obstacle: ${n0(total)} m</text>`;
+  // Start/end labels
+  h+=`<text x="${ML}" y="${runY-10}" font-size="8" fill="var(--tx2)" text-anchor="middle">V = 0</text>`;
+  h+=`<text x="${liftX}" y="${runY-10}" font-size="8" fill="#185FA5" text-anchor="middle" font-weight="500">Lift off</text>`;
+  h+=`<text x="${obstX}" y="${runY-10}" font-size="8" fill="#EF9F27" text-anchor="middle" font-weight="500">Obstacle</text>`;
+  // Dots
+  h+=`<circle cx="${ML}" cy="${runY}" r="4" fill="#185FA5"/>`;
+  h+=`<circle cx="${liftX}" cy="${runY}" r="4" fill="#185FA5"/>`;
+  h+=`<circle cx="${obstX}" cy="${obstY}" r="4" fill="#3B6D11"/>`;
+
+  svg.innerHTML=h;
+}
+
+function update(){
+  const to=POH.takeoff;
+  const altPts=to.altitude_ft;
+  const isaPts=to.isa_dev_c;
+
+  const alt=+document.getElementById('alt').value;
+  const oat=+document.getElementById('oat').value;
+  const mass=+document.getElementById('mass').value;
+  const wind=+document.getElementById('wind').value;
+  const surface=document.querySelector('input[name="surface"]:checked').value;
+  const condition=document.querySelector('input[name="condition"]:checked').value;
+  const slope=+document.getElementById('slope').value;
+
+  // Display values
+  document.getElementById('alt-v').textContent=alt.toLocaleString()+' ft';
+  document.getElementById('oat-v').textContent=(oat>=0?'+':'')+oat+' °C';
+  document.getElementById('mass-v').textContent=mass+' kg';
+  if(wind===0) document.getElementById('wind-v').textContent='Calm';
+  else if(wind>0) document.getElementById('wind-v').textContent=wind+' kts HW';
+  else document.getElementById('wind-v').textContent=Math.abs(wind)+' kts TW';
+  if(slope===0) document.getElementById('slope-v').textContent='Level';
+  else if(slope>0) document.getElementById('slope-v').textContent=slope+'% up';
+  else document.getElementById('slope-v').textContent=Math.abs(slope)+'% down';
+
+  // ISA deviation at this altitude
+  const isaTemp=15-2*alt/1000;
+  const isaDev=oat-isaTemp;
+  document.getElementById('isa-dev').textContent='ISA '+(isaDev>=0?'+':'')+n1(isaDev)+'°C';
+
+  // Select tables based on surface
+  const grTable=surface==='asphalt'?to.asphalt_ground_roll_m:to.grass_ground_roll_m;
+  const obTable=surface==='asphalt'?to.asphalt_50ft_m:to.grass_50ft_m;
+  const grTableSL=grTable[0]; // sea level row for slope correction
+
+  // 1. Base interpolation from table
+  const baseGR=interp2D(grTable,altPts,isaPts,alt,isaDev);
+  const baseOB=interp2D(obTable,altPts,isaPts,alt,isaDev);
+  const baseSL_GR=interp2D([grTableSL],new Float64Array([0]),isaPts,0,isaDev); // SL ground roll for slope calc
+
+  // 2. Mass correction: (mass/600)²
+  const massFactor=(mass/600)*(mass/600);
+  const massGR=baseGR*massFactor;
+  const massOB=baseOB*massFactor;
+  const massSL_GR=baseSL_GR*massFactor;
+
+  // 3. Wind correction
+  let windFactor=1;
+  if(wind>0){
+    // Headwind: subtract 10% per 12 kts
+    windFactor=1-(wind/12)*0.10;
+  }else if(wind<0){
+    // Tailwind: add 10% per 2 kts, max 10 kts
+    const tw=Math.min(Math.abs(wind),10);
+    windFactor=1+(tw/2)*0.10;
+  }
+  const windGR=massGR*windFactor;
+  const windOB=massOB*windFactor;
+
+  // 4. Wet grass correction (only for grass surface, wet condition)
+  let wetFactor=1;
+  if(surface==='grass'&&condition==='wet') wetFactor=1.18;
+  const wetGR=windGR*wetFactor;
+  const wetOB=windOB; // wet only affects ground roll
+
+  // 5. Slope correction (based on SL ground roll)
+  let slopeAdd=0;
+  if(slope>0){
+    slopeAdd=massSL_GR*0.22*slope;
+  }else if(slope<0){
+    slopeAdd=massSL_GR*(-0.07)*Math.abs(slope);
+  }
+  const finalGR=Math.max(0,wetGR+slopeAdd);
+  const finalOB=Math.max(0,wetOB+slopeAdd);
+
+  // Display results
+  document.getElementById('r-gr').textContent=n0(finalGR);
+  document.getElementById('r-50').textContent=n0(finalOB);
+
+  // Draw SVG
+  drawSVG(finalGR,finalOB);
+
+  // Highlight POH table cells
+  const a=bracket(altPts,alt);
+  const d=bracket(isaPts,isaDev);
+  const prefix=surface==='asphalt'?'A':'G';
+  // Clear all highlights
+  document.querySelectorAll('.ptable td.hl').forEach(c=>c.classList.remove('hl'));
+  // Highlight bracket cells
+  ['g','o'].forEach(type=>{
+    [[a.i,d.i],[a.i,d.i+1],[a.i+1,d.i],[a.i+1,d.i+1]].forEach(([ai,di])=>{
+      const cell=document.getElementById(`c-${prefix}${type}${ai}${di}`);
+      if(cell) cell.classList.add('hl');
+    });
+  });
+
+  // Detailed calculation
+  let det='';
+  det+=`<div class="det-phase"><div class="det-head">1. Base distances from POH table</div>`;
+  det+=`<div class="det-line">Pressure altitude: ${alt.toLocaleString()} ft &nbsp;·&nbsp; ISA deviation: ${isaDev>=0?'+':''}${n1(isaDev)}°C &nbsp;·&nbsp; Surface: ${surface}</div>`;
+  det+=`<div class="det-line">Interpolated (${surface}, 600 kg, calm, dry, level):</div>`;
+  det+=`<div class="det-line" style="padding-left:28px;">Ground roll = <span class="det-res">${n0(baseGR)} m</span></div>`;
+  det+=`<div class="det-line" style="padding-left:28px;">50 ft obstacle = <span class="det-res">${n0(baseOB)} m</span></div>`;
+  det+=`</div>`;
+
+  if(mass!==600){
+    det+=`<div class="det-phase"><div class="det-head">2. Mass correction (${mass} kg)</div>`;
+    det+=`<div class="det-line">Factor = (${mass} / 600)&sup2; = <strong>${massFactor.toFixed(3)}</strong> &nbsp; <em style="font-size:10px;">(approximation, not from POH)</em></div>`;
+    det+=`<div class="det-line" style="padding-left:28px;">Ground roll = ${n0(baseGR)} &times; ${massFactor.toFixed(3)} = <span class="det-res">${n0(massGR)} m</span></div>`;
+    det+=`<div class="det-line" style="padding-left:28px;">50 ft obstacle = ${n0(baseOB)} &times; ${massFactor.toFixed(3)} = <span class="det-res">${n0(massOB)} m</span></div>`;
+    det+=`</div>`;
+  }
+
+  if(wind!==0){
+    const stepNum=mass!==600?3:2;
+    const prevGR=mass!==600?massGR:baseGR;
+    const prevOB=mass!==600?massOB:baseOB;
+    det+=`<div class="det-phase"><div class="det-head">${stepNum}. Wind correction (${wind>0?wind+' kts headwind':Math.abs(wind)+' kts tailwind'})</div>`;
+    if(wind>0){
+      det+=`<div class="det-line">Headwind: subtract 10% per 12 kts &rarr; factor = 1 &minus; (${wind}/12 &times; 0.10) = <strong>${windFactor.toFixed(3)}</strong></div>`;
+    }else{
+      const tw=Math.min(Math.abs(wind),10);
+      det+=`<div class="det-line">Tailwind: add 10% per 2 kts &rarr; factor = 1 + (${tw}/2 &times; 0.10) = <strong>${windFactor.toFixed(3)}</strong></div>`;
+    }
+    det+=`<div class="det-line" style="padding-left:28px;">Ground roll = ${n0(prevGR)} &times; ${windFactor.toFixed(3)} = <span class="det-res">${n0(windGR)} m</span></div>`;
+    det+=`<div class="det-line" style="padding-left:28px;">50 ft obstacle = ${n0(prevOB)} &times; ${windFactor.toFixed(3)} = <span class="det-res">${n0(windOB)} m</span></div>`;
+    det+=`</div>`;
+  }
+
+  if(surface==='grass'&&condition==='wet'){
+    let stepNum=2;
+    if(mass!==600) stepNum++;
+    if(wind!==0) stepNum++;
+    det+=`<div class="det-phase"><div class="det-head">${stepNum}. Wet grass correction</div>`;
+    det+=`<div class="det-line">Add 18% to ground roll &rarr; factor = <strong>1.18</strong></div>`;
+    det+=`<div class="det-line" style="padding-left:28px;">Ground roll = ${n0(windGR)} &times; 1.18 = <span class="det-res">${n0(wetGR)} m</span></div>`;
+    det+=`<div class="det-line" style="padding-left:28px;">50 ft obstacle = unchanged (${n0(wetOB)} m)</div>`;
+    det+=`</div>`;
+  }
+
+  if(slope!==0){
+    let stepNum=2;
+    if(mass!==600) stepNum++;
+    if(wind!==0) stepNum++;
+    if(surface==='grass'&&condition==='wet') stepNum++;
+    const dir=slope>0?'upslope':'downslope';
+    const pct=slope>0?22:7;
+    det+=`<div class="det-phase"><div class="det-head">${stepNum}. Runway slope (${Math.abs(slope)}% ${dir})</div>`;
+    det+=`<div class="det-line">SL ground roll (${surface}) at ISA ${isaDev>=0?'+':''}${n1(isaDev)}°C = ${n0(massSL_GR)} m</div>`;
+    det+=`<div class="det-line">${slope>0?'Add':'Subtract'} ${pct}% of SL ground roll per 1% = ${n0(massSL_GR)} &times; ${(pct/100).toFixed(2)} &times; ${Math.abs(slope)} = <strong>${slope>0?'+':'&minus;'}${n0(Math.abs(slopeAdd))} m</strong></div>`;
+    det+=`<div class="det-line" style="padding-left:28px;">Ground roll = ${n0(wetGR)} ${slope>0?'+':'&minus;'} ${n0(Math.abs(slopeAdd))} = <span class="det-res">${n0(finalGR)} m</span></div>`;
+    det+=`<div class="det-line" style="padding-left:28px;">50 ft obstacle = ${n0(wetOB)} ${slope>0?'+':'&minus;'} ${n0(Math.abs(slopeAdd))} = <span class="det-res">${n0(finalOB)} m</span></div>`;
+    det+=`</div>`;
+  }
+
+  det+=`<hr class="det-sep">`;
+  det+=`<div style="font-size:12px;"><strong>Final result:</strong> Ground roll = <span class="det-res">${n0(finalGR)} m</span> &nbsp;·&nbsp; 50 ft obstacle = <span class="det-res">${n0(finalOB)} m</span> &nbsp;·&nbsp; Climb segment = ${n0(finalOB-finalGR)} m</div>`;
+
+  document.getElementById('det-calc').innerHTML=det;
+}
+
+// Init
+async function init(){
+  await loadPOH();
+  buildTables();
+
+  ['alt','oat','mass','wind','slope'].forEach(id=>
+    document.getElementById(id).addEventListener('input',update)
+  );
+  document.querySelectorAll('input[name="surface"],input[name="condition"]').forEach(r=>
+    r.addEventListener('change',update)
+  );
+  update();
+}
+init();
+</script>
+</body>
+</html>

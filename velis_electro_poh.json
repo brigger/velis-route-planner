@@ -40,5 +40,50 @@
       { "label": "Touch and go + traffic pattern",                               "group": "other",    "vals": [10, 11, 13, 15, 17, 21] },
       { "label": "Aborted landing + climb to 1,000 ft AGL — 64 kW (70 sec)",    "group": "other",    "vals": [8, 8, 10, 11, 14, 17] }
     ]
+  },
+  "takeoff": {
+    "description": "Take off distance at MPTOP (50kW), Flaps +1, 600 kg, dry runway",
+    "conditions": {
+      "power": "MPTOP (50 kW)",
+      "flaps": "+1",
+      "mass_kg": 600,
+      "speed_liftoff_kias": 50,
+      "speed_over_obstacle_kias": 60
+    },
+    "altitude_ft": [0, 4000, 8000, 12000],
+    "isa_dev_c": [-15, -5, 0, 5, 15],
+    "asphalt_ground_roll_m": [
+      [208, 230, 240, 250, 268],
+      [276, 295, 304, 313, 330],
+      [337, 355, 363, 371, 387],
+      [393, 409, 417, 424, 438]
+    ],
+    "asphalt_50ft_m": [
+      [391, 430, 448, 466, 499],
+      [512, 547, 564, 580, 610],
+      [622, 654, 669, 684, 712],
+      [722, 751, 765, 778, 804]
+    ],
+    "grass_ground_roll_m": [
+      [236, 260, 272, 283, 304],
+      [312, 335, 345, 355, 375],
+      [382, 402, 412, 421, 438],
+      [445, 464, 472, 481, 497]
+    ],
+    "grass_50ft_m": [
+      [476, 507, 517, 526, 555],
+      [591, 631, 650, 669, 704],
+      [731, 768, 785, 802, 833],
+      [833, 867, 883, 898, 927]
+    ],
+    "corrections": {
+      "headwind_subtract_pct_per_12kts": 10,
+      "tailwind_add_pct_per_2kts": 10,
+      "tailwind_max_kts": 10,
+      "wet_grass_add_ground_roll_pct": 18,
+      "upslope_add_pct_of_sl_gr_per_1pct": 22,
+      "downslope_sub_pct_of_sl_gr_per_1pct": 7
+    },
+    "caution": "MTOP must be limited to 90 seconds"
   }
 }
