@@ -3,153 +3,1170 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Velis Electro — Route Planner</title>
+<title>Velis Electro · Flight Energy Planning</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{--font:'DM Sans',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;--bg-page:#f0ede8;--bg-card:#fff;--bg-sec:#f5f4f1;--bd:#e2ddd6;--bd2:#ccc8c0;--tx:#1a1a1a;--tx2:#6b6660;--rad-lg:14px;--rad-md:8px;--blue:#185FA5;}
-  *,*::before,*::after{box-sizing:border-box;}
-  body{margin:0;background:var(--bg-page);font-family:var(--font);color:var(--tx);padding:0 0 48px;}
-  .page-wrap{max-width:860px;margin:0 auto;padding:0 16px;}
-  .nav{background:var(--bg-card);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:10;backdrop-filter:blur(12px);background:rgba(255,255,255,0.92);}
-  .nav-inner{max-width:860px;margin:0 auto;padding:0 16px;display:flex;align-items:stretch;}
-  .nav-brand{padding:11px 18px 11px 0;font-size:13px;font-weight:700;color:var(--tx);border-right:1px solid var(--bd);margin-right:4px;letter-spacing:-0.02em;display:flex;align-items:center;gap:6px;}
-  .nav-brand svg{opacity:0.5;}
-  .nav-tab{padding:11px 18px;font-size:12.5px;font-weight:500;color:var(--tx2);text-decoration:none;border-bottom:2px solid transparent;transition:all 0.15s;}
-  .nav-tab:hover{color:var(--tx);}
-  .nav-tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600;}
-  .perf-banner{background:var(--bg-sec);border:0.5px solid var(--bd);border-radius:var(--rad-md);padding:6px 12px;margin-bottom:14px;display:flex;align-items:center;flex-wrap:wrap;gap:6px;}
-  .perf-tag{font-size:10px;font-weight:600;color:var(--tx2);background:var(--bg-card);border:0.5px solid var(--bd);border-radius:12px;padding:2px 8px;}
-  .wrap{padding:16px 0;}
-  .card{background:var(--bg-card);border:0.5px solid var(--bd);border-radius:var(--rad-lg);padding:1rem 1.25rem;margin-bottom:14px;}
-  h3{font-size:15px;font-weight:700;margin:0 0 12px;color:var(--tx);letter-spacing:-0.02em;}
-  h4{font-size:10.5px;font-weight:600;color:var(--tx2);margin:0 0 8px;text-transform:uppercase;letter-spacing:0.06em;}
-  .leg-badge{font-size:11px;font-weight:500;padding:2px 10px;border-radius:20px;display:inline-block;}
-  .sr{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
-  .sr label{font-size:12px;color:var(--tx2);min-width:200px;font-weight:500;}
-  .sv{font-size:12px;font-weight:600;color:var(--tx);min-width:72px;text-align:right;}
-  .g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px;}
-  .met{background:var(--bg-sec);border-radius:var(--rad-md);padding:9px 11px;}
-  .met-l{font-size:10px;color:var(--tx2);margin:0 0 2px;}
-  .met-v{font-size:18px;font-weight:600;margin:0;color:var(--tx);}
-  .met-u{font-size:10px;color:var(--tx2);}
-  .seg-box{border-radius:var(--rad-md);padding:9px 11px;border:0.5px solid var(--bd);background:var(--bg-sec);}
-  .seg-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin:0 0 6px;}
-  .seg-row{display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px;}
-  .seg-k{color:var(--tx2);}
-  .seg-v{font-weight:500;color:var(--tx);}
-  .phase-track{display:flex;height:24px;border-radius:var(--rad-md);overflow:hidden;margin:8px 0 5px;}
-  .ps{display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;color:#fff;transition:width 0.3s;white-space:nowrap;overflow:hidden;}
-  .legend-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;}
-  .li{display:flex;align-items:center;gap:3px;font-size:10px;color:var(--tx2);}
-  .ld{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
-  .msg{border-radius:var(--rad-md);padding:8px 12px;font-size:12px;margin-top:8px;display:none;line-height:1.5;}
-  .msg-ok{background:#EAF3DE;color:#27500A;border:0.5px solid #C0DD97;}
-  .msg-warn{background:#FAEEDA;color:#633806;border:0.5px solid #FAC775;}
-  .msg-err{background:#FCEBEB;color:#791F1F;border:0.5px solid #F7C1C1;}
-  .note{font-size:10px;color:var(--tx2);line-height:1.6;}
-  .soc-strip{display:flex;align-items:stretch;gap:0;margin:10px 0 4px;}
-  .soc-wp{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
-  .soc-arrow{display:flex;align-items:center;color:var(--tx2);font-size:12px;padding-top:14px;flex-shrink:0;width:16px;justify-content:center;}
-  .soc-bar-wrap{width:36px;height:60px;border:1.5px solid var(--bd2);border-radius:4px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;position:relative;background:var(--bg-sec);}
-  .soc-pct{font-size:12px;font-weight:600;}
-  .soc-kwh{font-size:9px;color:var(--tx2);}
-  .soc-label{font-size:9px;color:var(--tx2);text-align:center;line-height:1.2;max-width:52px;}
-  .chain-note{font-size:12px;color:var(--tx2);background:var(--bg-sec);border-radius:var(--rad-md);padding:5px 10px;margin-bottom:8px;}
-  .det-phase{margin-bottom:10px;}
-  .det-head{font-size:12px;font-weight:600;color:var(--tx);margin-bottom:1px;}
-  .det-line{font-size:11px;color:var(--tx2);padding-left:16px;line-height:1.7;}
-  .det-res{font-weight:700;color:var(--tx);text-decoration:underline;}
-  .det-sep{border:none;border-top:1px solid var(--bd);margin:10px 0 8px;}
-  .det-total{font-size:12px;margin-bottom:3px;display:flex;justify-content:space-between;}
-  .add-btn{display:block;margin:0 auto 14px;padding:6px 18px;font-size:12px;font-weight:600;font-family:var(--font);color:var(--blue);background:var(--bg-card);border:1.5px dashed var(--blue);border-radius:var(--rad-md);cursor:pointer;opacity:0.7;transition:opacity 0.15s;}
-  .add-btn:hover{opacity:1;}
-  .del-btn{font-size:14px;font-weight:700;color:var(--tx2);background:none;border:1px solid var(--bd);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;line-height:1;transition:all 0.15s;}
-  .del-btn:hover{color:#791F1F;border-color:#791F1F;background:#FCEBEB;}
-  input[type=range]{-webkit-appearance:none;height:4px;border-radius:2px;background:#ddd;outline:none;flex:1;}
-  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#fff;border:1.5px solid #ccc;box-shadow:0 1px 3px rgba(0,0,0,0.15);cursor:pointer;}
-  input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#fff;border:1.5px solid #ccc;box-shadow:0 1px 3px rgba(0,0,0,0.15);cursor:pointer;}
-  @media(max-width:540px){.g4{grid-template-columns:1fr 1fr;}.sr label{min-width:130px;}}
+:root{
+  --font-display:'Chakra Petch',system-ui,sans-serif;
+  --font-body:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,sans-serif;
+  --font-mono:'JetBrains Mono',Menlo,Consolas,monospace;
+
+  /* Warm chart-paper palette */
+  --bg-page:#F4EFE2;
+  --bg-card:#FFFFFF;
+  --bg-elev:#FCFAF2;
+  --bg-sunken:#EEE7D2;
+  --bg-deep:#E5DCBF;
+
+  --bd-line:#DDD3B7;
+  --bd-accent:#C2B693;
+  --bd-bright:#8A7D54;
+
+  --tx-pri:#121B2A;
+  --tx-sec:#546071;
+  --tx-dim:#8A8572;
+  --tx-bright:#000000;
+
+  /* Aviation accent palette */
+  --navy:#0B3D68;
+  --navy-bright:#1258A0;
+  --navy-dim:#083052;
+  --terra:#C7501C;
+  --terra-dim:#8C3812;
+  --sage:#2E6B3E;
+  --sage-dim:#1F4A2B;
+  --amber:#B5830A;
+  --red:#B3261E;
+  --plum:#6B3A6B;
+  --teal:#0F6368;
+}
+
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:var(--font-body);
+  font-size:13px;
+  line-height:1.5;
+  color:var(--tx-pri);
+  background:
+    radial-gradient(ellipse 90% 50% at 15% 0%,rgba(11,61,104,0.05),transparent 60%),
+    radial-gradient(ellipse 70% 40% at 85% 20%,rgba(199,80,28,0.04),transparent 60%),
+    radial-gradient(ellipse 80% 60% at 50% 100%,rgba(46,107,62,0.035),transparent 60%),
+    var(--bg-page);
+  background-attachment:fixed;
+  min-height:100vh;
+  padding:0 0 80px;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+/* subtle chart grid overlay */
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image:
+    linear-gradient(rgba(138,125,84,0.08) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(138,125,84,0.08) 1px,transparent 1px);
+  background-size:48px 48px;
+  mask-image:radial-gradient(ellipse at center,black 20%,transparent 85%);
+  -webkit-mask-image:radial-gradient(ellipse at center,black 20%,transparent 85%);
+  pointer-events:none;
+  z-index:0;
+}
+
+/* === NAV === */
+.nav{
+  position:sticky;
+  top:0;
+  z-index:50;
+  background:linear-gradient(180deg,rgba(253,250,238,0.92),rgba(244,239,226,0.85));
+  backdrop-filter:blur(16px) saturate(1.4);
+  -webkit-backdrop-filter:blur(16px) saturate(1.4);
+  border-bottom:1px solid var(--bd-line);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.6) inset,
+    0 12px 32px -18px rgba(18,27,42,0.18);
+}
+.nav-inner{
+  max-width:960px;
+  margin:0 auto;
+  padding:14px 20px;
+  display:flex;
+  align-items:center;
+  gap:18px;
+}
+.brand-mark{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding-right:18px;
+  border-right:1px solid var(--bd-line);
+}
+.brand-logo{
+  width:34px;
+  height:34px;
+  display:grid;
+  place-items:center;
+  color:var(--navy);
+  position:relative;
+  border:1px solid rgba(11,61,104,0.35);
+  background:
+    radial-gradient(circle at center,rgba(11,61,104,0.08),transparent 70%),
+    var(--bg-card);
+  box-shadow:0 1px 2px rgba(18,27,42,0.06),inset 0 0 0 1px rgba(255,255,255,0.6);
+}
+.brand-text .name{
+  font-family:var(--font-display);
+  font-size:14px;
+  font-weight:700;
+  letter-spacing:0.14em;
+  text-transform:uppercase;
+  color:var(--tx-pri);
+  line-height:1;
+}
+.brand-text .tag{
+  font-family:var(--font-mono);
+  font-size:9px;
+  color:var(--tx-dim);
+  letter-spacing:0.16em;
+  text-transform:uppercase;
+  margin-top:4px;
+}
+.nav-tabs{
+  display:flex;
+  gap:2px;
+}
+.nav-tab{
+  font-family:var(--font-display);
+  font-size:11px;
+  font-weight:500;
+  letter-spacing:0.14em;
+  text-transform:uppercase;
+  color:var(--tx-sec);
+  text-decoration:none;
+  padding:9px 14px;
+  border:1px solid transparent;
+  transition:color 0.2s,background 0.2s,border-color 0.2s;
+  position:relative;
+}
+.nav-tab:hover{color:var(--tx-pri);border-color:var(--bd-line);}
+.nav-tab.active{
+  color:var(--navy);
+  border-color:rgba(11,61,104,0.28);
+  background:rgba(11,61,104,0.05);
+  box-shadow:inset 0 -2px 0 0 var(--navy);
+}
+.nav-meta{
+  margin-left:auto;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-family:var(--font-mono);
+  font-size:10px;
+  color:var(--tx-sec);
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+}
+.live-dot{
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:var(--sage);
+  box-shadow:0 0 0 2px rgba(46,107,62,0.2);
+  animation:livePulse 2.4s ease-in-out infinite;
+}
+@keyframes livePulse{
+  0%,100%{opacity:1;transform:scale(1);}
+  50%{opacity:0.55;transform:scale(0.82);}
+}
+
+/* === PAGE WRAP === */
+.page-wrap{
+  max-width:960px;
+  margin:0 auto;
+  padding:0 20px;
+  position:relative;
+  z-index:2;
+}
+.wrap{padding:28px 0 0;}
+
+.hero-title{
+  padding:8px 4px 22px;
+  border-bottom:1px solid var(--bd-line);
+  margin-bottom:22px;
+  position:relative;
+}
+.hero-title::after{
+  content:'';
+  position:absolute;
+  left:0;
+  bottom:-1px;
+  width:80px;
+  height:2px;
+  background:var(--navy);
+}
+.hero-eyebrow{
+  font-family:var(--font-mono);
+  font-size:10px;
+  color:var(--navy);
+  letter-spacing:0.18em;
+  text-transform:uppercase;
+  margin-bottom:8px;
+  display:inline-block;
+  padding:3px 10px;
+  border:1px solid rgba(11,61,104,0.3);
+  background:rgba(11,61,104,0.05);
+}
+.hero-h1{
+  font-family:var(--font-display);
+  font-size:clamp(28px,5vw,44px);
+  font-weight:600;
+  letter-spacing:-0.01em;
+  line-height:1.02;
+  margin:6px 0 8px;
+  color:var(--tx-pri);
+  text-transform:uppercase;
+}
+.hero-h1 em{
+  font-style:normal;
+  color:var(--terra);
+}
+.hero-sub{
+  font-family:var(--font-mono);
+  font-size:10px;
+  color:var(--tx-dim);
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+}
+
+/* === PERF BANNER === */
+.perf-banner{
+  background:linear-gradient(90deg,var(--bg-sunken) 0%,var(--bg-elev) 50%,var(--bg-sunken) 100%);
+  border:1px solid var(--bd-line);
+  border-radius:2px;
+  padding:0;
+  margin-bottom:18px;
+  display:flex;
+  align-items:stretch;
+  min-height:36px;
+  position:relative;
+  overflow:hidden;
+  box-shadow:0 1px 2px rgba(18,27,42,0.04);
+}
+.perf-banner::before{
+  content:'FLIGHT PARAMETERS';
+  font-family:var(--font-mono);
+  font-size:9px;
+  color:var(--navy);
+  font-weight:600;
+  letter-spacing:0.16em;
+  padding:0 14px;
+  display:flex;
+  align-items:center;
+  border-right:1px solid var(--bd-line);
+  background:rgba(11,61,104,0.05);
+  flex-shrink:0;
+}
+.perf-banner .tags{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:0;
+  padding:0;
+}
+.perf-tag{
+  font-family:var(--font-mono);
+  font-size:10.5px;
+  font-weight:500;
+  color:var(--tx-pri);
+  letter-spacing:0.04em;
+  padding:0 14px;
+  height:36px;
+  display:inline-flex;
+  align-items:center;
+  background:transparent;
+  border:none;
+  border-right:1px solid var(--bd-line);
+  border-radius:0;
+}
+.perf-tag sub{font-size:8px;vertical-align:baseline;}
+
+/* === CARDS === */
+.card{
+  background:var(--bg-card);
+  border:1px solid var(--bd-line);
+  border-radius:2px;
+  padding:24px 22px 20px;
+  margin-bottom:16px;
+  position:relative;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.7) inset,
+    0 1px 2px rgba(18,27,42,0.04),
+    0 8px 24px -16px rgba(18,27,42,0.12);
+  animation:cardIn 0.7s cubic-bezier(0.16,1,0.3,1) both;
+}
+.card[data-tag]::before{
+  content:attr(data-tag);
+  position:absolute;
+  top:0;
+  left:22px;
+  transform:translateY(-50%);
+  font-family:var(--font-mono);
+  font-size:9px;
+  font-weight:600;
+  color:var(--navy);
+  background:var(--bg-page);
+  padding:3px 10px;
+  letter-spacing:0.16em;
+  line-height:1;
+  white-space:nowrap;
+  text-transform:uppercase;
+  border:1px solid var(--bd-accent);
+  z-index:2;
+}
+.card[data-tag]::after{
+  content:'';
+  position:absolute;
+  bottom:6px;
+  right:6px;
+  width:18px;
+  height:3px;
+  background:
+    linear-gradient(90deg,var(--bd-accent) 0 4px,transparent 4px 7px,var(--bd-accent) 7px 11px,transparent 11px 14px,var(--bd-accent) 14px 18px);
+  opacity:0.7;
+}
+@keyframes cardIn{
+  from{opacity:0;transform:translateY(14px);}
+  to{opacity:1;transform:translateY(0);}
+}
+.card:nth-of-type(1){animation-delay:0.05s;}
+.card:nth-of-type(2){animation-delay:0.1s;}
+.card:nth-of-type(3){animation-delay:0.15s;}
+.card:nth-of-type(4){animation-delay:0.2s;}
+.card:nth-of-type(5){animation-delay:0.25s;}
+.card:nth-of-type(6){animation-delay:0.3s;}
+.card:nth-of-type(7){animation-delay:0.35s;}
+.card:nth-of-type(8){animation-delay:0.4s;}
+
+h3{
+  font-family:var(--font-display);
+  font-size:14px;
+  font-weight:600;
+  color:var(--tx-pri);
+  margin:2px 0 18px;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--bd-line);
+  position:relative;
+}
+h3::after{
+  content:'';
+  position:absolute;
+  left:0;
+  bottom:-1px;
+  width:32px;
+  height:2px;
+  background:var(--navy);
+}
+h4{
+  font-family:var(--font-mono);
+  font-size:9px;
+  font-weight:600;
+  color:var(--tx-dim);
+  margin:16px 0 8px;
+  text-transform:uppercase;
+  letter-spacing:0.14em;
+}
+
+/* === LEG BADGES === */
+.leg-badge{
+  font-family:var(--font-mono);
+  font-size:10px;
+  font-weight:600;
+  letter-spacing:0.14em;
+  text-transform:uppercase;
+  padding:5px 11px;
+  border:1px solid;
+  border-radius:0;
+  display:inline-block;
+  line-height:1;
+}
+
+/* === SLIDER ROWS === */
+.sr{
+  display:grid;
+  grid-template-columns:1fr auto;
+  align-items:center;
+  gap:6px 18px;
+  padding:11px 0 12px;
+  border-bottom:1px dashed var(--bd-line);
+}
+.sr:last-child{border-bottom:none;padding-bottom:4px;}
+.sr label{
+  font-family:var(--font-body);
+  font-size:11px;
+  font-weight:500;
+  color:var(--tx-sec);
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+  grid-column:1;
+  grid-row:1;
+  min-width:0;
+}
+.sr input[type=range]{
+  grid-column:1 / -1;
+  grid-row:2;
+  width:100%;
+  margin:6px 0 0;
+}
+.sr .sv{
+  font-family:var(--font-mono);
+  font-size:15px;
+  font-weight:600;
+  color:var(--navy);
+  grid-column:2;
+  grid-row:1;
+  text-align:right;
+  min-width:90px;
+  white-space:nowrap;
+}
+
+input[type=range]{
+  -webkit-appearance:none;
+  appearance:none;
+  height:3px;
+  border-radius:0;
+  background:linear-gradient(90deg,var(--bd-accent),var(--bd-line));
+  outline:none;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:16px;
+  height:16px;
+  border-radius:50%;
+  background:var(--navy);
+  border:2px solid var(--bg-card);
+  box-shadow:
+    0 0 0 1px var(--navy),
+    0 2px 4px rgba(11,61,104,0.35);
+  cursor:pointer;
+  transition:transform 0.15s,box-shadow 0.15s;
+}
+input[type=range]::-webkit-slider-thumb:hover{
+  transform:scale(1.15);
+  box-shadow:
+    0 0 0 1px var(--navy),
+    0 3px 8px rgba(11,61,104,0.45);
+}
+input[type=range]::-moz-range-thumb{
+  width:16px;
+  height:16px;
+  border-radius:50%;
+  background:var(--navy);
+  border:2px solid var(--bg-card);
+  box-shadow:0 0 0 1px var(--navy),0 2px 4px rgba(11,61,104,0.35);
+  cursor:pointer;
+}
+
+/* === CHAIN NOTES === */
+.chain-note{
+  font-family:var(--font-mono);
+  font-size:10px;
+  color:var(--tx-sec);
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  padding:7px 12px;
+  background:rgba(11,61,104,0.04);
+  border-left:2px solid rgba(11,61,104,0.4);
+  margin-bottom:12px;
+}
+
+/* === APPROACH SEG CTRL === */
+.approach-row{
+  margin-top:14px;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  flex-wrap:wrap;
+}
+.approach-label{
+  font-family:var(--font-mono);
+  font-size:10px;
+  color:var(--tx-dim);
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+}
+.seg-ctrl{
+  display:inline-flex;
+  border:1px solid var(--bd-accent);
+  background:var(--bg-sunken);
+  border-radius:2px;
+  overflow:hidden;
+}
+.seg-opt{cursor:pointer;display:block;}
+.seg-opt input{display:none;}
+.seg-opt span{
+  display:block;
+  font-family:var(--font-mono);
+  font-size:10.5px;
+  font-weight:500;
+  padding:8px 14px;
+  color:var(--tx-sec);
+  border-right:1px solid var(--bd-line);
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  transition:background 0.2s,color 0.2s;
+}
+.seg-opt:last-child span{border-right:none;}
+.seg-opt input:checked + span{
+  background:rgba(46,107,62,0.12);
+  color:var(--sage);
+  font-weight:600;
+}
+.seg-opt:hover span{color:var(--tx-pri);}
+
+/* === BUTTONS === */
+.btn{
+  font-family:var(--font-mono);
+  font-size:10.5px;
+  font-weight:500;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  padding:8px 16px;
+  border:1px solid;
+  background:transparent;
+  cursor:pointer;
+  transition:all 0.2s;
+  border-radius:2px;
+  color:var(--tx-sec);
+}
+.btn-primary{
+  color:#fff;
+  border-color:var(--navy);
+  background:var(--navy);
+}
+.btn-primary:hover{
+  background:var(--navy-bright);
+  border-color:var(--navy-bright);
+  box-shadow:0 2px 8px rgba(11,61,104,0.3);
+}
+.btn-ghost{border-color:var(--bd-accent);color:var(--tx-sec);}
+.btn-ghost:hover{color:var(--tx-pri);border-color:var(--navy);background:rgba(11,61,104,0.04);}
+
+.del-btn{
+  font-family:var(--font-mono);
+  font-size:14px;
+  font-weight:400;
+  color:var(--tx-dim);
+  background:transparent;
+  border:1px solid var(--bd-accent);
+  border-radius:0;
+  width:22px;
+  height:22px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  padding:0;
+  line-height:1;
+  transition:all 0.15s;
+}
+.del-btn:hover{
+  color:var(--red);
+  border-color:var(--red);
+  background:rgba(179,38,30,0.08);
+}
+
+.add-btn{
+  display:block;
+  margin:4px auto 18px;
+  padding:11px 28px;
+  font-family:var(--font-mono);
+  font-size:10.5px;
+  font-weight:500;
+  letter-spacing:0.16em;
+  text-transform:uppercase;
+  color:var(--navy);
+  background:var(--bg-card);
+  border:1px dashed var(--navy);
+  border-radius:0;
+  cursor:pointer;
+  transition:all 0.2s;
+}
+.add-btn:hover{
+  background:rgba(11,61,104,0.06);
+  box-shadow:0 2px 10px rgba(11,61,104,0.1);
+}
+
+/* === ROUTE I/O === */
+.route-io{padding:18px 22px 16px;}
+.route-io-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.route-io input[type=text]{
+  flex:1;
+  min-width:180px;
+  background:var(--bg-elev);
+  border:1px solid var(--bd-accent);
+  color:var(--tx-pri);
+  font-family:var(--font-mono);
+  font-size:12px;
+  padding:9px 14px;
+  border-radius:2px;
+  outline:none;
+  letter-spacing:0.04em;
+  transition:border-color 0.2s,box-shadow 0.2s;
+}
+.route-io input[type=text]::placeholder{
+  color:var(--tx-dim);
+  text-transform:uppercase;
+  letter-spacing:0.12em;
+  font-size:10px;
+}
+.route-io input[type=text]:focus{
+  border-color:var(--navy);
+  box-shadow:0 0 0 3px rgba(11,61,104,0.12);
+  background:var(--bg-card);
+}
+#route-status{
+  font-family:var(--font-mono);
+  font-size:10px;
+  color:var(--sage);
+  font-weight:600;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+}
+
+/* === METRICS (Mission summary) === */
+.g4{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+  margin-bottom:8px;
+}
+.met{
+  background:var(--bg-sunken);
+  border:1px solid var(--bd-line);
+  padding:14px 14px 12px;
+  position:relative;
+  overflow:hidden;
+}
+.met::before{
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;
+  height:2px;
+  background:linear-gradient(90deg,transparent 5%,var(--navy) 50%,transparent 95%);
+  opacity:0.55;
+}
+.met::after{
+  content:'';
+  position:absolute;
+  top:6px;
+  right:7px;
+  width:4px;
+  height:4px;
+  background:var(--navy);
+  border-radius:50%;
+  opacity:0.5;
+}
+.met-l{
+  font-family:var(--font-mono);
+  font-size:9px;
+  font-weight:600;
+  color:var(--tx-dim);
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  margin:0 0 8px;
+}
+.met-v{
+  font-family:var(--font-mono);
+  font-size:24px;
+  font-weight:700;
+  color:var(--navy);
+  margin:0;
+  letter-spacing:-0.02em;
+  line-height:1;
+}
+.met-u{
+  font-family:var(--font-mono);
+  font-size:9px;
+  font-weight:500;
+  color:var(--tx-dim);
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  margin-top:5px;
+  display:inline-block;
+}
+
+/* === SEG BOXES === */
+#seg-grid{gap:10px;}
+.seg-box{
+  background:var(--bg-sunken);
+  border:1px solid var(--bd-line);
+  border-left:3px solid;
+  border-radius:0;
+  padding:12px 14px;
+  position:relative;
+}
+.seg-title{
+  font-family:var(--font-mono);
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  margin:0 0 8px;
+}
+.seg-row{
+  display:flex;
+  justify-content:space-between;
+  font-family:var(--font-mono);
+  font-size:10.5px;
+  padding:2px 0;
+}
+.seg-k{
+  color:var(--tx-dim);
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+  font-size:9.5px;
+}
+.seg-v{color:var(--tx-pri);font-weight:500;}
+
+/* === PHASE TRACK === */
+.phase-track{
+  display:flex;
+  height:30px;
+  border-radius:0;
+  overflow:hidden;
+  margin:12px 0 8px;
+  border:1px solid var(--bd-accent);
+  background:var(--bg-sunken);
+  box-shadow:inset 0 1px 3px rgba(18,27,42,0.12);
+}
+.ps{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:var(--font-mono);
+  font-size:9.5px;
+  font-weight:700;
+  color:#fff;
+  text-shadow:0 1px 2px rgba(0,0,0,0.4);
+  transition:width 0.4s;
+  white-space:nowrap;
+  overflow:hidden;
+  letter-spacing:0.05em;
+  position:relative;
+}
+.legend-row{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+.li{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  font-family:var(--font-mono);
+  font-size:9px;
+  color:var(--tx-sec);
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+}
+.ld{
+  width:10px;
+  height:10px;
+  border-radius:0;
+  flex-shrink:0;
+  border:1px solid rgba(0,0,0,0.1);
+}
+
+/* === MSG ANNUNCIATORS === */
+.msg{
+  font-family:var(--font-mono);
+  font-size:11px;
+  letter-spacing:0.04em;
+  padding:12px 16px 12px 20px;
+  border-left:3px solid;
+  margin-top:12px;
+  display:none;
+  line-height:1.6;
+  position:relative;
+  font-weight:500;
+}
+.msg::before{
+  content:'';
+  position:absolute;
+  left:9px;
+  top:50%;
+  width:5px;
+  height:5px;
+  border-radius:50%;
+  transform:translateY(-50%);
+}
+.msg-ok{
+  border-color:var(--sage);
+  color:var(--sage-dim);
+  background:rgba(46,107,62,0.07);
+}
+.msg-ok::before{background:var(--sage);box-shadow:0 0 0 2px rgba(46,107,62,0.25);}
+.msg-warn{
+  border-color:var(--amber);
+  color:#7A5607;
+  background:rgba(181,131,10,0.08);
+}
+.msg-warn::before{background:var(--amber);box-shadow:0 0 0 2px rgba(181,131,10,0.25);}
+.msg-err{
+  border-color:var(--red);
+  color:var(--red);
+  background:rgba(179,38,30,0.07);
+  animation:errFlash 1.2s ease-in-out infinite alternate;
+}
+.msg-err::before{background:var(--red);box-shadow:0 0 0 2px rgba(179,38,30,0.25);}
+@keyframes errFlash{
+  from{background:rgba(179,38,30,0.04);}
+  to{background:rgba(179,38,30,0.14);}
+}
+
+/* === NOTE === */
+.note{
+  font-family:var(--font-body);
+  font-size:11px;
+  color:var(--tx-sec);
+  line-height:1.7;
+}
+.note strong{color:var(--tx-pri);font-weight:600;}
+
+/* === SOC WATERFALL === */
+.soc-strip{
+  display:flex;
+  align-items:stretch;
+  gap:0;
+  margin:14px 0 4px;
+  padding:22px 14px 12px;
+  background:var(--bg-sunken);
+  border:1px solid var(--bd-line);
+  border-radius:2px;
+  position:relative;
+  overflow:hidden;
+}
+.soc-strip::before{
+  content:'STATE OF CHARGE · %';
+  position:absolute;
+  top:8px;
+  left:14px;
+  font-family:var(--font-mono);
+  font-size:8.5px;
+  color:var(--tx-dim);
+  font-weight:600;
+  letter-spacing:0.16em;
+  text-transform:uppercase;
+}
+.soc-strip::after{
+  content:'';
+  position:absolute;
+  top:34px;
+  bottom:42px;
+  right:6px;
+  width:4px;
+  background:
+    linear-gradient(180deg,var(--tx-dim) 0 1px,transparent 1px 50%,var(--tx-dim) 50% 51%,transparent 51% 99%,var(--tx-dim) 99% 100%);
+  opacity:0.35;
+}
+.soc-wp{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:5px;
+  min-width:52px;
+}
+.soc-bar-wrap{
+  width:40px;
+  height:72px;
+  border:1px solid var(--bd-accent);
+  border-radius:0;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-end;
+  position:relative;
+  background:var(--bg-card);
+  box-shadow:inset 0 1px 3px rgba(18,27,42,0.12);
+}
+.soc-bar-wrap::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  background-image:
+    linear-gradient(180deg,transparent 24%,rgba(18,27,42,0.14) 25%,transparent 26%,transparent 49%,rgba(18,27,42,0.14) 50%,transparent 51%,transparent 74%,rgba(18,27,42,0.14) 75%,transparent 76%);
+  pointer-events:none;
+  z-index:3;
+}
+.soc-pct{
+  font-family:var(--font-mono);
+  font-size:13px;
+  font-weight:700;
+}
+.soc-kwh{
+  font-family:var(--font-mono);
+  font-size:9px;
+  color:var(--tx-dim);
+  letter-spacing:0.04em;
+}
+.soc-label{
+  font-family:var(--font-mono);
+  font-size:8.5px;
+  color:var(--tx-sec);
+  text-align:center;
+  line-height:1.25;
+  max-width:58px;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  font-weight:600;
+  margin-top:2px;
+}
+.soc-arrow{
+  display:flex;
+  align-items:center;
+  color:var(--navy);
+  font-size:12px;
+  padding-top:28px;
+  flex-shrink:0;
+  width:14px;
+  justify-content:center;
+  opacity:0.45;
+}
+
+/* === FLIGHT PROFILE SVG === */
+.svg-wrap{
+  overflow-x:auto;
+  padding:10px 8px;
+  background:
+    radial-gradient(ellipse at 50% 60%,rgba(11,61,104,0.03),transparent 70%),
+    var(--bg-sunken);
+  border:1px solid var(--bd-line);
+  border-radius:2px;
+  position:relative;
+}
+.svg-wrap::before,.svg-wrap::after{
+  content:'';
+  position:absolute;
+  width:10px;
+  height:10px;
+  border:1px solid var(--navy);
+  opacity:0.55;
+}
+.svg-wrap::before{top:6px;left:6px;border-right:none;border-bottom:none;}
+.svg-wrap::after{bottom:6px;right:6px;border-left:none;border-top:none;}
+#svg{display:block;min-width:320px;}
+
+/* === DETAILED CALC === */
+.det-phase{
+  margin-bottom:14px;
+  padding:12px 14px;
+  background:var(--bg-sunken);
+  border-left:3px solid;
+  border-top:1px solid var(--bd-line);
+  border-right:1px solid var(--bd-line);
+  border-bottom:1px solid var(--bd-line);
+  font-family:var(--font-mono);
+}
+.det-head{
+  font-family:var(--font-display);
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  margin-bottom:6px;
+}
+.det-line{
+  color:var(--tx-sec);
+  font-size:10.5px;
+  line-height:1.7;
+  padding-left:18px;
+}
+.det-line strong{color:var(--tx-pri);}
+.det-res{
+  color:var(--navy);
+  font-weight:700;
+  text-decoration:none;
+  padding:1px 5px;
+  background:rgba(11,61,104,0.08);
+  border-bottom:1px solid rgba(11,61,104,0.4);
+  font-family:var(--font-mono);
+}
+.det-sep{
+  border:none;
+  border-top:1px dashed var(--bd-accent);
+  margin:14px 0 10px;
+}
+.det-total{
+  font-family:var(--font-mono);
+  font-size:11px;
+  color:var(--tx-sec);
+  display:flex;
+  justify-content:space-between;
+  padding:3px 2px;
+}
+.det-total strong{color:var(--tx-pri);font-weight:700;}
+
+/* === RESPONSIVE === */
+@media(max-width:640px){
+  .nav-inner{padding:12px 14px;gap:10px;flex-wrap:wrap;}
+  .nav-meta{display:none;}
+  .brand-mark{padding-right:10px;}
+  .nav-tab{padding:8px 10px;font-size:10px;}
+  .page-wrap{padding:0 14px;}
+  .hero-h1{font-size:28px;}
+  .g4{grid-template-columns:1fr 1fr;}
+  .card{padding:22px 16px 16px;}
+  .card[data-tag]::before{left:14px;}
+  .sr label{font-size:10px;}
+  .sr .sv{font-size:13px;min-width:0;}
+  .perf-banner::before{padding:0 10px;font-size:8px;}
+  .perf-tag{font-size:9.5px;padding:0 10px;}
+  .soc-wp{min-width:44px;}
+  .soc-bar-wrap{width:32px;}
+}
+
+::selection{background:rgba(11,61,104,0.2);color:var(--tx-pri);}
+
+/* scrollbar */
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-track{background:var(--bg-sunken);}
+::-webkit-scrollbar-thumb{background:var(--bd-accent);border:2px solid var(--bg-sunken);}
+::-webkit-scrollbar-thumb:hover{background:var(--bd-bright);}
 </style>
 </head>
 <body>
 
 <nav class="nav"><div class="nav-inner">
-  <span class="nav-brand"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>Velis Electro</span>
-  <a href="index.html" class="nav-tab active">Route Planner</a>
-  <a href="velis_takeoff.html" class="nav-tab">Takeoff &amp; Landing</a>
-  <a href="velis_performance.html" class="nav-tab">Performance</a>
+  <div class="brand-mark">
+    <div class="brand-logo">
+      <svg viewBox="0 0 32 32" width="26" height="26" fill="none" stroke="currentColor">
+        <circle cx="16" cy="16" r="13" stroke-width="0.8" opacity="0.4"/>
+        <circle cx="16" cy="16" r="8.5" stroke-width="0.6" opacity="0.3"/>
+        <line x1="16" y1="2" x2="16" y2="6" stroke-width="1"/>
+        <line x1="16" y1="26" x2="16" y2="30" stroke-width="1"/>
+        <line x1="2" y1="16" x2="6" y2="16" stroke-width="1"/>
+        <line x1="26" y1="16" x2="30" y2="16" stroke-width="1"/>
+        <line x1="6.5" y1="6.5" x2="9" y2="9" stroke-width="0.7" opacity="0.6"/>
+        <line x1="23" y1="23" x2="25.5" y2="25.5" stroke-width="0.7" opacity="0.6"/>
+        <line x1="6.5" y1="25.5" x2="9" y2="23" stroke-width="0.7" opacity="0.6"/>
+        <line x1="23" y1="9" x2="25.5" y2="6.5" stroke-width="0.7" opacity="0.6"/>
+        <path d="M16 5 L19.5 16 L16 13.5 L12.5 16 Z" fill="currentColor" stroke="none"/>
+      </svg>
+    </div>
+    <div class="brand-text">
+      <div class="name">Velis Electro</div>
+      <div class="tag">Electronic Flight Bag</div>
+    </div>
+  </div>
+  <div class="nav-tabs">
+    <a href="index.html" class="nav-tab active">Route</a>
+    <a href="velis_takeoff.html" class="nav-tab">T/O · Land</a>
+    <a href="velis_performance.html" class="nav-tab">Perf</a>
+  </div>
+  <div class="nav-meta">
+    <span class="live-dot"></span>
+    <span id="nav-clock">—— UTC</span>
+  </div>
 </div></nav>
 
 <div class="page-wrap"><div class="wrap">
-  <div style="font-size:10px;color:var(--tx2);text-align:center;margin-bottom:8px;font-style:italic;">Corrections for wind components not (yet) included in calculations</div>
+
+  <div class="hero-title">
+    <div class="hero-eyebrow">Pipistrel · 57.6 kW · 24.8 kWh · POH-Based</div>
+    <h1 class="hero-h1">Route Energy <em>Plan</em></h1>
+    <div class="hero-sub">Wind components not yet modeled · Departure-altitude ISA deviation held constant</div>
+  </div>
+
   <div class="perf-banner"><div class="tags" id="perf-tags"></div></div>
 
-  <!-- SAVE/LOAD ROUTES -->
-  <div class="card" style="padding:10px 14px;">
-    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-      <input id="route-name" type="text" placeholder="Route name" style="flex:1;min-width:160px;font-size:12px;font-family:var(--font);padding:5px 8px;border:1px solid var(--bd);border-radius:6px;background:var(--bg-card);color:var(--tx);outline:none;">
-      <button id="route-save" style="font-size:11px;font-weight:600;font-family:var(--font);padding:5px 12px;border:1px solid var(--blue);border-radius:6px;background:var(--blue);color:#fff;cursor:pointer;">Save to file</button>
-      <span style="color:var(--bd2);font-size:14px;">|</span>
-      <button id="route-load" style="font-size:11px;font-weight:600;font-family:var(--font);padding:5px 12px;border:1px solid var(--bd);border-radius:6px;background:var(--bg-sec);color:var(--tx2);cursor:pointer;">Load from file</button>
+  <!-- ROUTE I/O -->
+  <div class="card route-io" data-tag="00 · ROUTE I/O">
+    <div class="route-io-row">
+      <input id="route-name" type="text" placeholder="Route designator">
+      <button id="route-save" class="btn btn-primary">Save ↗</button>
+      <button id="route-load" class="btn btn-ghost">Load ↙</button>
       <input type="file" id="route-file" accept=".json" style="display:none;">
-      <span id="route-status" style="font-size:10px;color:var(--tx2);"></span>
+      <span id="route-status"></span>
     </div>
   </div>
 
   <!-- BATTERY -->
-  <div class="card">
-    <h3>Battery &amp; conditions</h3>
-    <div class="sr"><label>State of health (SOH)</label><input type="range" id="soh" min="60" max="100" step="1" value="95"><span class="sv" id="soh-v">95%</span></div>
-    <div class="sr"><label>State of charge at departure (SOC)</label><input type="range" id="soc0" min="50" max="100" step="1" value="100"><span class="sv" id="soc0-v">100%</span></div>
+  <div class="card" data-tag="01 · BAT">
+    <h3>Battery &amp; Conditions</h3>
+    <div class="sr"><label>State of health · SOH</label><input type="range" id="soh" min="60" max="100" step="1" value="95"><span class="sv" id="soh-v">95%</span></div>
+    <div class="sr"><label>SOC at departure</label><input type="range" id="soc0" min="50" max="100" step="1" value="100"><span class="sv" id="soc0-v">100%</span></div>
     <div class="sr"><label>Minimum reserve SOC</label><input type="range" id="res" min="10" max="40" step="1" value="30"><span class="sv" id="res-v">30%</span></div>
-    <div class="sr"><label>Outside air temperature (OAT)</label><input type="range" id="oat" min="-30" max="45" step="1" value="15"><span class="sv" id="oat-v">+15 °C</span></div>
+    <div class="sr"><label>Outside air temperature · OAT</label><input type="range" id="oat" min="-30" max="45" step="1" value="15"><span class="sv" id="oat-v">+15 °C</span></div>
   </div>
 
   <!-- DEPARTURE -->
-  <div class="card">
-    <div class="leg-badge" style="background:#E6F1FB;color:#0C447C;margin-bottom:10px;">Departure</div>
-    <div class="sr"><label>Departure altitude (ft AMSL)</label><input type="range" id="dep-alt" min="0" max="8000" step="25" value="1525"><span class="sv" id="dep-alt-v">1,525 ft</span></div>
+  <div class="card" data-tag="02 · DEP">
+    <div class="leg-badge" style="background:rgba(11,61,104,0.08);color:#0B3D68;border-color:rgba(11,61,104,0.45);margin-bottom:14px;">Departure</div>
+    <div class="sr"><label>Departure altitude · ft AMSL</label><input type="range" id="dep-alt" min="0" max="8000" step="25" value="1525"><span class="sv" id="dep-alt-v">1,525 ft</span></div>
   </div>
 
   <!-- DYNAMIC LEG CARDS -->
   <div id="legs-container"></div>
 
   <!-- ADD LEG BUTTON -->
-  <button class="add-btn" id="add-leg-btn">+ Add intermediate leg</button>
+  <button class="add-btn" id="add-leg-btn">+ Add Intermediate Waypoint</button>
 
   <!-- DESTINATION -->
-  <div class="card" id="dest-card">
-    <div class="leg-badge" style="background:#EAF3DE;color:#27500A;margin-bottom:10px;" id="dest-badge">Destination</div>
+  <div class="card" id="dest-card" data-tag="ZZ · DEST">
+    <div class="leg-badge" id="dest-badge" style="background:rgba(46,107,62,0.1);color:#1F4A2B;border-color:rgba(46,107,62,0.45);margin-bottom:14px;">Destination</div>
     <div class="chain-note" id="dest-chain">Starting altitude: —</div>
-    <div class="sr"><label>Destination altitude (ft AMSL)</label><input type="range" id="arr-alt" min="0" max="8000" step="25" value="1525"><span class="sv" id="arr-alt-v">1,525 ft</span></div>
-    <div class="sr"><label>Distance to destination (nm)</label><input type="range" id="arr-dist" min="2" max="120" step="1" value="22"><span class="sv" id="arr-dist-v">22 nm</span></div>
-    <div style="margin-top:8px;display:flex;align-items:center;gap:16px;">
-      <span style="font-size:12px;color:var(--tx2);font-weight:500;">Arrival:</span>
-      <label style="font-size:12px;color:var(--tx2);display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="radio" name="approach" value="straight" style="accent-color:#3B6D11;"> Straight-in (5 %SOC)</label>
-      <label style="font-size:12px;color:var(--tx2);display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="radio" name="approach" value="pattern" checked style="accent-color:#3B6D11;"> Traffic pattern (12 %SOC)</label>
+    <div class="sr"><label>Destination altitude · ft AMSL</label><input type="range" id="arr-alt" min="0" max="8000" step="25" value="1525"><span class="sv" id="arr-alt-v">1,525 ft</span></div>
+    <div class="sr"><label>Distance to destination · nm</label><input type="range" id="arr-dist" min="2" max="120" step="1" value="22"><span class="sv" id="arr-dist-v">22 nm</span></div>
+    <div class="approach-row">
+      <span class="approach-label">Arrival</span>
+      <div class="seg-ctrl">
+        <label class="seg-opt"><input type="radio" name="approach" value="straight"><span>Straight-in · 5%</span></label>
+        <label class="seg-opt"><input type="radio" name="approach" value="pattern" checked><span>Pattern · 12%</span></label>
+      </div>
     </div>
   </div>
 
   <!-- FLIGHT PROFILE -->
-  <div class="card"><h3>Flight profile</h3><div style="overflow-x:auto;"><svg id="svg" viewBox="0 0 760 240" width="100%" style="display:block;min-width:320px;"></svg></div></div>
+  <div class="card" data-tag="05 · PROFILE">
+    <h3>Flight Profile</h3>
+    <div class="svg-wrap"><svg id="svg" viewBox="0 0 760 240" width="100%"></svg></div>
+  </div>
 
   <!-- SOC WATERFALL -->
-  <div class="card"><h3>SOC at each waypoint</h3><div class="soc-strip" id="soc-strip"></div><div style="font-size:10px;color:var(--tx2);margin-top:4px;">% of usable capacity remaining. Amber band = reserve floor.</div></div>
+  <div class="card" data-tag="06 · SOC WATERFALL">
+    <h3>SOC at Each Waypoint</h3>
+    <div class="soc-strip" id="soc-strip"></div>
+    <div class="note" style="font-size:10px;margin-top:10px;letter-spacing:0.03em;">% of usable capacity remaining · Amber band = reserve floor</div>
+  </div>
 
   <!-- SEGMENTS -->
-  <div class="card"><h3>Segment breakdown</h3><div id="seg-grid" style="display:grid;gap:8px;"></div></div>
+  <div class="card" data-tag="07 · SEGMENTS">
+    <h3>Segment Breakdown</h3>
+    <div id="seg-grid" style="display:grid;"></div>
+  </div>
 
   <!-- SUMMARY -->
-  <div class="card">
-    <h3>Mission summary</h3>
+  <div class="card" data-tag="08 · SUMMARY">
+    <h3>Mission Summary</h3>
     <div class="g4">
-      <div class="met"><p class="met-l">Usable energy</p><p class="met-v" id="r-usable">—</p><span class="met-u">kWh</span></div>
-      <div class="met"><p class="met-l">Energy used</p><p class="met-v" id="r-used">—</p><span class="met-u">kWh</span></div>
-      <div class="met"><p class="met-l">Total distance</p><p class="met-v" id="r-dist">—</p><span class="met-u">nm</span></div>
-      <div class="met"><p class="met-l">Total flight time</p><p class="met-v" id="r-time">—</p><span class="met-u">h:mm</span></div>
+      <div class="met"><p class="met-l">Usable Energy</p><p class="met-v" id="r-usable">—</p><span class="met-u">kWh</span></div>
+      <div class="met"><p class="met-l">Energy Used</p><p class="met-v" id="r-used">—</p><span class="met-u">kWh</span></div>
+      <div class="met"><p class="met-l">Total Distance</p><p class="met-v" id="r-dist">—</p><span class="met-u">nm</span></div>
+      <div class="met"><p class="met-l">Flight Time</p><p class="met-v" id="r-time">—</p><span class="met-u">h:mm</span></div>
     </div>
-    <h4>Energy distribution</h4>
+    <h4>Energy Distribution</h4>
     <div class="phase-track" id="phase-track"></div>
     <div class="legend-row" id="legend-row"></div>
     <div class="msg msg-ok" id="msg-ok"></div>
@@ -158,14 +1175,18 @@
   </div>
 
   <!-- DETAILED CALC -->
-  <div class="card"><h3>Detailed %SOC calculation</h3><div class="note" style="margin-bottom:10px;" id="det-header"></div><div id="det-calc"></div></div>
-
-  <div class="card note">
-    <strong style="color:var(--tx);">Model — Pipistrel Velis Electro</strong><br>
-    Nominal: 24.8 kWh. Climb: 48 kW at V<sub>y</sub>, ROC from POH table (1,000 ft bands, altitude &amp; ISA interpolated).
-    Cruise: power &amp; speed from POH table. Descent: power-off glide (15:1, 0 kW).
-    %SOC from POH energy tables, scaled by actual conditions.
+  <div class="card" data-tag="09 · DETAIL">
+    <h3>Detailed %SOC Calculation</h3>
+    <div class="note" style="margin-bottom:12px;" id="det-header"></div>
+    <div id="det-calc"></div>
   </div>
+
+  <div class="card note" data-tag="10 · MODEL">
+    <strong>Pipistrel Velis Electro</strong><br>
+    Nominal 24.8 kWh · Climb 48 kW at V<sub>y</sub>, ROC from POH (1,000 ft bands, altitude &amp; ISA interpolated) ·
+    Cruise power &amp; speed from POH table · Descent: power-off glide (15:1, 0 kW) · %SOC from POH energy tables, scaled by actual conditions.
+  </div>
+
 </div></div>
 
 <script>
@@ -209,23 +1230,24 @@ function n0(v){return Math.round(v);}
 function n1(v){return v.toFixed(1);}
 function mf(m){const h=Math.floor(m/60),mn=Math.round(m%60);return h>0?h+'h '+mn+'min':mn+' min';}
 function tf(m){const h=Math.floor(m/60),mn=Math.round(m%60);return h+':'+(mn<10?'0':'')+mn;}
-function socColor(p){return p<=15?'#E24B4A':p<=30?'#EF9F27':'#1D9E75';}
+function socColor(p){return p<=15?'#B3261E':p<=30?'#B5830A':'#2E6B3E';}
 function mfShort(m){const h=Math.floor(m/60),mn=Math.round(m%60);return h>0?h+'h'+mn+'m':mn+'m';}
 
-/* ═══ LEG COLORS ═══ */
+/* ═══ LEG COLORS (light-theme aviation chart palette) ═══ */
 const LCOL=[
-  {bg:'#E6F1FB',tx:'#0C447C',c1:'#185FA5',c2:'#378ADD'},
-  {bg:'#EEEDFE',tx:'#3C3489',c1:'#534AB7',c2:'#7F77DD'},
-  {bg:'#FFF3E0',tx:'#E65100',c1:'#E65100',c2:'#FF9800'},
-  {bg:'#FCE4EC',tx:'#880E4F',c1:'#C62828',c2:'#EF5350'},
-  {bg:'#E0F2F1',tx:'#004D40',c1:'#00695C',c2:'#26A69A'},
-  {bg:'#F3E5F5',tx:'#4A148C',c1:'#6A1B9A',c2:'#AB47BC'},
+  {bg:'rgba(11,61,104,0.09)',  tx:'#0B3D68', c1:'#0B3D68', c2:'#2C6AA3'},   // navy
+  {bg:'rgba(199,80,28,0.09)',  tx:'#8C3A12', c1:'#C7501C', c2:'#E07540'},   // terracotta
+  {bg:'rgba(107,58,107,0.09)', tx:'#4A244A', c1:'#6B3A6B', c2:'#9C5E9C'},   // plum
+  {bg:'rgba(15,99,104,0.09)',  tx:'#0F4A4E', c1:'#0F6368', c2:'#2A8E92'},   // teal
+  {bg:'rgba(139,98,14,0.09)',  tx:'#5A3F05', c1:'#8B620E', c2:'#B8873A'},   // ochre
+  {bg:'rgba(46,107,62,0.09)',  tx:'#1F4A2B', c1:'#2E6B3E', c2:'#52A06A'},   // sage
 ];
-const DEST_COL={bg:'#EAF3DE',tx:'#27500A',c1:'#3B6D11',c2:'#639922'};
+const DEST_COL={bg:'rgba(46,107,62,0.1)',tx:'#1F4A2B',c1:'#2E6B3E',c2:'#52A06A'};
 function lc(i){return LCOL[i%LCOL.length];}
+function lpad2(n){return n<10?'0'+n:''+n;}
 
 /* ═══ ROUTE STATE ═══ */
-let legs=[{alt:5200,dist:27}]; // at least one intermediate waypoint
+let legs=[{alt:5200,dist:27}];
 
 function renderLegs(){
   const c=document.getElementById('legs-container');
@@ -234,18 +1256,18 @@ function renderLegs(){
     const col=lc(i);
     const legNum=i+1;
     const canDel=legs.length>1;
-    html+=`<div class="card" data-leg="${i}">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-        <div class="leg-badge" style="background:${col.bg};color:${col.tx};">Leg ${legNum}</div>
-        ${canDel?`<button class="del-btn" data-idx="${i}" title="Remove leg">&times;</button>`:''}
+    const tagStr=(i+3).toString().padStart(2,'0')+' · LEG '+lpad2(legNum);
+    html+=`<div class="card" data-leg="${i}" data-tag="${tagStr}">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <div class="leg-badge" style="background:${col.bg};color:${col.tx};border-color:${col.c1}66;">Leg ${legNum}</div>
+        ${canDel?`<button class="del-btn" data-idx="${i}" title="Remove leg">×</button>`:''}
       </div>
       <div class="chain-note leg-chain" data-idx="${i}">Starting altitude: —</div>
-      <div class="sr"><label>Leg ${legNum} altitude (ft AMSL)</label><input type="range" class="leg-alt" data-idx="${i}" min="500" max="15000" step="100" value="${leg.alt}"><span class="sv leg-alt-v" data-idx="${i}">${leg.alt.toLocaleString()} ft</span></div>
-      <div class="sr"><label>Leg ${legNum} distance (nm)</label><input type="range" class="leg-dist" data-idx="${i}" min="2" max="120" step="1" value="${leg.dist}"><span class="sv leg-dist-v" data-idx="${i}">${leg.dist} nm</span></div>
+      <div class="sr"><label>Leg ${legNum} altitude · ft AMSL</label><input type="range" class="leg-alt" data-idx="${i}" min="500" max="15000" step="100" value="${leg.alt}"><span class="sv leg-alt-v" data-idx="${i}">${leg.alt.toLocaleString()} ft</span></div>
+      <div class="sr"><label>Leg ${legNum} distance · nm</label><input type="range" class="leg-dist" data-idx="${i}" min="2" max="120" step="1" value="${leg.dist}"><span class="sv leg-dist-v" data-idx="${i}">${leg.dist} nm</span></div>
     </div>`;
   });
   c.innerHTML=html;
-  // Attach listeners
   c.querySelectorAll('.leg-alt,.leg-dist').forEach(el=>el.addEventListener('input',onLegInput));
   c.querySelectorAll('.del-btn').forEach(el=>el.addEventListener('click',onDeleteLeg));
 }
@@ -294,12 +1316,10 @@ function update(){
   const approachSoc=approach==='pattern'?12:5;
   const sohPct=soh*100, usable=NOM*soh;
 
-  // Save to localStorage for other pages
   localStorage.setItem('velis_soh',Math.round(sohPct));
   localStorage.setItem('velis_oat',oat);
   localStorage.setItem('velis_dep_alt',depAlt);
 
-  // Display
   document.getElementById('soh-v').textContent=Math.round(sohPct)+'%';
   document.getElementById('soc0-v').textContent=Math.round(soc0*100)+'%';
   document.getElementById('res-v').textContent=Math.round(resPct*100)+'%';
@@ -308,31 +1328,27 @@ function update(){
   document.getElementById('arr-alt-v').textContent=arrAlt.toLocaleString()+' ft';
   document.getElementById('arr-dist-v').textContent=arrDist+' nm';
 
-  // Perf banner
   document.getElementById('perf-tags').innerHTML=
-    `<span class="perf-tag">Cruise ${cruiseKw} kW · ${cruiseKts.toFixed(0)} kts</span>`+
-    `<span class="perf-tag">V<sub>y</sub> ${vyKts} kts</span>`+
+    `<span class="perf-tag">CRZ ${cruiseKw} kW · ${cruiseKts.toFixed(0)} KT</span>`+
+    `<span class="perf-tag">V<sub>y</sub> ${vyKts} KT</span>`+
     `<span class="perf-tag">Glide ${glideR}:1</span>`;
 
-  // Chain notes for legs
   let prevAlt=depAlt;
   legs.forEach((leg,i)=>{
     const cn=document.querySelector(`.leg-chain[data-idx="${i}"]`);
-    if(cn) cn.textContent='Starting altitude: '+prevAlt.toLocaleString()+' ft';
+    if(cn) cn.textContent='Start alt: '+prevAlt.toLocaleString()+' ft';
     prevAlt=leg.alt;
   });
-  document.getElementById('dest-chain').textContent='Starting altitude: '+prevAlt.toLocaleString()+' ft';
+  document.getElementById('dest-chain').textContent='Start alt: '+prevAlt.toLocaleString()+' ft';
   const destLegNum=legs.length+1;
   document.getElementById('dest-badge').textContent='Leg '+destLegNum+' — Destination';
 
-  // ═══ CALCULATIONS ═══
   const toSoc=interpSOH(SOC_TAKEOFF,sohPct);
   const refClimb=interpSOH(SOC_CLIMB_1K,sohPct);
   const cru10=socCruise10min(Math.min(cruiseKw,35),sohPct);
 
   const results=[];
   prevAlt=depAlt;
-  // Intermediate legs
   legs.forEach((leg,i)=>{
     let trans;
     if(leg.alt>prevAlt) trans=calcClimb(prevAlt,leg.alt,oat,sohPct,vyKts,depAlt);
@@ -340,11 +1356,10 @@ function update(){
     const cruDist=Math.max(0,leg.dist-trans.nm);
     const cru=calcCruise(cruDist,cruiseKw,cruiseKts,sohPct);
     let soc=trans.soc+cru.soc;
-    if(i===0) soc+=toSoc; // takeoff on first leg
+    if(i===0) soc+=toSoc;
     results.push({trans,cru,cruDist,soc,min:trans.min+cru.min,isClimb:leg.alt>prevAlt,wpAlt:leg.alt,prevAlt,dist:leg.dist});
     prevAlt=leg.alt;
   });
-  // Final leg to destination
   const fTrans=calcDescent(prevAlt,arrAlt,glideR,vglideKts);
   const fCruDist=Math.max(0,arrDist-fTrans.nm);
   const fCru=calcCruise(fCruDist,cruiseKw,cruiseKts,sohPct);
@@ -356,18 +1371,15 @@ function update(){
   const totalMin=results.reduce((s,r)=>s+r.min,0);
   const startSocPct=soc0*100;
 
-  // SOC at each waypoint
   const socs=[startSocPct];
   let run=startSocPct;
   results.forEach(r=>{run=Math.max(0,run-r.soc);socs.push(run);});
 
-  // Summary
   document.getElementById('r-usable').textContent=usable.toFixed(1);
   document.getElementById('r-used').textContent=totalKwh.toFixed(1);
   document.getElementById('r-dist').textContent=Math.round(totalDist);
   document.getElementById('r-time').textContent=tf(totalMin);
 
-  // Phase track + legend
   const socToKwh=s=>(s/100)*usable;
   const pw=k=>(Math.max(0,Math.min(k/usable,1))*100).toFixed(1)+'%';
   const reserveKwh=usable*resPct, startKwh=usable*soc0, mission=startKwh-reserveKwh;
@@ -380,71 +1392,66 @@ function update(){
     lgHTML+=`<div class="li"><div class="ld" style="background:${col.c1};"></div>${r.isClimb?'Climb':'Desc'} ${ln}</div>`;
     lgHTML+=`<div class="li"><div class="ld" style="background:${col.c2};"></div>Cruise ${ln}</div>`;
   });
-  ptHTML+=`<div class="ps" style="background:#EF9F27;width:${pw(reserveKwh)};">${resPct>0.07?'Res':''}</div>`;
+  ptHTML+=`<div class="ps" style="background:#B5830A;width:${pw(reserveKwh)};">${resPct>0.07?'RSV':''}</div>`;
   const deficit=Math.max(0,totalKwh-mission);
-  if(deficit>0)ptHTML+=`<div class="ps" style="background:#E24B4A;width:${pw(Math.min(deficit,usable))};">Def</div>`;
-  lgHTML+=`<div class="li"><div class="ld" style="background:#EF9F27;"></div>Reserve</div>`;
-  lgHTML+=`<div class="li"><div class="ld" style="background:#E24B4A;"></div>Deficit</div>`;
+  if(deficit>0)ptHTML+=`<div class="ps" style="background:#B3261E;width:${pw(Math.min(deficit,usable))};">DEF</div>`;
+  lgHTML+=`<div class="li"><div class="ld" style="background:#B5830A;"></div>Reserve</div>`;
+  lgHTML+=`<div class="li"><div class="ld" style="background:#B3261E;"></div>Deficit</div>`;
   document.getElementById('phase-track').innerHTML=ptHTML;
   document.getElementById('legend-row').innerHTML=lgHTML;
 
-  // Messages
   ['msg-ok','msg-warn','msg-err'].forEach(id=>document.getElementById(id).style.display='none');
   const margin=mission-totalKwh;
   const marginPct=mission>0?Math.round(margin/mission*100):0;
   const arrSoc=socs[socs.length-1];
-  if(margin<0){document.getElementById('msg-err').textContent='Not feasible. Deficit: '+n1(Math.abs(margin))+' kWh.';document.getElementById('msg-err').style.display='block';}
-  else if(marginPct<=12){document.getElementById('msg-warn').textContent='Tight. '+n1(margin)+' kWh ('+marginPct+'%) spare. Arrival SOC: '+Math.round(arrSoc)+'%.';document.getElementById('msg-warn').style.display='block';}
-  else{document.getElementById('msg-ok').textContent='Feasible. Margin: '+n1(margin)+' kWh ('+marginPct+'%). Arrival SOC: '+Math.round(arrSoc)+'%.';document.getElementById('msg-ok').style.display='block';}
+  if(margin<0){document.getElementById('msg-err').textContent='▲ NOT FEASIBLE · Deficit: '+n1(Math.abs(margin))+' kWh';document.getElementById('msg-err').style.display='block';}
+  else if(marginPct<=12){document.getElementById('msg-warn').textContent='◆ TIGHT · '+n1(margin)+' kWh ('+marginPct+'%) spare · Arrival SOC: '+Math.round(arrSoc)+'%';document.getElementById('msg-warn').style.display='block';}
+  else{document.getElementById('msg-ok').textContent='● FEASIBLE · Margin: '+n1(margin)+' kWh ('+marginPct+'%) · Arrival SOC: '+Math.round(arrSoc)+'%';document.getElementById('msg-ok').style.display='block';}
 
-  // Segment cards
   const sgHTML=results.map((r,i)=>{
     const col=i<results.length-1?lc(i):DEST_COL;
     const ln=i+1;
-    return `<div class="seg-box" style="border-color:${col.c1};"><div class="seg-title" style="color:${col.c1};">Leg ${ln}${i===results.length-1?' (Dest)':''}</div>
+    return `<div class="seg-box" style="border-left-color:${col.c1};"><div class="seg-title" style="color:${col.c1};">Leg ${ln}${i===results.length-1?' · Dest':''}</div>
       <div class="seg-row"><span class="seg-k">${r.isClimb?'Climb':'Descent'}</span><span class="seg-v">${mf(r.trans.min)} / ${n1(r.trans.nm)} nm</span></div>
       <div class="seg-row"><span class="seg-k">Cruise</span><span class="seg-v">${mf(r.cru.min)} / ${n1(r.cruDist)} nm</span></div>
-      <div class="seg-row"><span class="seg-k">Energy</span><span class="seg-v">${n1(r.soc)} %SOC (${(socToKwh(r.soc)).toFixed(2)} kWh)</span></div></div>`;
+      <div class="seg-row"><span class="seg-k">Energy</span><span class="seg-v">${n1(r.soc)}% · ${(socToKwh(r.soc)).toFixed(2)} kWh</span></div></div>`;
   }).join('');
   document.getElementById('seg-grid').style.gridTemplateColumns=`repeat(${Math.min(results.length,3)},1fr)`;
   document.getElementById('seg-grid').innerHTML=sgHTML;
 
-  // SOC strip
-  const wpNames=['Departure',...legs.map((_,i)=>'Leg '+(i+1)),'Destination'];
+  const wpNames=['Dep',...legs.map((_,i)=>'Leg '+(i+1)),'Dest'];
   const strip=document.getElementById('soc-strip');
   strip.innerHTML='';
   socs.forEach((pct,i)=>{
-    const cp=Math.max(0,Math.min(100,pct)),fillH=Math.round(cp*0.6),resH=Math.round(resPct*100*0.6),col=socColor(cp);
+    const cp=Math.max(0,Math.min(100,pct)),fillH=Math.round(cp*0.72),resH=Math.round(resPct*100*0.72),col=socColor(cp);
     const wp=document.createElement('div');wp.className='soc-wp';
-    wp.innerHTML=`<div class="soc-bar-wrap"><div style="position:absolute;bottom:0;left:0;width:100%;height:${resH}px;background:#EF9F27;opacity:0.4;"></div><div style="width:100%;height:${fillH}px;background:${col};transition:height 0.3s;"></div></div><div class="soc-pct" style="color:${col};">${Math.round(cp)}%</div><div class="soc-kwh">${(cp/100*usable).toFixed(1)} kWh</div><div class="soc-label">${wpNames[i]}</div>`;
+    wp.innerHTML=`<div class="soc-bar-wrap"><div style="position:absolute;bottom:0;left:0;width:100%;height:${resH}px;background:rgba(181,131,10,0.22);z-index:1;"></div><div style="width:100%;height:${fillH}px;background:linear-gradient(180deg,${col},${col}d0);transition:height 0.4s;z-index:2;"></div></div><div class="soc-pct" style="color:${col};">${Math.round(cp)}%</div><div class="soc-kwh">${(cp/100*usable).toFixed(1)} kWh</div><div class="soc-label">${wpNames[i]}</div>`;
     strip.appendChild(wp);
-    if(i<socs.length-1){const a=document.createElement('div');a.className='soc-arrow';a.textContent='\u2192';strip.appendChild(a);}
+    if(i<socs.length-1){const a=document.createElement('div');a.className='soc-arrow';a.textContent='›';strip.appendChild(a);}
   });
 
-  // ═══ SVG PROFILE ═══
   drawSVG(depAlt,arrAlt,results);
 
-  // ═══ DETAILED CALCULATION ═══
   document.getElementById('det-header').innerHTML='All values from POH tables, interpolated at SOH = <strong>'+Math.round(sohPct)+'%</strong>';
   let det='',step='A',running2=startSocPct;
   results.forEach((r,i)=>{
     const col=i<results.length-1?lc(i):DEST_COL;
     const ln=i+1;
     const isLast=i===results.length-1;
-    det+=`<div class="det-phase"><div class="det-head" style="color:${col.c1};">Leg ${ln}${isLast?' — to Destination':''}</div>`;
+    det+=`<div class="det-phase" style="border-left-color:${col.c1};"><div class="det-head" style="color:${col.c1};">Leg ${ln}${isLast?' — to Destination':''}</div>`;
     if(i===0){det+=`<div class="det-line">${step}) Takeoff + initial climb to 300 ft AGL = <span class="det-res">${n1(toSoc)} %SOC</span></div>`;step=String.fromCharCode(step.charCodeAt(0)+1);}
     if(r.isClimb&&r.trans.bands){
       det+=`<div class="det-line">${step}) Climb (V<sub>y</sub>) at 48 kW from ${r.prevAlt.toLocaleString()} to ${r.wpAlt.toLocaleString()} ft (${r.trans.delta.toLocaleString()} ft)</div>`;
-      det+=`<div class="det-line" style="padding-left:28px;font-size:10px;color:var(--tx2);">ISA deviation: ${r.trans.isaDev>=0?'+':''}${r.trans.isaDev.toFixed(1)}°C (constant)</div>`;
-      r.trans.bands.forEach(b=>{det+=`<div class="det-line" style="padding-left:28px;font-size:10px;">${b.from.toLocaleString()}\u2192${b.to.toLocaleString()} ft: ROC=${b.roc} ft/min \u00b7 ${n1(b.min)} min \u00b7 ${n1(b.delta/1000)}\u00d7${n1(refClimb)}\u00d7(${REF_ROC}/${b.roc}) = ${n1(b.soc)} %SOC</div>`;});
-      det+=`<div class="det-line" style="padding-left:28px;">Total climb: ${n1(r.trans.min)} min \u00b7 ${n1(r.trans.nm)} nm \u00b7 <span class="det-res">${n1(r.trans.soc)} %SOC</span></div>`;
+      det+=`<div class="det-line" style="padding-left:28px;font-size:10px;color:var(--tx-dim);">ISA deviation: ${r.trans.isaDev>=0?'+':''}${r.trans.isaDev.toFixed(1)}°C (constant)</div>`;
+      r.trans.bands.forEach(b=>{det+=`<div class="det-line" style="padding-left:28px;font-size:10px;">${b.from.toLocaleString()}→${b.to.toLocaleString()} ft: ROC=${b.roc} ft/min · ${n1(b.min)} min · ${n1(b.delta/1000)}×${n1(refClimb)}×(${REF_ROC}/${b.roc}) = ${n1(b.soc)} %SOC</div>`;});
+      det+=`<div class="det-line" style="padding-left:28px;">Total climb: ${n1(r.trans.min)} min · ${n1(r.trans.nm)} nm · <span class="det-res">${n1(r.trans.soc)} %SOC</span></div>`;
     }else{
       det+=`<div class="det-line">${step}) Descent (glide ${glideR}:1) from ${r.prevAlt.toLocaleString()} to ${r.wpAlt.toLocaleString()} ft (${r.trans.delta.toLocaleString()} ft) = <span class="det-res">0 %SOC</span></div>`;
       det+=`<div class="det-line" style="padding-left:28px;">Glide distance = ${n1(r.trans.nm)} nm</div>`;
     }
     step=String.fromCharCode(step.charCodeAt(0)+1);
     det+=`<div class="det-line">${step}) Cruise at ${cruiseKw} kW (${Math.round(cruiseKts)} kts) for ${n1(r.cru.min)} min (${n1(r.cruDist)} nm)</div>`;
-    det+=`<div class="det-line" style="padding-left:28px;">(${n1(r.cru.min)} / 10) \u00d7 ${n1(cru10)} = <span class="det-res">${n1(r.cru.soc)} %SOC</span></div>`;
+    det+=`<div class="det-line" style="padding-left:28px;">(${n1(r.cru.min)} / 10) × ${n1(cru10)} = <span class="det-res">${n1(r.cru.soc)} %SOC</span></div>`;
     step=String.fromCharCode(step.charCodeAt(0)+1);
     if(isLast){
       const appLabel=approach==='pattern'?'Traffic pattern (1,000 ft)':'Straight-in approach';
@@ -452,15 +1459,15 @@ function update(){
       step=String.fromCharCode(step.charCodeAt(0)+1);
     }
     running2-=r.soc;
-    det+=`<div class="det-line" style="margin-top:2px;"><strong>Leg ${ln} total = <span class="det-res">${n1(r.soc)} %SOC</span> \u00b7 SOC remaining: ${n1(Math.max(0,running2))}%</strong></div></div>`;
+    det+=`<div class="det-line" style="margin-top:4px;"><strong>Leg ${ln} total = <span class="det-res">${n1(r.soc)} %SOC</span> · SOC remaining: ${n1(Math.max(0,running2))}%</strong></div></div>`;
   });
   det+=`<hr class="det-sep">`;
   det+=`<div class="det-total"><span>SOC at departure</span><strong>${n1(startSocPct)}% (${n1(usable*soc0)} kWh)</strong></div>`;
-  results.forEach((r,i)=>det+=`<div class="det-total"><span>\u2212 Leg ${i+1}</span><strong>${n1(r.soc)}%</strong></div>`);
+  results.forEach((r,i)=>det+=`<div class="det-total"><span>− Leg ${i+1}</span><strong>${n1(r.soc)}%</strong></div>`);
   det+=`<hr class="det-sep">`;
   det+=`<div class="det-total"><span><strong>SOC at destination</strong></span><strong style="color:${socColor(arrSoc)};">${n1(arrSoc)}% (${n1(arrSoc/100*usable)} kWh)</strong></div>`;
   det+=`<div class="det-total"><span>Reserve requirement</span><strong>${Math.round(resPct*100)}% (${n1(reserveKwh)} kWh)</strong></div>`;
-  det+=`<div class="det-total"><span><strong>Margin above reserve</strong></span><strong style="color:${margin>=0?'#27500A':'#791F1F'};">${n1(arrSoc-resPct*100)}% (${n1(margin)} kWh)</strong></div>`;
+  det+=`<div class="det-total"><span><strong>Margin above reserve</strong></span><strong style="color:${margin>=0?'#2E6B3E':'#B3261E'};">${n1(arrSoc-resPct*100)}% (${n1(margin)} kWh)</strong></div>`;
   det+=`<div class="det-total"><span>Total %SOC used</span><strong>${n1(totalSoc)}%</strong></div>`;
   document.getElementById('det-calc').innerHTML=det;
 }
@@ -475,9 +1482,8 @@ function drawSVG(depAlt,arrAlt,results){
   const maxA=Math.max(...allAlts)*1.15;
   function xp(nm){return PL+(nm/totalDist)*IW;}
   function yp(ft){return PT+IH-(ft/maxA)*IH;}
-  const tc='#555',gc='rgba(0,0,0,0.06)';
+  const tc='#546071',gc='rgba(84,96,113,0.14)',gcStrong='rgba(84,96,113,0.3)';
 
-  // Build profile points
   let cumDist=0;
   const pts=[[0,depAlt]];
   results.forEach(r=>{
@@ -490,11 +1496,19 @@ function drawSVG(depAlt,arrAlt,results){
   for(let i=1;i<pts.length;i++){if(Math.abs(pts[i][0]-uniq[uniq.length-1][0])>0.1||pts[i][1]!==uniq[uniq.length-1][1])uniq.push(pts[i]);}
   const linePath=uniq.map((p,i)=>(i===0?'M':'L')+xp(p[0]).toFixed(1)+','+yp(p[1]).toFixed(1)).join(' ');
   const fillPath=linePath+' L'+xp(totalDist).toFixed(1)+','+yp(0).toFixed(1)+' L'+xp(0).toFixed(1)+','+yp(0).toFixed(1)+' Z';
-  let h='<defs><clipPath id="pc"><rect x="'+PL+'" y="'+PT+'" width="'+IW+'" height="'+IH+'"/></clipPath></defs>';
+  let h='<defs><clipPath id="pc"><rect x="'+PL+'" y="'+PT+'" width="'+IW+'" height="'+IH+'"/></clipPath>'
+    +'<linearGradient id="pfg" x1="0" y1="0" x2="0" y2="1">'
+    +'<stop offset="0%" stop-color="#0B3D68" stop-opacity="0.18"/>'
+    +'<stop offset="100%" stop-color="#0B3D68" stop-opacity="0.02"/>'
+    +'</linearGradient>'
+    +'</defs>';
+
+  // outer frame
+  h+=`<rect x="${PL}" y="${PT}" width="${IW}" height="${IH}" fill="none" stroke="${gcStrong}" stroke-width="0.8"/>`;
 
   // Grid
   const step=maxA>8000?3000:2000;
-  for(let a=0;a<=maxA;a+=step){const y=yp(a);if(y<PT-2||y>PT+IH+2)continue;h+=`<line x1="${PL}" y1="${y.toFixed(1)}" x2="${W-PR}" y2="${y.toFixed(1)}" stroke="${gc}" stroke-width="1"/><text x="${PL-4}" y="${(y+3.5).toFixed(1)}" font-size="9" fill="${tc}" text-anchor="end">${(a/1000).toFixed(0)}k</text>`;}
+  for(let a=0;a<=maxA;a+=step){const y=yp(a);if(y<PT-2||y>PT+IH+2)continue;h+=`<line x1="${PL}" y1="${y.toFixed(1)}" x2="${W-PR}" y2="${y.toFixed(1)}" stroke="${gc}" stroke-width="1" stroke-dasharray="2,4"/><text x="${PL-6}" y="${(y+3.5).toFixed(1)}" font-size="9" fill="${tc}" text-anchor="end" font-family="JetBrains Mono,monospace">${(a/1000).toFixed(0)}k</text>`;}
 
   // Waypoint dividers
   cumDist=0;
@@ -502,25 +1516,27 @@ function drawSVG(depAlt,arrAlt,results){
     cumDist+=r.dist;
     if(i<results.length-1){
       const col=lc(i);
-      h+=`<line x1="${xp(cumDist).toFixed(1)}" y1="${PT}" x2="${xp(cumDist).toFixed(1)}" y2="${(PT+IH).toFixed(1)}" stroke="${col.c1}" stroke-width="1" stroke-dasharray="3,3" opacity="0.6"/>`;
+      h+=`<line x1="${xp(cumDist).toFixed(1)}" y1="${PT}" x2="${xp(cumDist).toFixed(1)}" y2="${(PT+IH).toFixed(1)}" stroke="${col.c1}" stroke-width="1" stroke-dasharray="2,4" opacity="0.5"/>`;
     }
   });
 
   // Fill + line
-  h+=`<path d="${fillPath}" fill="rgba(29,158,117,0.09)" clip-path="url(#pc)"/>`;
-  h+=`<path d="${linePath}" fill="none" stroke="#1D9E75" stroke-width="2" clip-path="url(#pc)"/>`;
+  h+=`<path d="${fillPath}" fill="url(#pfg)" clip-path="url(#pc)"/>`;
+  h+=`<path d="${linePath}" fill="none" stroke="#0B3D68" stroke-width="1.8" clip-path="url(#pc)"/>`;
 
-  // Waypoint dots + altitude labels
+  // Waypoint dots
   cumDist=0;
-  h+=`<circle cx="${xp(0).toFixed(1)}" cy="${yp(depAlt).toFixed(1)}" r="4" fill="#185FA5"/>`;
+  h+=`<circle cx="${xp(0).toFixed(1)}" cy="${yp(depAlt).toFixed(1)}" r="4.5" fill="#0B3D68"/>`;
+  h+=`<circle cx="${xp(0).toFixed(1)}" cy="${yp(depAlt).toFixed(1)}" r="1.8" fill="#FFFFFF"/>`;
   results.forEach((r,i)=>{
     cumDist+=r.dist;
     const col=i<results.length-1?lc(i):DEST_COL;
-    h+=`<circle cx="${xp(cumDist).toFixed(1)}" cy="${yp(r.wpAlt).toFixed(1)}" r="4" fill="${col.c1}"/>`;
-    if(i<results.length-1) h+=`<text x="${xp(cumDist).toFixed(1)}" y="${(yp(r.wpAlt)-9).toFixed(1)}" font-size="9" fill="${col.c1}" text-anchor="middle" font-weight="500">${r.wpAlt.toLocaleString()} ft</text>`;
+    h+=`<circle cx="${xp(cumDist).toFixed(1)}" cy="${yp(r.wpAlt).toFixed(1)}" r="4.5" fill="${col.c1}"/>`;
+    h+=`<circle cx="${xp(cumDist).toFixed(1)}" cy="${yp(r.wpAlt).toFixed(1)}" r="1.8" fill="#FFFFFF"/>`;
+    if(i<results.length-1) h+=`<text x="${xp(cumDist).toFixed(1)}" y="${(yp(r.wpAlt)-10).toFixed(1)}" font-size="9" fill="${col.c1}" text-anchor="middle" font-weight="700" font-family="JetBrains Mono,monospace">${r.wpAlt.toLocaleString()} ft</text>`;
   });
 
-  // TOC/BOD transition points
+  // TOC/BOD transitions
   cumDist=0;
   results.forEach((r,i)=>{
     const transNm=r.trans.nm;
@@ -528,39 +1544,47 @@ function drawSVG(depAlt,arrAlt,results){
     if(transNm>totalDist*0.02 && Math.abs(transNm-r.dist)>totalDist*0.03){
       const col=i<results.length-1?lc(i):DEST_COL;
       const label=r.isClimb?'TOC':'BOD';
-      h+=`<line x1="${xp(transPos).toFixed(1)}" y1="${PT}" x2="${xp(transPos).toFixed(1)}" y2="${(PT+IH).toFixed(1)}" stroke="${col.c1}" stroke-width="0.8" stroke-dasharray="2,3" opacity="0.4"/>`;
-      h+=`<circle cx="${xp(transPos).toFixed(1)}" cy="${yp(r.wpAlt).toFixed(1)}" r="3" fill="${col.c1}" opacity="0.7"/>`;
-      h+=`<text x="${xp(transPos).toFixed(1)}" y="${(yp(r.wpAlt)-18).toFixed(1)}" font-size="7.5" fill="${col.c1}" text-anchor="middle" font-weight="600" opacity="0.8">${label}</text>`;
-      h+=`<text x="${xp(transPos).toFixed(1)}" y="${(yp(r.wpAlt)-9).toFixed(1)}" font-size="7" fill="${col.c1}" text-anchor="middle" opacity="0.7">${n1(transNm)} nm \u00b7 ${mfShort(r.trans.min)}</text>`;
+      h+=`<line x1="${xp(transPos).toFixed(1)}" y1="${PT}" x2="${xp(transPos).toFixed(1)}" y2="${(PT+IH).toFixed(1)}" stroke="${col.c1}" stroke-width="0.7" stroke-dasharray="1,3" opacity="0.45"/>`;
+      h+=`<circle cx="${xp(transPos).toFixed(1)}" cy="${yp(r.wpAlt).toFixed(1)}" r="2.5" fill="${col.c1}" opacity="0.9"/>`;
+      h+=`<text x="${xp(transPos).toFixed(1)}" y="${(yp(r.wpAlt)-19).toFixed(1)}" font-size="7.5" fill="${col.c1}" text-anchor="middle" font-weight="700" opacity="0.95" font-family="JetBrains Mono,monospace">${label}</text>`;
+      h+=`<text x="${xp(transPos).toFixed(1)}" y="${(yp(r.wpAlt)-10).toFixed(1)}" font-size="7" fill="${tc}" text-anchor="middle" opacity="0.8" font-family="JetBrains Mono,monospace">${n1(transNm)} nm · ${mfShort(r.trans.min)}</text>`;
     }
     cumDist+=r.dist;
   });
 
   // X-axis labels
   cumDist=0;let cumMin=0;
-  const xLabels=[[0,'Dep',0]];
+  const xLabels=[[0,'DEP',0]];
   results.forEach((r,i)=>{
     cumDist+=r.dist;cumMin+=r.min;
-    const label=i<results.length-1?'Leg '+(i+1):'Dest';
+    const label=i<results.length-1?'LEG '+(i+1):'DEST';
     xLabels.push([cumDist,label,cumMin]);
   });
   xLabels.forEach(([nm,lbl,cm])=>{
-    h+=`<text x="${xp(nm).toFixed(1)}" y="${(PT+IH+13).toFixed(1)}" font-size="9" fill="${tc}" text-anchor="middle" font-weight="500">${lbl}</text>`;
-    h+=`<text x="${xp(nm).toFixed(1)}" y="${(PT+IH+24).toFixed(1)}" font-size="8" fill="${tc}" text-anchor="middle">${Math.round(nm)} nm</text>`;
-    if(nm>0)h+=`<text x="${xp(nm).toFixed(1)}" y="${(PT+IH+35).toFixed(1)}" font-size="8" fill="${tc}" text-anchor="middle">${mfShort(cm)}</text>`;
+    h+=`<text x="${xp(nm).toFixed(1)}" y="${(PT+IH+14).toFixed(1)}" font-size="9" fill="${tc}" text-anchor="middle" font-weight="700" letter-spacing="0.1em" font-family="JetBrains Mono,monospace">${lbl}</text>`;
+    h+=`<text x="${xp(nm).toFixed(1)}" y="${(PT+IH+25).toFixed(1)}" font-size="8" fill="${tc}" text-anchor="middle" opacity="0.75" font-family="JetBrains Mono,monospace">${Math.round(nm)} nm</text>`;
+    if(nm>0)h+=`<text x="${xp(nm).toFixed(1)}" y="${(PT+IH+36).toFixed(1)}" font-size="8" fill="${tc}" text-anchor="middle" opacity="0.75" font-family="JetBrains Mono,monospace">${mfShort(cm)}</text>`;
   });
 
-  // Leg annotations
-  cumDist=0;cumMin=0;
+  // Leg mid-annotations
+  cumDist=0;
   results.forEach((r,i)=>{
     const col=i<results.length-1?lc(i):DEST_COL;
     const mid=cumDist+r.dist/2;
-    h+=`<text x="${xp(mid).toFixed(1)}" y="${(PT+IH+50).toFixed(1)}" font-size="8" fill="${col.c1}" text-anchor="middle" font-weight="500">${Math.round(r.dist)} nm \u00b7 ${mfShort(r.min)}</text>`;
+    h+=`<text x="${xp(mid).toFixed(1)}" y="${(PT+IH+51).toFixed(1)}" font-size="8" fill="${col.c1}" text-anchor="middle" font-weight="600" font-family="JetBrains Mono,monospace">${Math.round(r.dist)} nm · ${mfShort(r.min)}</text>`;
     cumDist+=r.dist;
   });
 
-  h+=`<text x="${(PL-36).toFixed(0)}" y="${(PT+IH/2).toFixed(1)}" font-size="9" fill="${tc}" text-anchor="middle" transform="rotate(-90,${PL-36},${(PT+IH/2).toFixed(1)})">Altitude (ft)</text>`;
+  h+=`<text x="${(PL-38).toFixed(0)}" y="${(PT+IH/2).toFixed(1)}" font-size="8" fill="${tc}" text-anchor="middle" letter-spacing="0.1em" transform="rotate(-90,${PL-38},${(PT+IH/2).toFixed(1)})" font-family="JetBrains Mono,monospace">ALT · FT</text>`;
   svg.innerHTML=h;
+}
+
+/* ═══ CLOCK ═══ */
+function tickClock(){
+  const d=new Date();
+  const hh=lpad2(d.getUTCHours()),mm=lpad2(d.getUTCMinutes()),ss=lpad2(d.getUTCSeconds());
+  const el=document.getElementById('nav-clock');
+  if(el) el.textContent=hh+':'+mm+':'+ss+' UTC';
 }
 
 /* ═══ STATE ═══ */
@@ -606,7 +1630,6 @@ async function init(){
     document.getElementById(id).addEventListener('input',()=>{saveState();update();}));
   document.querySelectorAll('input[name="approach"]').forEach(r=>r.addEventListener('change',()=>{saveState();update();}));
 
-  // Route save/load
   document.getElementById('route-save').addEventListener('click',()=>{
     const name=document.getElementById('route-name').value.trim();
     if(!name){document.getElementById('route-name').focus();return;}
@@ -615,7 +1638,7 @@ async function init(){
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);
     a.download=name.replace(/[^a-zA-Z0-9_\- ]/g,'').replace(/\s+/g,'_')+'.json';a.click();
     URL.revokeObjectURL(a.href);
-    const el=document.getElementById('route-status');el.textContent='Saved: '+a.download;setTimeout(()=>el.textContent='',3000);
+    const el=document.getElementById('route-status');el.textContent='SAVED · '+a.download;setTimeout(()=>el.textContent='',3000);
   });
   document.getElementById('route-load').addEventListener('click',()=>document.getElementById('route-file').click());
   document.getElementById('route-file').addEventListener('change',e=>{
@@ -623,11 +1646,12 @@ async function init(){
     const reader=new FileReader();
     reader.onload=ev=>{try{const data=JSON.parse(ev.target.result);applyFullState(data.route||data);
       document.getElementById('route-name').value=data.name||file.name.replace('.json','');
-      const el=document.getElementById('route-status');el.textContent='Loaded: '+(data.name||file.name);setTimeout(()=>el.textContent='',3000);
-    }catch(err){const el=document.getElementById('route-status');el.textContent='Error: invalid file';setTimeout(()=>el.textContent='',3000);}};
+      const el=document.getElementById('route-status');el.textContent='LOADED · '+(data.name||file.name);setTimeout(()=>el.textContent='',3000);
+    }catch(err){const el=document.getElementById('route-status');el.textContent='ERROR · INVALID FILE';setTimeout(()=>el.textContent='',3000);}};
     reader.readAsText(file);e.target.value='';
   });
 
+  tickClock();setInterval(tickClock,1000);
   update();
 }
 init();
