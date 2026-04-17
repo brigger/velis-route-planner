@@ -124,6 +124,9 @@ textarea{border:none;background:transparent;outline:none;padding:0;margin:0;resi
 .wp tr.totals td.lbl{text-align:right;vertical-align:middle;padding:0 2mm;font-size:7.5pt;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--tx2);}
 .wp tr.totals td.val{text-align:center;vertical-align:middle;font-size:8.5pt;font-weight:700;color:var(--tx);padding:0 1mm;position:relative;}
 .wp tr.totals .tot-extra{position:absolute;top:0.3mm;right:0.8mm;font-size:5.5pt;color:var(--tx2);font-weight:500;line-height:1;opacity:0.75;font-variant:tabular-nums;}
+.wp tr.totals td.rem{padding:0;background:#f5f4f1;vertical-align:middle;}
+.wp tr.totals td.rem .totals-rem{width:100%;height:100%;padding:0 2mm;text-align:left;font-size:8pt;font-weight:500;color:var(--tx);letter-spacing:0;}
+.wp tr.totals td.rem .totals-rem::placeholder{font-size:7pt;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:0.05em;opacity:0.7;}
 
 .wp tr.altn td{background:#FFF8E7;}
 .wp tr.altn td:first-child{border-left:2px solid #B78500;}
@@ -420,6 +423,7 @@ const DEFAULT_STATE=()=>({
   route:[EMPTY_WP(),EMPTY_WP()],   // DEP, DEST (always present)
   altn:EMPTY_WP(),
   comments:'',
+  totalsRemark:'',
   end:{mode:'electric',ff:'',tf:'',tripT:'',altT:'',extraT:''},
   meta:{id:null,name:'',dirty:false}
 });
@@ -448,6 +452,7 @@ function loadState(){
       route:Array.isArray(s.route)&&s.route.length>=2?s.route.map(r=>({...EMPTY_WP(),...r})):d.route,
       altn:{...d.altn,...(s.altn||{})},
       comments:s.comments||'',
+      totalsRemark:s.totalsRemark||'',
       end:{...d.end,...(s.end||{})},
       meta:{...d.meta,...(s.meta||{})}};
   }catch(e){return DEFAULT_STATE();}
@@ -523,7 +528,8 @@ function totalsRow(){
     <td class="val">${totalDist>0?totalDist.toFixed(0):''}</td>
     <td></td>
     <td class="val">${totalMin>0?fmtTime(totalMin):''}${totalMin>0?'<span class="tot-extra">+10</span>':''}</td>
-    <td></td><td></td><td></td>
+    <td></td><td></td>
+    <td class="rem"><input class="single-inp totals-rem" data-totals-rem="1" value="${esc(state.totalsRemark||'')}" placeholder="REMARKS"></td>
   </tr>`;
 }
 function altnRow(){
@@ -606,6 +612,8 @@ function wireRowInputs(){
     state.route.splice(state.route.length-1,0,EMPTY_WP());
     saveState();renderWP();refreshEndurance();
   });
+  const tRem=tb.querySelector('tr.totals [data-totals-rem]');
+  if(tRem) tRem.addEventListener('input',()=>{state.totalsRemark=tRem.value;saveState();});
 }
 
 function refreshTotals(){
@@ -931,6 +939,7 @@ function hydrate(loaded,meta){
       ? loaded.route.map(r=>({...EMPTY_WP(),...r})) : d.route,
     altn:{...d.altn,...(loaded.altn||{})},
     comments:loaded.comments||'',
+    totalsRemark:loaded.totalsRemark||'',
     end:{...d.end,...(loaded.end||{})},
     meta:{id:meta.id,name:meta.name,dirty:false}
   };
