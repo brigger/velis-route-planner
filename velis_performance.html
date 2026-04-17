@@ -434,8 +434,10 @@ async function init(){
   );
   // Listen for localStorage changes from Route Planner (e.g. OAT, SOH, altitude, cruise power)
   window.addEventListener('storage', () => { load(); update(); });
-  // Re-sync when returning to this tab from the Route Planner
+  // Re-sync when returning to this tab from the Route Planner,
+  // or after plan_sync.js loads a bundle in-place.
   window.addEventListener('pageshow', () => { load(); update(); });
+  document.addEventListener('velis:after-load', () => { load(); update(); });
 
   update();
 }

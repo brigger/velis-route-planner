@@ -613,8 +613,9 @@ async function init(){
     document.getElementById(id).addEventListener('input',()=>{saveState();update();}));
   document.querySelectorAll('input[name="approach"]').forEach(r=>r.addEventListener('change',()=>{saveState();update();}));
 
-  // Re-read state after the NAV Plan's Load replaces localStorage from another page or navigation
+  // Re-read state after navigation or after plan_sync.js loads a bundle in-place
   window.addEventListener('pageshow',()=>{loadState();renderLegs();update();});
+  document.addEventListener('velis:after-load',()=>{loadState();renderLegs();update();});
 
   update();
 }

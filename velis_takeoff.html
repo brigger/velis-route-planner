@@ -589,8 +589,9 @@ async function init(){
   document.querySelectorAll('input[name="surface"],input[name="condition"]').forEach(r=>
     r.addEventListener('change',()=>{saveTO();update();})
   );
-  // Re-read after navigation (bundle load from another tab/page updated localStorage)
+  // Re-read after navigation or after plan_sync.js loads a bundle in-place
   window.addEventListener('pageshow',()=>{loadTO();update();});
+  document.addEventListener('velis:after-load',()=>{loadTO();update();});
   update();
 }
 init();
