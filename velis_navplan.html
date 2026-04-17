@@ -612,12 +612,11 @@ E.altT.value=state.end.altT||'';
 E.extraT.value=state.end.extraT||'';
 
 function batteryKwh(){
-  // Reconstruct total-battery capacity from Route-Planner-stored values; fallback to Velis nominal.
+  // velis_usable_kwh = full usable capacity (NOM × SOH) written by the Route Planner.
+  // The Route Planner's %SOC is expressed against this same capacity, so it's the right divisor here.
   const usable=parseFloat(localStorage.getItem('velis_usable_kwh'));
-  const soc0=parseFloat(localStorage.getItem('velis_soc0_pct'));
-  const res=parseFloat(localStorage.getItem('velis_reserve_pct'));
-  if(isFinite(usable)&&isFinite(soc0)&&isFinite(res)&&soc0>res) return usable*100/(soc0-res);
-  return 21; // Velis nominal usable kWh
+  if(isFinite(usable)&&usable>0) return usable;
+  return 23.3; // Velis nominal usable kWh at SOH ≈ 94 %
 }
 function endurancePull(){
   // Electric only: pull Avg power + Trip time from the Route Planner (if empty),
