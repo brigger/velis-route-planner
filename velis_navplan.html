@@ -132,6 +132,7 @@ textarea{border:none;background:transparent;outline:none;padding:0;margin:0;resi
 .wp tr.altn .wp-badge{font-size:7pt;font-weight:700;color:#7A5700;letter-spacing:0.06em;position:absolute;top:0.5mm;left:1mm;pointer-events:none;}
 
 .wp .del-btn{position:absolute;top:0.5mm;right:0.5mm;width:4mm;height:4mm;border:none;background:transparent;color:#B08888;cursor:pointer;font-size:11pt;line-height:1;border-radius:50%;padding:0;display:flex;align-items:center;justify-content:center;opacity:0.75;transition:opacity 0.12s,background 0.12s;}
+.wp .eet-extra{position:absolute;top:0.3mm;right:0.8mm;font-size:5.5pt;color:var(--tx2);font-weight:500;line-height:1;pointer-events:none;opacity:0.75;font-variant:tabular-nums;}
 .wp .del-btn:hover{opacity:1;color:#791F1F;background:#FCEBEB;}
 
 .add-wp-row td{padding:0;height:auto;border:none;background:#fff;}
@@ -480,13 +481,17 @@ function buildRouteHTML(){
   let html='';
   state.route.forEach((r,i)=>{
     const role=i===0?'dep':(i===last?'dest':'wp');
-    if(i===last) html+=addRow();   // + row immediately before DEST
-    html+=wpRow(r,i,role);
+    let eetExtra='';
+    if(i===1&&last===1) eetExtra='+10';     // single leg absorbs both TO and LDG
+    else if(i===1) eetExtra='+5';           // first leg — takeoff buffer
+    else if(i===last) eetExtra='+5';        // last leg — landing buffer
+    if(i===last) html+=addRow();            // + row immediately before DEST
+    html+=wpRow(r,i,role,eetExtra);
   });
   return html;
 }
 
-function wpRow(r,i,role){
+function wpRow(r,i,role,eetExtra){
   const canDel=role==='wp';
   return `<tr class="${role}" data-idx="${i}">
     <td class="dual">
@@ -497,7 +502,7 @@ function wpRow(r,i,role){
     <td><input class="single-inp" data-f="hdg" value="${esc(r.hdg)}"></td>
     <td><input class="single-inp" data-f="dist" inputmode="decimal" value="${esc(r.dist)}"></td>
     <td class="alt-td"><div class="alt-wrap">${trendBtnHTML(r.altTrend||'',`data-trend-idx="${i}"`)}<input class="single-inp alt-inp" data-f="alt" value="${esc(r.alt)}"></div></td>
-    <td><input class="single-inp" data-f="eet" value="${esc(r.eet)}"></td>
+    <td><input class="single-inp" data-f="eet" value="${esc(r.eet)}">${eetExtra?`<span class="eet-extra">${eetExtra}</span>`:''}</td>
     <td><input class="single-inp" data-f="ato" value="${esc(r.ato)}"></td>
     <td><input class="single-inp" data-f="wind" value="${esc(r.wind)}"></td>
     <td class="dual">
