@@ -496,7 +496,7 @@ function wpRow(r,i,role,eetExtra){
       <input class="dual-inp u" data-f="freq" value="${esc(r.freq)}">
       <input class="dual-inp l" data-f="ident" value="${esc(r.ident)}">
     </td>
-    <td><input class="single-inp" data-f="wp" value="${esc(r.wp)}" style="${canDel?'padding-right:5mm;':''}">${canDel?`<button class="del-btn" data-del="${i}" title="Remove waypoint">×</button>`:''}</td>
+    <td><input class="single-inp" data-f="wp" value="${esc(r.wp)}"></td>
     <td><input class="single-inp" data-f="hdg" value="${esc(r.hdg)}"></td>
     <td><input class="single-inp" data-f="dist" inputmode="decimal" value="${esc(r.dist)}"></td>
     <td class="alt-td"><div class="alt-wrap">${trendBtnHTML(r.altTrend||'',`data-trend-idx="${i}"`)}<input class="single-inp alt-inp" data-f="alt" value="${esc(r.alt)}"></div></td>
@@ -504,8 +504,9 @@ function wpRow(r,i,role,eetExtra){
     <td><input class="single-inp" data-f="ato" value="${esc(r.ato)}"></td>
     <td><input class="single-inp" data-f="wind" value="${esc(r.wind)}"></td>
     <td class="dual">
-      <input class="dual-inp u" data-f="freqR" value="${esc(r.freqR)}">
+      <input class="dual-inp u" data-f="freqR" value="${esc(r.freqR)}"${canDel?' style="padding-right:5mm;"':''}>
       <input class="dual-inp l" data-f="remark" value="${esc(r.remark)}">
+      ${canDel?`<button class="del-btn" data-del="${i}" title="Remove waypoint">×</button>`:''}
     </td>
   </tr>`;
 }
