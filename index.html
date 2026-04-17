@@ -105,6 +105,7 @@
     <div class="sr"><label>State of charge at departure (SOC)</label><input type="range" id="soc0" min="50" max="100" step="1" value="100"><span class="sv" id="soc0-v">100%</span></div>
     <div class="sr"><label>Minimum reserve SOC</label><input type="range" id="res" min="10" max="40" step="1" value="30"><span class="sv" id="res-v">30%</span></div>
     <div class="sr"><label>Outside air temperature (OAT)</label><input type="range" id="oat" min="-30" max="45" step="1" value="15"><span class="sv" id="oat-v">+15 °C</span></div>
+    <div class="sr"><label>Cruise power</label><input type="range" id="cruise-kw" min="20" max="36" step="1" value="36"><span class="sv" id="cruise-kw-v">36 kW</span></div>
   </div>
 
   <!-- DEPARTURE -->
@@ -278,7 +279,9 @@ document.getElementById('add-leg-btn').addEventListener('click',()=>{
 
 /* ═══ MAIN UPDATE ═══ */
 function update(){
-  const cruiseKw=parseFloat(localStorage.getItem('velis_cruise_kw')??'36');
+  const cruiseKw=+document.getElementById('cruise-kw').value;
+  localStorage.setItem('velis_cruise_kw',cruiseKw);
+  document.getElementById('cruise-kw-v').textContent=cruiseKw+' kW';
   const vyKts=parseFloat(localStorage.getItem('velis_vy')??'75');
   const vglideKts=parseFloat(localStorage.getItem('velis_vglide')??'70');
   const glideR=parseFloat(localStorage.getItem('velis_glide_ratio')??'15');
@@ -576,6 +579,7 @@ function drawSVG(depAlt,arrAlt,results){
 function getFullState(){
   return{soh:document.getElementById('soh').value,soc0:document.getElementById('soc0').value,
     res:document.getElementById('res').value,oat:document.getElementById('oat').value,
+    cruiseKw:document.getElementById('cruise-kw').value,
     depAlt:document.getElementById('dep-alt').value,arrAlt:document.getElementById('arr-alt').value,
     arrDist:document.getElementById('arr-dist').value,
     approach:document.querySelector('input[name="approach"]:checked').value,
@@ -586,6 +590,7 @@ function applyFullState(s){
   if(s.soc0!==undefined)document.getElementById('soc0').value=s.soc0;
   if(s.res!==undefined)document.getElementById('res').value=s.res;
   if(s.oat!==undefined)document.getElementById('oat').value=s.oat;
+  if(s.cruiseKw!==undefined)document.getElementById('cruise-kw').value=s.cruiseKw;
   if(s.depAlt!==undefined)document.getElementById('dep-alt').value=s.depAlt;
   if(s.arrAlt!==undefined)document.getElementById('arr-alt').value=s.arrAlt;
   if(s.arrDist!==undefined)document.getElementById('arr-dist').value=s.arrDist;
@@ -595,9 +600,14 @@ function applyFullState(s){
 }
 function saveState(){localStorage.setItem('velis_route_state',JSON.stringify(getFullState()));}
 function loadState(){
+  // Seed cruise-kw from the shared key even if no full route_state exists yet
+  const savedKw=localStorage.getItem('velis_cruise_kw');
+  if(savedKw!==null) document.getElementById('cruise-kw').value=savedKw;
   const raw=localStorage.getItem('velis_route_state');if(!raw)return;
   try{const s=JSON.parse(raw);
     ['soh','soc0','res','oat'].forEach(id=>{if(s[id]!==undefined)document.getElementById(id).value=s[id];});
+    if(s.cruiseKw!==undefined)document.getElementById('cruise-kw').value=s.cruiseKw;
+    else{const saved=localStorage.getItem('velis_cruise_kw');if(saved!==null)document.getElementById('cruise-kw').value=saved;}
     if(s.depAlt!==undefined)document.getElementById('dep-alt').value=s.depAlt;
     if(s.arrAlt!==undefined)document.getElementById('arr-alt').value=s.arrAlt;
     if(s.arrDist!==undefined)document.getElementById('arr-dist').value=s.arrDist;
@@ -611,7 +621,7 @@ async function init(){
   await loadPOH();
   loadState();
   renderLegs();
-  ['soh','soc0','res','oat','dep-alt','arr-alt','arr-dist'].forEach(id=>
+  ['soh','soc0','res','oat','cruise-kw','dep-alt','arr-alt','arr-dist'].forEach(id=>
     document.getElementById(id).addEventListener('input',()=>{saveState();update();}));
   document.querySelectorAll('input[name="approach"]').forEach(r=>r.addEventListener('change',()=>{saveState();update();}));
 

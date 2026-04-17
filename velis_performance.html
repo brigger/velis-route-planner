@@ -165,13 +165,12 @@ hr{border:none;border-top:0.5px solid var(--bd);margin:12px 0;}
 
 <!-- ═══ CRUISE POWER ═══ -->
 <div class="card">
-  <h3>Cruise power setting</h3>
-  <div class="pwr-btns" id="pwr-btns"></div>
+  <h3>Cruise power reference</h3>
   <table class="ptable" id="pwr-table">
     <thead><tr><th>Power (kW)</th><th>RPM</th><th>KIAS</th><th>KCAS</th><th>kts</th></tr></thead>
     <tbody id="pwr-tbody"></tbody>
   </table>
-  <div class="info">Selected: <strong id="cruise-info">—</strong></div>
+  <div class="info">Current setting: <strong id="cruise-info">—</strong> &middot; change it with the Cruise power slider on the <a href="index.html">Route Planner</a>.</div>
 </div>
 
 <!-- ═══ %SOC TABLE ═══ -->
@@ -299,17 +298,6 @@ function buildPwrTable() {
     `<tr id="pr${i}"><td style="font-weight:700;">${r.kw}</td><td>${r.rpm.toLocaleString()}</td>` +
     `<td>${r.kias}</td><td><em>${r.kcas}</em></td><td>${r.kias}</td></tr>`
   ).join('');
-  const box = document.getElementById('pwr-btns');
-  box.innerHTML = PWR.map(r =>
-    `<button class="pwr-btn${r.kw===selPwr?' active':''}" data-kw="${r.kw}">${r.kw} kW</button>`
-  ).join('');
-  box.addEventListener('click', e => {
-    const btn = e.target.closest('.pwr-btn');
-    if (!btn) return;
-    selPwr = +btn.dataset.kw;
-    box.querySelectorAll('.pwr-btn').forEach(b => b.classList.toggle('active', +b.dataset.kw===selPwr));
-    save(); update();
-  });
 }
 
 function buildSOCTable() {
@@ -412,7 +400,6 @@ function update() {
 function save() {
   const ids = { velis_vy:'vy', velis_vx:'vx', velis_vglide:'vglide', velis_glide_ratio:'glide-ratio' };
   Object.entries(ids).forEach(([k,id]) => localStorage.setItem(k, document.getElementById(id).value));
-  localStorage.setItem('velis_cruise_kw', selPwr);
 }
 
 function load() {
@@ -436,8 +423,10 @@ async function init(){
   ['vy','vx','vglide','glide-ratio'].forEach(id =>
     document.getElementById(id).addEventListener('input', () => { save(); update(); })
   );
-  // Listen for localStorage changes from Route Planner (e.g. OAT, SOH, altitude)
-  window.addEventListener('storage', () => { update(); });
+  // Listen for localStorage changes from Route Planner (e.g. OAT, SOH, altitude, cruise power)
+  window.addEventListener('storage', () => { load(); update(); });
+  // Re-sync when returning to this tab from the Route Planner
+  window.addEventListener('pageshow', () => { load(); update(); });
 
 // ── Save / Load performance settings as JSON file ──
 function getPerfState(){
@@ -456,7 +445,7 @@ function applyPerfState(state){
   if(state.glideRatio!==undefined) document.getElementById('glide-ratio').value=state.glideRatio;
   if(state.cruiseKw!==undefined){
     selPwr=+state.cruiseKw;
-    document.querySelectorAll('.pwr-btn').forEach(b=>b.classList.toggle('active',+b.dataset.kw===selPwr));
+    localStorage.setItem('velis_cruise_kw',selPwr);
   }
   save(); update();
 }
