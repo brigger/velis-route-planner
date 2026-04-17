@@ -79,6 +79,7 @@
   <a href="index.html" class="nav-tab active">Route Planner</a>
   <a href="velis_takeoff.html" class="nav-tab">Takeoff &amp; Landing</a>
   <a href="velis_performance.html" class="nav-tab">Performance</a>
+  <a href="velis_navplan.html" class="nav-tab">NAV Plan</a>
 </div></nav>
 
 <div class="page-wrap"><div class="wrap">
@@ -355,6 +356,14 @@ function update(){
   const totalDist=results.reduce((s,r)=>s+r.dist,0);
   const totalMin=results.reduce((s,r)=>s+r.min,0);
   const startSocPct=soc0*100;
+
+  // Expose computed totals for the Endurance Calculator page
+  localStorage.setItem('velis_total_min',Math.round(totalMin));
+  localStorage.setItem('velis_total_kwh',totalKwh.toFixed(2));
+  localStorage.setItem('velis_total_dist',Math.round(totalDist));
+  localStorage.setItem('velis_usable_kwh',usable.toFixed(2));
+  localStorage.setItem('velis_reserve_pct',Math.round(resPct*100));
+  localStorage.setItem('velis_soc0_pct',Math.round(soc0*100));
 
   // SOC at each waypoint
   const socs=[startSocPct];
