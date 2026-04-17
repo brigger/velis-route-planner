@@ -9,7 +9,7 @@
 <style>
   :root{--font:'DM Sans',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;--bg-page:#f0ede8;--bg-card:#fff;--bg-sec:#f5f4f1;--bd:#e2ddd6;--bd2:#ccc8c0;--tx:#1a1a1a;--tx2:#6b6660;--rad-lg:14px;--rad-md:8px;--blue:#185FA5;}
   *,*::before,*::after{box-sizing:border-box;}
-  body{margin:0;background:var(--bg-page);font-family:var(--font);color:var(--tx);padding:0 0 48px;}
+  body{margin:0;background:var(--bg-page);font-family:var(--font);color:var(--tx);padding:0 0 88px;}
   .page-wrap{max-width:860px;margin:0 auto;padding:0 16px;}
   .nav{background:var(--bg-card);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:10;backdrop-filter:blur(12px);background:rgba(255,255,255,0.92);}
   .nav-inner{max-width:860px;margin:0 auto;padding:0 16px;display:flex;align-items:stretch;}
@@ -85,8 +85,6 @@
 <div class="page-wrap"><div class="wrap">
   <div style="font-size:10px;color:var(--tx2);text-align:center;margin-bottom:8px;font-style:italic;">Corrections for wind components not (yet) included in calculations</div>
   <div class="perf-banner"><div class="tags" id="perf-tags"></div></div>
-
-  <div style="font-size:10px;color:var(--tx2);text-align:right;margin-bottom:8px;">Save/Load lives on the <a href="velis_navplan.html" style="color:var(--blue);">NAV Plan</a> page — one button saves everything.</div>
 
   <!-- BATTERY -->
   <div class="card">
@@ -588,7 +586,7 @@ function applyFullState(s){
   if(s.legs&&Array.isArray(s.legs)&&s.legs.length>0) legs=s.legs;
   renderLegs(); saveState(); update();
 }
-function saveState(){localStorage.setItem('velis_route_state',JSON.stringify(getFullState()));localStorage.setItem('velis_bundle_mtime',String(Date.now()));}
+function saveState(){localStorage.setItem('velis_route_state',JSON.stringify(getFullState()));if(window.velisPlan)window.velisPlan.markDirty();else localStorage.setItem('velis_bundle_mtime',String(Date.now()));}
 function loadState(){
   // Seed cruise-kw from the shared key even if no full route_state exists yet
   const savedKw=localStorage.getItem('velis_cruise_kw');
@@ -622,5 +620,6 @@ async function init(){
 }
 init();
 </script>
+<script src="plan_sync.js" defer></script>
 </body>
 </html>
