@@ -74,8 +74,14 @@ textarea{border:none;background:transparent;outline:none;padding:0;margin:0;resi
 .hdr{display:grid;gap:2mm 3mm;margin-bottom:3mm;font-size:9pt;}
 .hdr-row{display:grid;grid-template-columns:repeat(12,1fr);align-items:end;gap:3mm;}
 .hdr-row.r1 .fld{grid-column:span 3;}
-.hdr-row.r3 .fld,
-.hdr-row.r4 .fld{grid-column:span 4;}
+.hdr-deparr{display:grid;grid-template-columns:1fr 1fr;gap:4mm;margin-top:1mm;}
+.hdr-section{display:grid;gap:1.8mm;}
+.sec-lbl{font-size:7pt;font-weight:700;color:var(--tx2);letter-spacing:0.08em;text-transform:uppercase;border-bottom:0.5px solid var(--bd);padding:0 0 0.5mm;}
+.sec-lbl.dep{border-bottom-color:var(--green);}
+.sec-lbl.dst{border-bottom-color:#B78500;}
+.hdr-subrow{display:grid;grid-template-columns:repeat(6,1fr);align-items:end;gap:2.5mm;}
+.hdr-subrow.r-ab .fld{grid-column:span 3;}
+.hdr-subrow.r-cd .fld{grid-column:span 2;}
 .fld{display:flex;align-items:baseline;gap:1.5mm;min-width:0;}
 .fld-lbl{font-size:7.5pt;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--tx2);white-space:nowrap;flex-shrink:0;}
 .fld-inp{flex:1;border-bottom:1px solid var(--bd2);min-height:4.5mm;font-size:9pt;padding:0 1mm 0.5mm;}
@@ -226,15 +232,31 @@ textarea{border:none;background:transparent;outline:none;padding:0;margin:0;resi
           <div class="fld"><span class="fld-lbl">Pilot</span><input class="fld-inp" data-h="pilot"></div>
           <div class="fld"><span class="fld-lbl">Date</span><input class="fld-inp" data-h="date"></div>
         </div>
-        <div class="hdr-row r3">
-          <div class="fld"><span class="fld-lbl">Hobbs</span><input class="fld-inp" data-h="hobbs"></div>
-          <div class="fld"><span class="fld-lbl">Start</span><input class="fld-inp" data-h="startT"></div>
-          <div class="fld"><span class="fld-lbl">End</span><input class="fld-inp" data-h="endT"></div>
-        </div>
-        <div class="hdr-row r4">
-          <div class="fld"><span class="fld-lbl">RWY</span><input class="fld-inp" data-h="rwy"></div>
-          <div class="fld"><span class="fld-lbl">QNH</span><input class="fld-inp" data-h="qnh"></div>
-          <div class="fld"><span class="fld-lbl">Wind</span><input class="fld-inp" data-h="wind"></div>
+        <div class="hdr-deparr">
+          <div class="hdr-section">
+            <div class="sec-lbl dep">Departure</div>
+            <div class="hdr-subrow r-ab">
+              <div class="fld"><span class="fld-lbl">Hobbs</span><input class="fld-inp" data-h="depHobbs"></div>
+              <div class="fld"><span class="fld-lbl">Start</span><input class="fld-inp" data-h="startT"></div>
+            </div>
+            <div class="hdr-subrow r-cd">
+              <div class="fld"><span class="fld-lbl">RWY</span><input class="fld-inp" data-h="depRwy"></div>
+              <div class="fld"><span class="fld-lbl">QNH</span><input class="fld-inp" data-h="depQnh"></div>
+              <div class="fld"><span class="fld-lbl">Wind</span><input class="fld-inp" data-h="depWind"></div>
+            </div>
+          </div>
+          <div class="hdr-section">
+            <div class="sec-lbl dst">Destination</div>
+            <div class="hdr-subrow r-ab">
+              <div class="fld"><span class="fld-lbl">Hobbs</span><input class="fld-inp" data-h="dstHobbs"></div>
+              <div class="fld"><span class="fld-lbl">End</span><input class="fld-inp" data-h="endT"></div>
+            </div>
+            <div class="hdr-subrow r-cd">
+              <div class="fld"><span class="fld-lbl">RWY</span><input class="fld-inp" data-h="dstRwy"></div>
+              <div class="fld"><span class="fld-lbl">QNH</span><input class="fld-inp" data-h="dstQnh"></div>
+              <div class="fld"><span class="fld-lbl">Wind</span><input class="fld-inp" data-h="dstWind"></div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -376,13 +398,28 @@ const TREND_NEXT={'':'up',up:'down',down:''};
 const TREND_CHAR={'':'',up:'↗',down:'↘'};
 const trendBtnHTML=(t,attr)=>`<button class="trend-btn ${t?'':'empty'}" ${attr} data-trend="${t}" title="Toggle climb / descent / level">${TREND_CHAR[t]||''}</button>`;
 const DEFAULT_STATE=()=>({
-  hdr:{ident:'',type:'',pilot:'',date:'',hobbs:'',startT:'',endT:'',rwy:'',qnh:'',wind:''},
+  hdr:{ident:'',type:'',pilot:'',date:'',
+       depHobbs:'',startT:'',depRwy:'',depQnh:'',depWind:'',
+       dstHobbs:'',endT:'',dstRwy:'',dstQnh:'',dstWind:''},
   route:[EMPTY_WP(),EMPTY_WP()],   // DEP, DEST (always present)
   altn:EMPTY_WP(),
   comments:'',
   end:{mode:'electric',ff:'',tf:'',tripT:'',altT:'',extraT:''},
   meta:{id:null,name:'',dirty:false}
 });
+
+// Migrate pre-split headers (single hobbs/rwy/qnh/wind) into the DEP-side fields.
+function migrateHdr(oldHdr){
+  const h={...(oldHdr||{})};
+  const map={hobbs:'depHobbs',rwy:'depRwy',qnh:'depQnh',wind:'depWind'};
+  for(const [o,n] of Object.entries(map)){
+    if(h[o]!==undefined){
+      if(!h[n]) h[n]=h[o];
+      delete h[o];
+    }
+  }
+  return h;
+}
 
 let state=loadState();
 
@@ -391,7 +428,7 @@ function loadState(){
     const raw=localStorage.getItem(STATE_KEY);
     if(!raw) return DEFAULT_STATE();
     const s=JSON.parse(raw),d=DEFAULT_STATE();
-    return{hdr:{...d.hdr,...(s.hdr||{})},
+    return{hdr:{...d.hdr,...migrateHdr(s.hdr)},
       route:Array.isArray(s.route)&&s.route.length>=2?s.route.map(r=>({...EMPTY_WP(),...r})):d.route,
       altn:{...d.altn,...(s.altn||{})},
       comments:s.comments||'',
@@ -860,7 +897,7 @@ document.getElementById('set-save').addEventListener('click',()=>{
 function hydrate(loaded,meta){
   const d=DEFAULT_STATE();
   state={
-    hdr:{...d.hdr,...(loaded.hdr||{})},
+    hdr:{...d.hdr,...migrateHdr(loaded.hdr)},
     route:Array.isArray(loaded.route)&&loaded.route.length>=2
       ? loaded.route.map(r=>({...EMPTY_WP(),...r})) : d.route,
     altn:{...d.altn,...(loaded.altn||{})},
