@@ -51,6 +51,8 @@ body{margin:0;background:var(--bg-page);font-family:var(--font);color:var(--tx);
 .plan-item .del{border:none;background:transparent;color:#B08888;cursor:pointer;font-size:15px;padding:0 6px;line-height:1;}
 .plan-item .del:hover{color:#791F1F;}
 .plan-empty{font-size:11.5px;color:var(--tx2);padding:10px;font-style:italic;text-align:center;}
+.import-ta{width:100%;min-height:280px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;line-height:1.45;border:1px solid var(--bd2);border-radius:6px;padding:8px 10px;color:var(--tx);background:#fafaf7;outline:none;resize:vertical;}
+.import-ta:focus{border-color:var(--blue);}
 .seg{display:inline-flex;border:1px solid var(--bd);border-radius:6px;overflow:hidden;background:var(--bg-card);}
 .seg button{border:none;border-radius:0;padding:6px 14px;background:transparent;color:var(--tx2);font-size:11.5px;font-weight:500;border-right:1px solid var(--bd);}
 .seg button:last-child{border-right:none;}
@@ -209,6 +211,7 @@ textarea{border:none;background:transparent;outline:none;padding:0;margin:0;resi
     </div>
     <span class="sep">|</span>
     <button id="btn-load">Load…</button>
+    <button id="btn-import">Import…</button>
     <button id="btn-save">Save</button>
     <button id="btn-save-as">Save as…</button>
     <span class="sep">|</span>
@@ -372,6 +375,19 @@ textarea{border:none;background:transparent;outline:none;padding:0;margin:0;resi
     <div class="modal-actions">
       <button id="set-cancel">Cancel</button>
       <button id="set-save" class="primary">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Import-from-Sky-Demon modal ═══ -->
+<div class="modal" id="import-modal" hidden>
+  <div class="modal-box" style="min-width:560px;">
+    <h3>Import from Sky Demon</h3>
+    <p class="hint">Paste the nav-log text copied from Sky Demon. Waypoints replace the current route; header fields (ACFT, Pilot, RWY, QNH…) are not touched.</p>
+    <textarea id="import-ta" class="import-ta" spellcheck="false" placeholder="SR 04:35 Z, MCT 04:03 Z    MSA    Level    TAS    Trk    Wind    Hdg    GS    Dist    Time …"></textarea>
+    <div class="modal-actions">
+      <button id="import-cancel">Cancel</button>
+      <button id="import-do" class="primary">Import</button>
     </div>
   </div>
 </div>
@@ -1009,6 +1025,111 @@ document.getElementById('plan-list').addEventListener('click',async ev=>{
     hydrate(p.plan_json,{id:p.id,name:p.name});
     document.getElementById('load-modal').hidden=true;
   }catch(e){alert('Load failed: '+e.message);}
+});
+
+/* ═════════════════════════════════════════════════════════════════════
+   SKY DEMON IMPORT — paste nav-log text, replace the route
+   ═════════════════════════════════════════════════════════════════════ */
+
+function parseSkyDemon(text){
+  const lines=text.split(/\r?\n/);
+  const wps=[];
+  let pending=null;           // {name,elev}
+  const dropQuote=s=>(s||'').replace(/[’'`]/g,'');
+  const isWind=p=>/^\d{3}\/\d{1,2}$/.test(p);
+  const looksNumeric=p=>/^[\d'’.,]+$/.test(p)||isWind(p);
+  const tokenize=l=>l.split(/\t+|\s{2,}/).map(p=>p.trim()).filter(Boolean);
+  const flushPending=()=>{
+    if(!pending) return;
+    wps.push({name:pending.name,elev:pending.elev||'',data:null});
+    pending=null;
+  };
+  for(const raw of lines){
+    const line=raw.trim();
+    if(!line) continue;
+    if(/^S[RS]\s+\d/i.test(line)) continue;           // "SR 04:35 Z, MCT …" / "SS 18:18 …"
+    if(/^MSA\b/i.test(line)) continue;                // column header
+    if(/^°[tm]\b/.test(line)) continue;               // units row "°t … °m kt nm"
+    if(/^\d[\d'’]*\s*ft\s*\(/.test(line)){            // elevation line "1'526 ft (55 hPa)"
+      if(pending) pending.elev=line;
+      continue;
+    }
+    const parts=tokenize(line);
+    const numCount=parts.filter(looksNumeric).length;
+    const isData=parts.length>=5&&numCount>=5&&parts.some(isWind);
+    if(isData){
+      if(!pending) continue;
+      const windIdx=parts.findIndex(isWind);
+      const offset=windIdx-4;                         // align so MSA=0, Level=1, …, Time=8
+      const g=i=>parts[i+offset];
+      wps.push({name:pending.name,elev:pending.elev||'',data:{
+        msa:dropQuote(g(0)),level:dropQuote(g(1)),tas:g(2),trk:g(3),
+        wind:g(4),hdg:g(5),gs:g(6),dist:g(7),eet:g(8)
+      }});
+      pending=null;
+    } else {
+      flushPending();
+      pending={name:line,elev:''};
+    }
+  }
+  flushPending();
+  return wps;
+}
+
+function wpFromSkyDemon(w,prevAlt){
+  const name=w.name||'';
+  const mIcao=name.match(/^([A-Z]{4})\s+(.+)$/);
+  const ident=mIcao?mIcao[1]:'';
+  const wpName=mIcao?mIcao[2]:name;
+  const dropQuote=s=>(s||'').replace(/[’'`,]/g,'');
+  const toNum=s=>{const n=parseFloat(dropQuote(s));return isFinite(n)?n:null;};
+  const elevFt=toNum((w.elev.match(/^([\d'’]+)\s*ft/)||[])[1]);
+  const lvl=w.data?toNum(w.data.level):null;
+  const curAlt=lvl??elevFt;
+  let trend='';
+  if(prevAlt!=null&&curAlt!=null){
+    if(curAlt>prevAlt) trend='up';
+    else if(curAlt<prevAlt) trend='down';
+  }
+  const alt=w.data?dropQuote(w.data.level||''):(elevFt!=null?String(elevFt):'');
+  const dist=w.data&&w.data.dist?dropQuote(w.data.dist):'';
+  const eet=w.data&&w.data.eet?fmtTime(parseFloat(w.data.eet)):'';
+  const hdg=w.data?w.data.hdg||'':'';
+  const wind=w.data?w.data.wind||'':'';
+  return {
+    leg:{...EMPTY_WP(),ident,wp:wpName,alt,altTrend:trend,dist,eet,hdg,wind},
+    curAlt
+  };
+}
+
+document.getElementById('btn-import').addEventListener('click',()=>{
+  const ta=document.getElementById('import-ta');
+  ta.value='';
+  document.getElementById('import-modal').hidden=false;
+  setTimeout(()=>ta.focus(),0);
+});
+document.getElementById('import-cancel').addEventListener('click',()=>{
+  document.getElementById('import-modal').hidden=true;
+});
+document.getElementById('import-do').addEventListener('click',()=>{
+  const text=document.getElementById('import-ta').value;
+  const parsed=parseSkyDemon(text);
+  if(parsed.length<2){
+    alert('Could not find at least 2 waypoints in the pasted text. Paste the nav-log block including the departure and destination lines.');
+    return;
+  }
+  const hasContent=state.route.some(r=>r.wp||r.ident||r.freq||r.hdg||r.dist||r.alt||r.eet||r.wind||r.remark);
+  if(hasContent&&!confirm(`Replace the current route with ${parsed.length} imported waypoint(s)?`)) return;
+
+  let prevAlt=null;
+  state.route=parsed.map(w=>{
+    const {leg,curAlt}=wpFromSkyDemon(w,prevAlt);
+    prevAlt=curAlt;
+    return leg;
+  });
+  state.meta.dirty=true;saveLocal();
+  renderWP();refreshEndurance();updateStatus();
+  document.getElementById('import-modal').hidden=true;
 });
 
 /* ═══ Init ═══ */
