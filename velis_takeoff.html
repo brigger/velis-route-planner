@@ -563,6 +563,7 @@ function saveTO(){
     surface:document.querySelector('input[name="surface"]:checked')?.value,
     condition:document.querySelector('input[name="condition"]:checked')?.value
   }));
+  localStorage.setItem('velis_bundle_mtime',String(Date.now()));
 }
 function loadTO(){
   try{

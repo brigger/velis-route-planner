@@ -453,7 +453,9 @@ function loadState(){
   }catch(e){return DEFAULT_STATE();}
 }
 function saveLocal(){localStorage.setItem(STATE_KEY,JSON.stringify(state));}
-function saveState(){if(!state.meta)state.meta={id:null,name:'',dirty:false};state.meta.dirty=true;saveLocal();updateStatus();}
+function markBundleDirty(){localStorage.setItem('velis_bundle_mtime',String(Date.now()));}
+function markBundleSaved(){localStorage.setItem('velis_bundle_stime',String(Date.now()));}
+function saveState(){if(!state.meta)state.meta={id:null,name:'',dirty:false};state.meta.dirty=true;saveLocal();markBundleDirty();updateStatus();}
 
 /* ─── Parsers / formatters ─── */
 const parseNum=s=>{const v=parseFloat(String(s).replace(',','.'));return isFinite(v)?v:NaN;};
@@ -818,7 +820,7 @@ function refreshEndurance(){
 document.getElementById('btn-clear').addEventListener('click',()=>{
   if(!confirm('Clear the NAV plan form? This cannot be undone.')) return;
   state=DEFAULT_STATE();
-  saveLocal();
+  saveLocal();markBundleDirty();
   // Rehydrate all inputs from default state
   document.querySelectorAll('input[data-h]').forEach(inp=>{inp.value=state.hdr[inp.dataset.h]||'';});
   ta.value='';
@@ -878,15 +880,21 @@ async function api(path,opts={}){
 }
 
 /* ─── Status line ─── */
+function bundleDirty(){
+  const m=parseInt(localStorage.getItem('velis_bundle_mtime')||'0',10);
+  const st=parseInt(localStorage.getItem('velis_bundle_stime')||'0',10);
+  return m>st;
+}
 function updateStatus(){
   const s=document.getElementById('status');
   if(!s) return;
   const meta=state.meta||{id:null,name:'',dirty:false};
   const a=getAuth();
   const who=a.owner?` · ${a.owner}`:'';
+  const dirty=meta.dirty||bundleDirty();
   let txt;
-  if(meta.id) txt=(meta.dirty?'● ':'')+(meta.name||`Plan #${meta.id}`)+(meta.dirty?' (unsaved)':' (saved)');
-  else txt=meta.dirty?'● Unsaved draft':'Not saved to server';
+  if(meta.id) txt=(dirty?'● ':'')+(meta.name||`Plan #${meta.id}`)+(dirty?' (unsaved)':' (saved)');
+  else txt=dirty?'● Unsaved draft':'Not saved to server';
   s.textContent=txt+who;
 }
 
@@ -963,7 +971,7 @@ async function doSave(){
   if(!meta.id) return doSaveAs();
   try{
     await api(`/plans/${meta.id}`,{method:'PUT',body:JSON.stringify({plan_json:collectBundle()})});
-    state.meta.dirty=false;saveLocal();updateStatus();
+    state.meta.dirty=false;markBundleSaved();saveLocal();updateStatus();
   }catch(e){
     if(e.status===404){
       // Plan was deleted on server — fall back to Save As
@@ -982,7 +990,7 @@ async function doSaveAs(){
   try{
     const res=await api('/plans',{method:'POST',body:JSON.stringify({name:name.trim(),plan_json:collectBundle()})});
     state.meta={id:res.id,name:res.name,dirty:false};
-    saveLocal();updateStatus();
+    markBundleSaved();saveLocal();updateStatus();
   }catch(e){
     if(e.status===409){
       alert(`A plan named "${name.trim()}" already exists for this owner. Pick a different name.`);
@@ -1043,6 +1051,7 @@ document.getElementById('plan-list').addEventListener('click',async ev=>{
     const p=await api(`/plans/${pid}`);
     applyBundleSideEffects(p.plan_json);
     hydrate((p.plan_json&&p.plan_json.navplan)||{},{id:p.id,name:p.name});
+    markBundleSaved();updateStatus();
     document.getElementById('load-modal').hidden=true;
   }catch(e){alert('Load failed: '+e.message);}
 });
@@ -1148,7 +1157,7 @@ document.getElementById('import-do').addEventListener('click',()=>{
     prevAlt=curAlt;
     return leg;
   });
-  state.meta.dirty=true;saveLocal();
+  state.meta.dirty=true;saveLocal();markBundleDirty();
   renderWP();refreshEndurance();updateStatus();
   document.getElementById('import-modal').hidden=true;
 });
@@ -1157,8 +1166,9 @@ document.getElementById('import-do').addEventListener('click',()=>{
 renderWP();
 refreshEndurance();
 updateStatus();
-// Re-pull totals when returning from the Route Planner tab
-window.addEventListener('pageshow',refreshEndurance);
+// Re-pull totals and re-evaluate dirty state when returning from another page
+window.addEventListener('pageshow',()=>{refreshEndurance();updateStatus();});
+window.addEventListener('storage',updateStatus);
 </script>
 
 </body>

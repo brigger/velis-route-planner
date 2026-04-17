@@ -588,7 +588,7 @@ function applyFullState(s){
   if(s.legs&&Array.isArray(s.legs)&&s.legs.length>0) legs=s.legs;
   renderLegs(); saveState(); update();
 }
-function saveState(){localStorage.setItem('velis_route_state',JSON.stringify(getFullState()));}
+function saveState(){localStorage.setItem('velis_route_state',JSON.stringify(getFullState()));localStorage.setItem('velis_bundle_mtime',String(Date.now()));}
 function loadState(){
   // Seed cruise-kw from the shared key even if no full route_state exists yet
   const savedKw=localStorage.getItem('velis_cruise_kw');

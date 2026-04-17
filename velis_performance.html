@@ -407,6 +407,7 @@ function update() {
 function save() {
   const ids = { velis_vy:'vy', velis_vx:'vx', velis_vglide:'vglide', velis_glide_ratio:'glide-ratio' };
   Object.entries(ids).forEach(([k,id]) => localStorage.setItem(k, document.getElementById(id).value));
+  localStorage.setItem('velis_bundle_mtime', String(Date.now()));
 }
 
 function load() {
