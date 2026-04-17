@@ -163,6 +163,8 @@ textarea{border:none;background:transparent;outline:none;padding:0;margin:0;resi
   .nav,.toolbar{display:none;}
   .page-wrap{padding:0;gap:0;}
   .sheet{box-shadow:none !important;width:287mm !important;height:190mm !important;grid-template-columns:1fr 1fr !important;}
+  /* Preserve the light grey background on column headers + fuel section headers */
+  .wp th,.fuel .title-row td,.fuel thead.col-head td{background:var(--bg-sec) !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   .sheet.view-nav .fuel-half,
   .sheet.view-fuel .nav-half{display:flex !important;}
   .add-wp-row{display:none;}
