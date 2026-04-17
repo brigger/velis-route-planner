@@ -951,18 +951,10 @@ function collectBundle(){
   }
   return {version:2,navplan:np,localStorage:ls};
 }
-// Apply localStorage section (v2 bundles); return the navplan part for hydrate()
 function applyBundleSideEffects(bundle){
-  if(bundle&&bundle.localStorage){
-    for(const [k,v] of Object.entries(bundle.localStorage)){
-      if(v!=null) localStorage.setItem(k,v);
-    }
-  }
-}
-// Given plan_json (v1 flat or v2 {version,navplan,localStorage}), return just the navplan portion
-function navplanFromBundle(bundle){
-  if(bundle&&(bundle.version||bundle.navplan||bundle.localStorage)) return bundle.navplan||{};
-  return bundle||{};
+  const ls=bundle&&bundle.localStorage;
+  if(!ls) return;
+  for(const [k,v] of Object.entries(ls)) if(v!=null) localStorage.setItem(k,v);
 }
 
 async function doSave(){
@@ -1050,7 +1042,7 @@ document.getElementById('plan-list').addEventListener('click',async ev=>{
   try{
     const p=await api(`/plans/${pid}`);
     applyBundleSideEffects(p.plan_json);
-    hydrate(navplanFromBundle(p.plan_json),{id:p.id,name:p.name});
+    hydrate((p.plan_json&&p.plan_json.navplan)||{},{id:p.id,name:p.name});
     document.getElementById('load-modal').hidden=true;
   }catch(e){alert('Load failed: '+e.message);}
 });
