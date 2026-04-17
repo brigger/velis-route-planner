@@ -1,14 +1,14 @@
 # flightplanner backend
 
 Tiny Flask service that persists NAV plans for `velis_navplan.html` to a
-shared MariaDB. See `../docs/FLIGHTPLANNER_BACKEND.md` for the full
-architecture + VPS deploy flow.
+shared MariaDB. Already deployed as the `flightplanner` container in
+`/opt/docker/docker-compose.yml` on the VPS (listens on
+`127.0.0.1:8003`, Nginx reverse-proxies `/velis-planner/api/`).
 
 ## Local dev
 
-Requires Python 3.12+ and a reachable MariaDB with DB + user created per
-§3.1 of the backend doc (either local, or SSH-tunneled from the VPS:
-`ssh -L 3306:127.0.0.1:3306 root@95.217.222.205`).
+Requires Python 3.12+ and a reachable MariaDB. Either stand up a local
+one or SSH-tunnel to the VPS: `ssh -L 3306:127.0.0.1:3306 root@95.217.222.205`.
 
 ```bash
 cd backend
@@ -54,7 +54,13 @@ rows (defaults to `"default"`).
 
 Unique key: `(owner, name)`. Renaming into an existing name ⇒ 409.
 
-## Deploy
+## Redeploy after a code change
 
-See `../docs/FLIGHTPLANNER_BACKEND.md` §5 (compose + nginx), §7 (first-
-time VPS bring-up), and §8 (build order).
+```bash
+ssh root@95.217.222.205 \
+  "cd /opt/docker/flightplanner-src && git pull && \
+   cd /opt/docker && docker compose build flightplanner && \
+   docker compose up -d flightplanner"
+```
+
+Secrets live in `/opt/docker/.env` (`FLIGHTPLANNER_DB_USER`, `FLIGHTPLANNER_DB_PASS`, `FLIGHTPLANNER_API_KEY`). To rotate the API key: regenerate, replace in `.env`, `docker compose up -d flightplanner`, then paste the new key into the ⚙ settings modal on each browser you use.
