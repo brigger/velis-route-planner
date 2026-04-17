@@ -81,9 +81,6 @@ textarea{border:none;background:transparent;outline:none;padding:0;margin:0;resi
 .hdr-row.r1 .fld[data-col="date"]{grid-column:span 2;}
 .hdr-deparr{display:grid;grid-template-columns:1fr 1fr;gap:4mm;margin-top:1mm;}
 .hdr-section{display:grid;gap:1.8mm;}
-.sec-lbl{font-size:7pt;font-weight:700;color:var(--tx2);letter-spacing:0.08em;text-transform:uppercase;border-bottom:0.5px solid var(--bd);padding:0 0 0.5mm;}
-.sec-lbl.dep{border-bottom-color:var(--green);}
-.sec-lbl.dst{border-bottom-color:#B78500;}
 .hdr-subrow{display:grid;grid-template-columns:repeat(6,1fr);align-items:end;gap:2.5mm;}
 .hdr-subrow.r-ab .fld{grid-column:span 3;}
 .hdr-subrow.r-cd .fld{grid-column:span 2;}
@@ -240,27 +237,25 @@ textarea{border:none;background:transparent;outline:none;padding:0;margin:0;resi
         </div>
         <div class="hdr-deparr">
           <div class="hdr-section">
-            <div class="sec-lbl dep">Departure</div>
             <div class="hdr-subrow r-ab">
-              <div class="fld"><span class="fld-lbl">Hobbs</span><input class="fld-inp" data-h="depHobbs"></div>
-              <div class="fld"><span class="fld-lbl">Start</span><input class="fld-inp" data-h="startT"></div>
+              <div class="fld"><span class="fld-lbl">DEP Hobbs</span><input class="fld-inp" data-h="depHobbs"></div>
+              <div class="fld"><span class="fld-lbl">DEP Start</span><input class="fld-inp" data-h="startT"></div>
             </div>
             <div class="hdr-subrow r-cd">
-              <div class="fld"><span class="fld-lbl">RWY</span><input class="fld-inp" data-h="depRwy"></div>
-              <div class="fld"><span class="fld-lbl">QNH</span><input class="fld-inp" data-h="depQnh"></div>
-              <div class="fld"><span class="fld-lbl">Wind</span><input class="fld-inp" data-h="depWind"></div>
+              <div class="fld"><span class="fld-lbl">DEP RWY</span><input class="fld-inp" data-h="depRwy"></div>
+              <div class="fld"><span class="fld-lbl">DEP QNH</span><input class="fld-inp" data-h="depQnh"></div>
+              <div class="fld"><span class="fld-lbl">DEP Wind</span><input class="fld-inp" data-h="depWind"></div>
             </div>
           </div>
           <div class="hdr-section">
-            <div class="sec-lbl dst">Destination</div>
             <div class="hdr-subrow r-ab">
-              <div class="fld"><span class="fld-lbl">Hobbs</span><input class="fld-inp" data-h="dstHobbs"></div>
-              <div class="fld"><span class="fld-lbl">End</span><input class="fld-inp" data-h="endT"></div>
+              <div class="fld"><span class="fld-lbl">DEST Hobbs</span><input class="fld-inp" data-h="dstHobbs"></div>
+              <div class="fld"><span class="fld-lbl">DEST End</span><input class="fld-inp" data-h="endT"></div>
             </div>
             <div class="hdr-subrow r-cd">
-              <div class="fld"><span class="fld-lbl">RWY</span><input class="fld-inp" data-h="dstRwy"></div>
-              <div class="fld"><span class="fld-lbl">QNH</span><input class="fld-inp" data-h="dstQnh"></div>
-              <div class="fld"><span class="fld-lbl">Wind</span><input class="fld-inp" data-h="dstWind"></div>
+              <div class="fld"><span class="fld-lbl">DEST RWY</span><input class="fld-inp" data-h="dstRwy"></div>
+              <div class="fld"><span class="fld-lbl">DEST QNH</span><input class="fld-inp" data-h="dstQnh"></div>
+              <div class="fld"><span class="fld-lbl">DEST Wind</span><input class="fld-inp" data-h="dstWind"></div>
             </div>
           </div>
         </div>
@@ -1095,7 +1090,8 @@ function wpFromSkyDemon(w,prevAlt){
     else if(curAlt<prevAlt) trend='down';
   }
   const alt=w.data?dropQuote(w.data.level||''):(elevFt!=null?String(elevFt):'');
-  const dist=w.data&&w.data.dist?dropQuote(w.data.dist):'';
+  const distNum=w.data&&w.data.dist?parseFloat(dropQuote(w.data.dist)):NaN;
+  const dist=isFinite(distNum)?String(Math.ceil(distNum)):'';
   const eet=w.data&&w.data.eet?dropQuote(w.data.eet):'';
   const hdg=w.data?w.data.hdg||'':'';
   const wind=w.data?w.data.wind||'':'';
