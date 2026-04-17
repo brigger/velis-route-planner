@@ -29,6 +29,28 @@ body{margin:0;background:var(--bg-page);font-family:var(--font);color:var(--tx);
 .toolbar button.primary:hover{background:#124a82;}
 .toolbar .status{font-size:10.5px;color:var(--tx2);}
 .toolbar .sep{color:var(--bd2);}
+.toolbar button.icon{padding:5px 8px;font-size:12px;}
+
+/* ═══ MODAL ═══ */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;z-index:100;}
+.modal[hidden]{display:none;}
+.modal-box{background:#fff;border-radius:var(--rad-lg);padding:20px 24px;min-width:340px;max-width:520px;max-height:80vh;overflow:auto;box-shadow:0 10px 40px rgba(0,0,0,0.2);}
+.modal-box h3{margin:0 0 14px;font-size:14px;font-weight:700;letter-spacing:-0.01em;}
+.modal-box label{display:block;font-size:10.5px;color:var(--tx2);font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:12px;}
+.modal-box label input{display:block;width:100%;margin-top:4px;padding:7px 10px;border:1px solid var(--bd2);border-radius:6px;font-size:13px;color:var(--tx);font-weight:400;text-transform:none;letter-spacing:0;background:#fff;}
+.modal-box .hint{font-size:10.5px;color:var(--tx2);margin:-6px 0 14px;font-style:italic;line-height:1.4;}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;}
+.modal-actions button{font-family:var(--font);font-size:11px;font-weight:600;padding:6px 14px;border:1px solid var(--bd);border-radius:6px;background:var(--bg-sec);color:var(--tx2);cursor:pointer;}
+.modal-actions button.primary{border-color:var(--blue);background:var(--blue);color:#fff;}
+.modal-actions button.primary:hover{background:#124a82;}
+.plan-list{display:flex;flex-direction:column;gap:2px;margin:4px 0;}
+.plan-item{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:6px;cursor:pointer;font-size:12px;gap:12px;}
+.plan-item:hover{background:var(--bg-sec);}
+.plan-item .pn{font-weight:600;color:var(--tx);}
+.plan-item .pd{font-size:10.5px;color:var(--tx2);margin-left:6px;}
+.plan-item .del{border:none;background:transparent;color:#B08888;cursor:pointer;font-size:15px;padding:0 6px;line-height:1;}
+.plan-item .del:hover{color:#791F1F;}
+.plan-empty{font-size:11.5px;color:var(--tx2);padding:10px;font-style:italic;text-align:center;}
 .seg{display:inline-flex;border:1px solid var(--bd);border-radius:6px;overflow:hidden;background:var(--bg-card);}
 .seg button{border:none;border-radius:0;padding:6px 14px;background:transparent;color:var(--tx2);font-size:11.5px;font-weight:500;border-right:1px solid var(--bd);}
 .seg button:last-child{border-right:none;}
@@ -180,10 +202,15 @@ textarea{border:none;background:transparent;outline:none;padding:0;margin:0;resi
       <button type="button" data-view="view-fuel">Endurance calc</button>
     </div>
     <span class="sep">|</span>
+    <button id="btn-load">Load…</button>
+    <button id="btn-save">Save</button>
+    <button id="btn-save-as">Save as…</button>
+    <span class="sep">|</span>
     <button id="btn-clear">Clear form</button>
     <button id="btn-print" class="primary">Print</button>
+    <button id="btn-settings" class="icon" title="API settings">⚙</button>
     <span class="grow"></span>
-    <span class="status" id="status">Both halves print together on one A4. Auto-saved locally.</span>
+    <span class="status" id="status"></span>
   </div>
 
   <div class="sheet view-nav" id="sheet">
@@ -313,6 +340,31 @@ textarea{border:none;background:transparent;outline:none;padding:0;margin:0;resi
   </div>
 </div>
 
+<!-- ═══ Settings modal ═══ -->
+<div class="modal" id="settings-modal" hidden>
+  <div class="modal-box">
+    <h3>API settings</h3>
+    <p class="hint">Shared API key (set once on the VPS) and your pilot label (used to scope saved plans).</p>
+    <label>API key<input id="set-key" type="password" autocomplete="off"></label>
+    <label>Owner (short name)<input id="set-owner" autocomplete="off" placeholder="e.g. patrick"></label>
+    <div class="modal-actions">
+      <button id="set-cancel">Cancel</button>
+      <button id="set-save" class="primary">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Load-plan modal ═══ -->
+<div class="modal" id="load-modal" hidden>
+  <div class="modal-box">
+    <h3>Load plan</h3>
+    <div class="plan-list" id="plan-list"></div>
+    <div class="modal-actions">
+      <button id="load-cancel">Close</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ═════════════════════════════════════════════════════════════════════
    NAV Plan — state, render, compute, persist
@@ -328,7 +380,8 @@ const DEFAULT_STATE=()=>({
   route:[EMPTY_WP(),EMPTY_WP()],   // DEP, DEST (always present)
   altn:EMPTY_WP(),
   comments:'',
-  end:{mode:'electric',ff:'',tf:'',tripT:'',altT:'',extraT:''}
+  end:{mode:'electric',ff:'',tf:'',tripT:'',altT:'',extraT:''},
+  meta:{id:null,name:'',dirty:false}
 });
 
 let state=loadState();
@@ -342,10 +395,12 @@ function loadState(){
       route:Array.isArray(s.route)&&s.route.length>=2?s.route.map(r=>({...EMPTY_WP(),...r})):d.route,
       altn:{...d.altn,...(s.altn||{})},
       comments:s.comments||'',
-      end:{...d.end,...(s.end||{})}};
+      end:{...d.end,...(s.end||{})},
+      meta:{...d.meta,...(s.meta||{})}};
   }catch(e){return DEFAULT_STATE();}
 }
-function saveState(){localStorage.setItem(STATE_KEY,JSON.stringify(state));}
+function saveLocal(){localStorage.setItem(STATE_KEY,JSON.stringify(state));}
+function saveState(){if(!state.meta)state.meta={id:null,name:'',dirty:false};state.meta.dirty=true;saveLocal();updateStatus();}
 
 /* ─── Parsers / formatters ─── */
 const parseNum=s=>{const v=parseFloat(String(s).replace(',','.'));return isFinite(v)?v:NaN;};
@@ -706,7 +761,7 @@ function refreshEndurance(){
 document.getElementById('btn-clear').addEventListener('click',()=>{
   if(!confirm('Clear the NAV plan form? This cannot be undone.')) return;
   state=DEFAULT_STATE();
-  saveState();
+  saveLocal();
   // Rehydrate all inputs from default state
   document.querySelectorAll('input[data-h]').forEach(inp=>{inp.value=state.hdr[inp.dataset.h]||'';});
   ta.value='';
@@ -714,6 +769,7 @@ document.getElementById('btn-clear').addEventListener('click',()=>{
   E.ffInp.value='';E.tfInp.value='';E.tripT.value='';E.altT.value='';E.extraT.value='';
   renderWP();
   refreshEndurance();
+  updateStatus();
 });
 document.getElementById('btn-print').addEventListener('click',()=>window.print());
 
@@ -734,9 +790,195 @@ document.querySelectorAll('#view-seg button').forEach(btn=>{
   });
 });
 
+/* ═════════════════════════════════════════════════════════════════════
+   BACKEND SYNC — Save / Save As / Load against /api/plans
+   ═════════════════════════════════════════════════════════════════════ */
+
+const AUTH_KEY='velis_navplan_auth';
+const API_BASE=(typeof window!=='undefined'&&typeof window.VELIS_API_BASE==='string')?window.VELIS_API_BASE:'/velis-planner/api';
+
+function getAuth(){try{return JSON.parse(localStorage.getItem(AUTH_KEY))||{};}catch(e){return {};}}
+function setAuth(a){localStorage.setItem(AUTH_KEY,JSON.stringify(a));}
+
+async function api(path,opts={}){
+  const auth=getAuth();
+  const r=await fetch(API_BASE+path,{
+    ...opts,
+    headers:{
+      'Content-Type':'application/json',
+      'X-API-Key':auth.key||'',
+      'X-Owner':auth.owner||'default',
+      ...(opts.headers||{})
+    }
+  });
+  if(!r.ok){
+    const txt=await r.text().catch(()=>'');
+    const err=new Error(r.status+' '+txt);
+    err.status=r.status;
+    throw err;
+  }
+  return r.json();
+}
+
+/* ─── Status line ─── */
+function updateStatus(){
+  const s=document.getElementById('status');
+  if(!s) return;
+  const meta=state.meta||{id:null,name:'',dirty:false};
+  const a=getAuth();
+  const who=a.owner?` · ${a.owner}`:'';
+  let txt;
+  if(meta.id) txt=(meta.dirty?'● ':'')+(meta.name||`Plan #${meta.id}`)+(meta.dirty?' (unsaved)':' (saved)');
+  else txt=meta.dirty?'● Unsaved draft':'Not saved to server';
+  s.textContent=txt+who;
+}
+
+/* ─── Settings modal ─── */
+const settingsModal=document.getElementById('settings-modal');
+function openSettings(){
+  const a=getAuth();
+  document.getElementById('set-key').value=a.key||'';
+  document.getElementById('set-owner').value=a.owner||'';
+  settingsModal.hidden=false;
+}
+function ensureAuth(){
+  const a=getAuth();
+  if(!a.key||!a.owner){openSettings();return false;}
+  return true;
+}
+document.getElementById('btn-settings').addEventListener('click',openSettings);
+document.getElementById('set-cancel').addEventListener('click',()=>{settingsModal.hidden=true;});
+document.getElementById('set-save').addEventListener('click',()=>{
+  const key=document.getElementById('set-key').value.trim();
+  const owner=document.getElementById('set-owner').value.trim();
+  if(!key||!owner){alert('Both API key and owner are required.');return;}
+  setAuth({key,owner});
+  settingsModal.hidden=true;
+  updateStatus();
+});
+
+/* ─── Hydrate from a loaded plan ─── */
+function hydrate(loaded,meta){
+  const d=DEFAULT_STATE();
+  state={
+    hdr:{...d.hdr,...(loaded.hdr||{})},
+    route:Array.isArray(loaded.route)&&loaded.route.length>=2
+      ? loaded.route.map(r=>({...EMPTY_WP(),...r})) : d.route,
+    altn:{...d.altn,...(loaded.altn||{})},
+    comments:loaded.comments||'',
+    end:{...d.end,...(loaded.end||{})},
+    meta:{id:meta.id,name:meta.name,dirty:false}
+  };
+  document.querySelectorAll('input[data-h]').forEach(inp=>{inp.value=state.hdr[inp.dataset.h]||'';});
+  ta.value=state.comments||'';
+  E.mode.value=state.end.mode||'electric';
+  E.ffInp.value=state.end.ff||'';
+  E.tfInp.value=state.end.tf||'';
+  E.tripT.value=state.end.tripT||'';
+  E.altT.value=state.end.altT||'';
+  E.extraT.value=state.end.extraT||'';
+  saveLocal();
+  renderWP();
+  refreshEndurance();
+  updateStatus();
+}
+
+/* ─── Save / Save As / Load handlers ─── */
+function stripMeta(){const {meta:_m,...body}=state;return body;}
+
+async function doSave(){
+  if(!ensureAuth()) return;
+  const meta=state.meta||{id:null,name:''};
+  if(!meta.id) return doSaveAs();
+  try{
+    await api(`/plans/${meta.id}`,{method:'PUT',body:JSON.stringify({plan_json:stripMeta()})});
+    state.meta.dirty=false;saveLocal();updateStatus();
+  }catch(e){
+    if(e.status===404){
+      // Plan was deleted on server — fall back to Save As
+      state.meta={id:null,name:meta.name,dirty:true};
+      return doSaveAs();
+    }
+    alert('Save failed: '+e.message);
+  }
+}
+
+async function doSaveAs(){
+  if(!ensureAuth()) return;
+  const suggested=(state.meta&&state.meta.name)||state.hdr.ident||'';
+  const name=prompt('Save as — plan name:',suggested);
+  if(!name||!name.trim()) return;
+  try{
+    const res=await api('/plans',{method:'POST',body:JSON.stringify({name:name.trim(),plan_json:stripMeta()})});
+    state.meta={id:res.id,name:res.name,dirty:false};
+    saveLocal();updateStatus();
+  }catch(e){
+    if(e.status===409){
+      alert(`A plan named "${name.trim()}" already exists for this owner. Pick a different name.`);
+      return doSaveAs();
+    }
+    alert('Save As failed: '+e.message);
+  }
+}
+
+async function doLoad(){
+  if(!ensureAuth()) return;
+  const listEl=document.getElementById('plan-list');
+  listEl.innerHTML='<div class="plan-empty">Loading…</div>';
+  document.getElementById('load-modal').hidden=false;
+  try{
+    const plans=await api('/plans');
+    if(!plans.length){
+      listEl.innerHTML='<div class="plan-empty">No saved plans yet for this owner.</div>';
+      return;
+    }
+    listEl.innerHTML=plans.map(p=>{
+      const when=new Date(p.updated_at).toLocaleString();
+      return `<div class="plan-item" data-id="${p.id}">
+        <span><span class="pn">${esc(p.name)}</span><span class="pd">${esc(when)}</span></span>
+        <button class="del" data-del="${p.id}" title="Delete">×</button>
+      </div>`;
+    }).join('');
+  }catch(e){
+    listEl.innerHTML=`<div class="plan-empty">Could not list plans: ${esc(e.message)}</div>`;
+  }
+}
+
+document.getElementById('btn-save').addEventListener('click',doSave);
+document.getElementById('btn-save-as').addEventListener('click',doSaveAs);
+document.getElementById('btn-load').addEventListener('click',doLoad);
+document.getElementById('load-cancel').addEventListener('click',()=>{document.getElementById('load-modal').hidden=true;});
+
+document.getElementById('plan-list').addEventListener('click',async ev=>{
+  const delBtn=ev.target.closest('[data-del]');
+  if(delBtn){
+    ev.stopPropagation();
+    const pid=delBtn.dataset.del;
+    if(!confirm('Delete this plan permanently?')) return;
+    try{
+      await api(`/plans/${pid}`,{method:'DELETE'});
+      if(state.meta&&String(state.meta.id)===String(pid)){
+        state.meta={id:null,name:state.meta.name||'',dirty:true};
+        saveLocal();updateStatus();
+      }
+      doLoad();
+    }catch(e){alert('Delete failed: '+e.message);}
+    return;
+  }
+  const item=ev.target.closest('.plan-item');
+  if(!item) return;
+  const pid=item.dataset.id;
+  try{
+    const p=await api(`/plans/${pid}`);
+    hydrate(p.plan_json,{id:p.id,name:p.name});
+    document.getElementById('load-modal').hidden=true;
+  }catch(e){alert('Load failed: '+e.message);}
+});
+
 /* ═══ Init ═══ */
 renderWP();
 refreshEndurance();
+updateStatus();
 // Re-pull totals when returning from the Route Planner tab
 window.addEventListener('pageshow',refreshEndurance);
 </script>
