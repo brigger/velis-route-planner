@@ -435,63 +435,6 @@ async function init(){
   // Re-sync when returning to this tab from the Route Planner
   window.addEventListener('pageshow', () => { load(); update(); });
 
-// ── Save / Load performance settings as JSON file ──
-function getPerfState(){
-  return {
-    vy:document.getElementById('vy').value,
-    vx:document.getElementById('vx').value,
-    vglide:document.getElementById('vglide').value,
-    glideRatio:document.getElementById('glide-ratio').value,
-    cruiseKw:selPwr
-  };
-}
-function applyPerfState(state){
-  if(state.vy!==undefined) document.getElementById('vy').value=state.vy;
-  if(state.vx!==undefined) document.getElementById('vx').value=state.vx;
-  if(state.vglide!==undefined) document.getElementById('vglide').value=state.vglide;
-  if(state.glideRatio!==undefined) document.getElementById('glide-ratio').value=state.glideRatio;
-  if(state.cruiseKw!==undefined){
-    selPwr=+state.cruiseKw;
-    localStorage.setItem('velis_cruise_kw',selPwr);
-  }
-  save(); update();
-}
-function showPerfStatus(msg){
-  const el=document.getElementById('perf-status');
-  el.textContent=msg;
-  setTimeout(()=>{el.textContent='';},3000);
-}
-
-  document.getElementById('perf-save').addEventListener('click',()=>{
-    const data={type:'velis_performance',savedAt:new Date().toISOString(),settings:getPerfState()};
-    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url; a.download='velis_performance.json'; a.click();
-    URL.revokeObjectURL(url);
-    showPerfStatus('Saved: velis_performance.json');
-  });
-
-  document.getElementById('perf-load-btn').addEventListener('click',()=>{
-    document.getElementById('perf-file').click();
-  });
-  document.getElementById('perf-file').addEventListener('change',(e)=>{
-    const file=e.target.files[0];
-    if(!file) return;
-    const reader=new FileReader();
-    reader.onload=(ev)=>{
-      try{
-        const data=JSON.parse(ev.target.result);
-        applyPerfState(data.settings||data);
-        showPerfStatus('Loaded: '+file.name);
-      }catch(err){
-        showPerfStatus('Error: invalid JSON file');
-      }
-    };
-    reader.readAsText(file);
-    e.target.value='';
-  });
-
   update();
 }
 init();

@@ -941,14 +941,36 @@ function hydrate(loaded,meta){
 }
 
 /* ─── Save / Save As / Load handlers ─── */
-function stripMeta(){const {meta:_m,...body}=state;return body;}
+const BUNDLE_EXCLUDE=new Set(['velis_navplan_state','velis_navplan_auth','velis_navplan_view']);
+function collectBundle(){
+  const {meta:_m,...np}=state;
+  const ls={};
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k&&k.startsWith('velis_')&&!BUNDLE_EXCLUDE.has(k)) ls[k]=localStorage.getItem(k);
+  }
+  return {version:2,navplan:np,localStorage:ls};
+}
+// Apply localStorage section (v2 bundles); return the navplan part for hydrate()
+function applyBundleSideEffects(bundle){
+  if(bundle&&bundle.localStorage){
+    for(const [k,v] of Object.entries(bundle.localStorage)){
+      if(v!=null) localStorage.setItem(k,v);
+    }
+  }
+}
+// Given plan_json (v1 flat or v2 {version,navplan,localStorage}), return just the navplan portion
+function navplanFromBundle(bundle){
+  if(bundle&&(bundle.version||bundle.navplan||bundle.localStorage)) return bundle.navplan||{};
+  return bundle||{};
+}
 
 async function doSave(){
   if(!ensureAuth()) return;
   const meta=state.meta||{id:null,name:''};
   if(!meta.id) return doSaveAs();
   try{
-    await api(`/plans/${meta.id}`,{method:'PUT',body:JSON.stringify({plan_json:stripMeta()})});
+    await api(`/plans/${meta.id}`,{method:'PUT',body:JSON.stringify({plan_json:collectBundle()})});
     state.meta.dirty=false;saveLocal();updateStatus();
   }catch(e){
     if(e.status===404){
@@ -966,7 +988,7 @@ async function doSaveAs(){
   const name=prompt('Save as — plan name:',suggested);
   if(!name||!name.trim()) return;
   try{
-    const res=await api('/plans',{method:'POST',body:JSON.stringify({name:name.trim(),plan_json:stripMeta()})});
+    const res=await api('/plans',{method:'POST',body:JSON.stringify({name:name.trim(),plan_json:collectBundle()})});
     state.meta={id:res.id,name:res.name,dirty:false};
     saveLocal();updateStatus();
   }catch(e){
@@ -1027,7 +1049,8 @@ document.getElementById('plan-list').addEventListener('click',async ev=>{
   const pid=item.dataset.id;
   try{
     const p=await api(`/plans/${pid}`);
-    hydrate(p.plan_json,{id:p.id,name:p.name});
+    applyBundleSideEffects(p.plan_json);
+    hydrate(navplanFromBundle(p.plan_json),{id:p.id,name:p.name});
     document.getElementById('load-modal').hidden=true;
   }catch(e){alert('Load failed: '+e.message);}
 });

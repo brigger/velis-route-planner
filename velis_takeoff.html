@@ -552,18 +552,43 @@ function drawLandingSVG(gr,total){
   svg.innerHTML=h;
 }
 
+// Persist takeoff/landing inputs so the Save bundle can include them
+const TO_KEY='velis_takeoff';
+function saveTO(){
+  localStorage.setItem(TO_KEY,JSON.stringify({
+    alt:document.getElementById('alt').value,
+    oat:document.getElementById('oat').value,
+    wind:document.getElementById('wind').value,
+    slope:document.getElementById('slope').value,
+    surface:document.querySelector('input[name="surface"]:checked')?.value,
+    condition:document.querySelector('input[name="condition"]:checked')?.value
+  }));
+}
+function loadTO(){
+  try{
+    const raw=localStorage.getItem(TO_KEY);if(!raw) return;
+    const s=JSON.parse(raw);
+    ['alt','oat','wind','slope'].forEach(id=>{if(s[id]!==undefined)document.getElementById(id).value=s[id];});
+    if(s.surface){const r=document.querySelector(`input[name="surface"][value="${s.surface}"]`);if(r)r.checked=true;}
+    if(s.condition){const r=document.querySelector(`input[name="condition"][value="${s.condition}"]`);if(r)r.checked=true;}
+  }catch(e){}
+}
+
 // Init
 async function init(){
   await loadPOH();
   buildDistTables('poh-tables',POH.takeoff,'to');
   buildDistTables('poh-tables-ld',POH.landing,'ld');
 
+  loadTO();
   ['alt','oat','wind','slope'].forEach(id=>
-    document.getElementById(id).addEventListener('input',update)
+    document.getElementById(id).addEventListener('input',()=>{saveTO();update();})
   );
   document.querySelectorAll('input[name="surface"],input[name="condition"]').forEach(r=>
-    r.addEventListener('change',update)
+    r.addEventListener('change',()=>{saveTO();update();})
   );
+  // Re-read after navigation (bundle load from another tab/page updated localStorage)
+  window.addEventListener('pageshow',()=>{loadTO();update();});
   update();
 }
 init();

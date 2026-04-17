@@ -86,17 +86,7 @@
   <div style="font-size:10px;color:var(--tx2);text-align:center;margin-bottom:8px;font-style:italic;">Corrections for wind components not (yet) included in calculations</div>
   <div class="perf-banner"><div class="tags" id="perf-tags"></div></div>
 
-  <!-- SAVE/LOAD ROUTES -->
-  <div class="card" style="padding:10px 14px;">
-    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-      <input id="route-name" type="text" placeholder="Route name" style="flex:1;min-width:160px;font-size:12px;font-family:var(--font);padding:5px 8px;border:1px solid var(--bd);border-radius:6px;background:var(--bg-card);color:var(--tx);outline:none;">
-      <button id="route-save" style="font-size:11px;font-weight:600;font-family:var(--font);padding:5px 12px;border:1px solid var(--blue);border-radius:6px;background:var(--blue);color:#fff;cursor:pointer;">Save to file</button>
-      <span style="color:var(--bd2);font-size:14px;">|</span>
-      <button id="route-load" style="font-size:11px;font-weight:600;font-family:var(--font);padding:5px 12px;border:1px solid var(--bd);border-radius:6px;background:var(--bg-sec);color:var(--tx2);cursor:pointer;">Load from file</button>
-      <input type="file" id="route-file" accept=".json" style="display:none;">
-      <span id="route-status" style="font-size:10px;color:var(--tx2);"></span>
-    </div>
-  </div>
+  <div style="font-size:10px;color:var(--tx2);text-align:right;margin-bottom:8px;">Save/Load lives on the <a href="velis_navplan.html" style="color:var(--blue);">NAV Plan</a> page — one button saves everything.</div>
 
   <!-- BATTERY -->
   <div class="card">
@@ -625,27 +615,8 @@ async function init(){
     document.getElementById(id).addEventListener('input',()=>{saveState();update();}));
   document.querySelectorAll('input[name="approach"]').forEach(r=>r.addEventListener('change',()=>{saveState();update();}));
 
-  // Route save/load
-  document.getElementById('route-save').addEventListener('click',()=>{
-    const name=document.getElementById('route-name').value.trim();
-    if(!name){document.getElementById('route-name').focus();return;}
-    const data={name,savedAt:new Date().toISOString(),route:getFullState()};
-    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-    const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-    a.download=name.replace(/[^a-zA-Z0-9_\- ]/g,'').replace(/\s+/g,'_')+'.json';a.click();
-    URL.revokeObjectURL(a.href);
-    const el=document.getElementById('route-status');el.textContent='Saved: '+a.download;setTimeout(()=>el.textContent='',3000);
-  });
-  document.getElementById('route-load').addEventListener('click',()=>document.getElementById('route-file').click());
-  document.getElementById('route-file').addEventListener('change',e=>{
-    const file=e.target.files[0];if(!file)return;
-    const reader=new FileReader();
-    reader.onload=ev=>{try{const data=JSON.parse(ev.target.result);applyFullState(data.route||data);
-      document.getElementById('route-name').value=data.name||file.name.replace('.json','');
-      const el=document.getElementById('route-status');el.textContent='Loaded: '+(data.name||file.name);setTimeout(()=>el.textContent='',3000);
-    }catch(err){const el=document.getElementById('route-status');el.textContent='Error: invalid file';setTimeout(()=>el.textContent='',3000);}};
-    reader.readAsText(file);e.target.value='';
-  });
+  // Re-read state after the NAV Plan's Load replaces localStorage from another page or navigation
+  window.addEventListener('pageshow',()=>{loadState();renderLegs();update();});
 
   update();
 }
