@@ -1096,7 +1096,7 @@ function wpFromSkyDemon(w,prevAlt){
   }
   const alt=w.data?dropQuote(w.data.level||''):(elevFt!=null?String(elevFt):'');
   const dist=w.data&&w.data.dist?dropQuote(w.data.dist):'';
-  const eet=w.data&&w.data.eet?fmtTime(parseFloat(w.data.eet)):'';
+  const eet=w.data&&w.data.eet?dropQuote(w.data.eet):'';
   const hdg=w.data?w.data.hdg||'':'';
   const wind=w.data?w.data.wind||'':'';
   return {
