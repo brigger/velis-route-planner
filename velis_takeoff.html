@@ -61,8 +61,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     </span>
     <a href="index.html" class="nav-tab">Route Planner</a>
     <a href="velis_takeoff.html" class="nav-tab active">Takeoff &amp; Landing</a>
-    <a href="velis_performance.html" class="nav-tab">Performance</a>
     <a href="velis_navplan.html" class="nav-tab">NAV Plan</a>
+    <a href="velis_performance.html" class="nav-tab">Performance</a>
   </div>
 </nav>
 
@@ -552,21 +552,50 @@ function drawLandingSVG(gr,total){
   svg.innerHTML=h;
 }
 
+// Persist takeoff/landing inputs so the Save bundle can include them
+const TO_KEY='velis_takeoff';
+function saveTO(){
+  localStorage.setItem(TO_KEY,JSON.stringify({
+    alt:document.getElementById('alt').value,
+    oat:document.getElementById('oat').value,
+    wind:document.getElementById('wind').value,
+    slope:document.getElementById('slope').value,
+    surface:document.querySelector('input[name="surface"]:checked')?.value,
+    condition:document.querySelector('input[name="condition"]:checked')?.value
+  }));
+  if(window.velisPlan) window.velisPlan.markDirty();
+  else localStorage.setItem('velis_bundle_mtime',String(Date.now()));
+}
+function loadTO(){
+  try{
+    const raw=localStorage.getItem(TO_KEY);if(!raw) return;
+    const s=JSON.parse(raw);
+    ['alt','oat','wind','slope'].forEach(id=>{if(s[id]!==undefined)document.getElementById(id).value=s[id];});
+    if(s.surface){const r=document.querySelector(`input[name="surface"][value="${s.surface}"]`);if(r)r.checked=true;}
+    if(s.condition){const r=document.querySelector(`input[name="condition"][value="${s.condition}"]`);if(r)r.checked=true;}
+  }catch(e){}
+}
+
 // Init
 async function init(){
   await loadPOH();
   buildDistTables('poh-tables',POH.takeoff,'to');
   buildDistTables('poh-tables-ld',POH.landing,'ld');
 
+  loadTO();
   ['alt','oat','wind','slope'].forEach(id=>
-    document.getElementById(id).addEventListener('input',update)
+    document.getElementById(id).addEventListener('input',()=>{saveTO();update();})
   );
   document.querySelectorAll('input[name="surface"],input[name="condition"]').forEach(r=>
-    r.addEventListener('change',update)
+    r.addEventListener('change',()=>{saveTO();update();})
   );
+  // Re-read after navigation or after plan_sync.js loads a bundle in-place
+  window.addEventListener('pageshow',()=>{loadTO();update();});
+  document.addEventListener('velis:after-load',()=>{loadTO();update();});
   update();
 }
 init();
 </script>
+<script src="plan_sync.js" defer></script>
 </body>
 </html>

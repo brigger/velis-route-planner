@@ -27,8 +27,11 @@ body{margin:0;background:var(--bg-page);font-family:var(--font);color:var(--tx);
 .toolbar button.primary{border-color:var(--blue);background:var(--blue);color:#fff;}
 .toolbar button:hover{border-color:var(--tx2);}
 .toolbar button.primary:hover{background:#124a82;}
-.toolbar .status{font-size:10.5px;color:var(--tx2);}
 .toolbar .sep{color:var(--bd2);}
+
+/* ═══ IMPORT MODAL (Sky Demon paste) — reuses plan_sync.js's .plan-modal shell ═══ */
+.import-ta{width:100%;min-height:280px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;line-height:1.45;border:1px solid var(--bd2);border-radius:6px;padding:8px 10px;color:var(--tx);background:#fafaf7;outline:none;resize:vertical;box-sizing:border-box;}
+.import-ta:focus{border-color:var(--blue);}
 .seg{display:inline-flex;border:1px solid var(--bd);border-radius:6px;overflow:hidden;background:var(--bg-card);}
 .seg button{border:none;border-radius:0;padding:6px 14px;background:transparent;color:var(--tx2);font-size:11.5px;font-weight:500;border-right:1px solid var(--bd);}
 .seg button:last-child{border-right:none;}
@@ -51,9 +54,15 @@ textarea{border:none;background:transparent;outline:none;padding:0;margin:0;resi
 
 .hdr{display:grid;gap:2mm 3mm;margin-bottom:3mm;font-size:9pt;}
 .hdr-row{display:grid;grid-template-columns:repeat(12,1fr);align-items:end;gap:3mm;}
-.hdr-row.r1 .fld{grid-column:span 3;}
-.hdr-row.r3 .fld,
-.hdr-row.r4 .fld{grid-column:span 4;}
+.hdr-row.r1 .fld[data-col="ident"]{grid-column:span 3;}
+.hdr-row.r1 .fld[data-col="type"]{grid-column:span 2;}
+.hdr-row.r1 .fld[data-col="pilot"]{grid-column:span 4;}
+.hdr-row.r1 .fld[data-col="date"]{grid-column:span 3;}
+.hdr-deparr{display:grid;grid-template-columns:1fr 1fr;gap:4mm;margin-top:1mm;}
+.hdr-section{display:grid;gap:1.8mm;}
+.hdr-subrow{display:grid;grid-template-columns:repeat(6,1fr);align-items:end;gap:2.5mm;}
+.hdr-subrow.r-ab .fld{grid-column:span 3;}
+.hdr-subrow.r-cd .fld{grid-column:span 2;}
 .fld{display:flex;align-items:baseline;gap:1.5mm;min-width:0;}
 .fld-lbl{font-size:7.5pt;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--tx2);white-space:nowrap;flex-shrink:0;}
 .fld-inp{flex:1;border-bottom:1px solid var(--bd2);min-height:4.5mm;font-size:9pt;padding:0 1mm 0.5mm;}
@@ -76,14 +85,14 @@ textarea{border:none;background:transparent;outline:none;padding:0;margin:0;resi
 .wp td.dual .dual-inp.l{color:var(--tx);font-weight:500;}
 
 .wp col.c-freq1{width:14%;}
-.wp col.c-wp{width:15%;}
+.wp col.c-wp{width:18%;}
 .wp col.c-hdg{width:7%;}
 .wp col.c-dist{width:7%;}
 .wp col.c-alt{width:11%;}
 .wp col.c-eet{width:7%;}
 .wp col.c-ato{width:10%;}
-.wp col.c-wind{width:6%;}
-.wp col.c-rem{width:23%;}
+.wp col.c-wind{width:9%;}
+.wp col.c-rem{width:17%;}
 
 .wp tr.dep td,
 .wp tr.dest td{background:#EAF3DE;}
@@ -91,14 +100,18 @@ textarea{border:none;background:transparent;outline:none;padding:0;margin:0;resi
 .wp tr.dest td:first-child{border-left:2px solid var(--green);}
 
 .wp tr.totals td{background:#f5f4f1;font-weight:600;color:var(--tx);}
-.wp tr.totals td.lbl{text-align:right;padding:0 2mm;font-size:7.5pt;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--tx2);}
-.wp tr.totals td.val{text-align:center;font-size:8.5pt;font-weight:700;color:var(--tx);padding:0 1mm;}
+.wp tr.totals td.lbl{text-align:right;vertical-align:middle;padding:0 2mm;font-size:7.5pt;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--tx2);}
+.wp tr.totals td.val{text-align:center;vertical-align:middle;font-size:8.5pt;font-weight:700;color:var(--tx);padding:0 1mm;position:relative;}
+.wp tr.totals .tot-extra{position:absolute;top:0.3mm;right:0.8mm;font-size:5.5pt;color:var(--tx2);font-weight:500;line-height:1;opacity:0.75;font-variant:tabular-nums;}
+.wp tr.totals td.dual.totals-rem{background:#f5f4f1;padding:0;}
+.wp tr.totals td.dual.totals-rem .dual-inp{text-align:left;}
 
 .wp tr.altn td{background:#FFF8E7;}
 .wp tr.altn td:first-child{border-left:2px solid #B78500;}
 .wp tr.altn .wp-badge{font-size:7pt;font-weight:700;color:#7A5700;letter-spacing:0.06em;position:absolute;top:0.5mm;left:1mm;pointer-events:none;}
 
 .wp .del-btn{position:absolute;top:0.5mm;right:0.5mm;width:4mm;height:4mm;border:none;background:transparent;color:#B08888;cursor:pointer;font-size:11pt;line-height:1;border-radius:50%;padding:0;display:flex;align-items:center;justify-content:center;opacity:0.75;transition:opacity 0.12s,background 0.12s;}
+.wp .eet-extra{position:absolute;top:0.3mm;right:0.8mm;font-size:5.5pt;color:var(--tx2);font-weight:500;line-height:1;pointer-events:none;opacity:0.75;font-variant:tabular-nums;}
 .wp .del-btn:hover{opacity:1;color:#791F1F;background:#FCEBEB;}
 
 .add-wp-row td{padding:0;height:auto;border:none;background:#fff;}
@@ -109,47 +122,59 @@ textarea{border:none;background:transparent;outline:none;padding:0;margin:0;resi
 .comments-lbl{font-size:7pt;font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:1mm;}
 .comments textarea{flex:1;font-size:8.5pt;line-height:1.4;}
 
-/* ═══ RIGHT: ENDURANCE CALCULATOR ═══ */
-.fuel-wrap{display:flex;flex-direction:column;height:100%;}
-.fuel{width:100%;border-collapse:collapse;font-size:9pt;table-layout:fixed;}
-.fuel th,.fuel td{border:0.5px solid var(--bd);padding:2mm 2.5mm;vertical-align:middle;}
+/* ═══ RIGHT: ENDURANCE CALCULATOR — compact to leave room for TO/LDG pictures ═══ */
+.fuel-wrap{display:flex;flex-direction:column;}
+.fuel{width:100%;border-collapse:collapse;font-size:8pt;table-layout:fixed;}
+.fuel th,.fuel td{border:0.5px solid var(--bd);padding:1.3mm 2mm;vertical-align:middle;}
 .fuel col.c-lbl{width:46%;}
 .fuel col.c-time{width:27%;}
 .fuel col.c-qty{width:27%;}
 
-.fuel .title-row td{padding:3mm 2.5mm;background:var(--bg-sec);}
-.fuel .title-td{font-size:11pt;font-weight:700;letter-spacing:-0.01em;color:var(--tx);vertical-align:top;}
-.fuel .title-td .mode-wrap{margin-top:1.5mm;display:flex;align-items:center;gap:2mm;}
-.fuel .title-td .mode-sel{font-family:var(--font);font-size:8.5pt;font-weight:500;padding:1mm 6mm 1mm 2mm;border:0.5px solid var(--bd2);border-radius:2mm;background:#fff;color:var(--tx);cursor:pointer;appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='none' stroke='%236b6660' stroke-width='1.4' d='M1 1l4 4 4-4'/></svg>");background-repeat:no-repeat;background-position:right 2mm center;}
-.fuel .ff-cell{font-size:8pt;}
-.fuel .ff-cell .ff-lbl{font-size:7pt;font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:1mm;}
-.fuel .ff-cell .ff-inp{border-bottom:1px solid var(--bd2);min-height:5mm;text-align:center;font-size:9pt;font-weight:500;padding:0 1mm 0.5mm;}
-.fuel .ff-cell .unit-hint{font-size:6.5pt;font-weight:400;color:var(--tx2);text-transform:none;letter-spacing:0;margin-left:1mm;}
+.fuel .title-row td{padding:2mm 2mm;background:var(--bg-sec);}
+.fuel .title-td{font-size:10pt;font-weight:700;letter-spacing:-0.01em;color:var(--tx);vertical-align:top;}
+.fuel .title-td .mode-wrap{margin-top:1mm;display:flex;align-items:center;gap:2mm;}
+.fuel .title-td .mode-sel{font-family:var(--font);font-size:8pt;font-weight:500;padding:0.5mm 5mm 0.5mm 2mm;border:0.5px solid var(--bd2);border-radius:2mm;background:#fff;color:var(--tx);cursor:pointer;appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='none' stroke='%236b6660' stroke-width='1.4' d='M1 1l4 4 4-4'/></svg>");background-repeat:no-repeat;background-position:right 2mm center;}
+.fuel .ff-cell{font-size:7.5pt;}
+.fuel .ff-cell .ff-lbl{font-size:6.5pt;font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:0.6mm;}
+.fuel .ff-cell .ff-inp{border-bottom:1px solid var(--bd2);min-height:4mm;text-align:center;font-size:8.5pt;font-weight:500;padding:0 1mm 0.4mm;}
+.fuel .ff-cell .unit-hint{font-size:6pt;font-weight:400;color:var(--tx2);text-transform:none;letter-spacing:0;margin-left:1mm;}
 
-.fuel thead.col-head td{background:var(--bg-sec);text-align:center;font-size:7.5pt;font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:0.05em;padding:1.5mm;}
-.fuel thead.col-head td .sub{font-size:7pt;font-weight:400;text-transform:none;letter-spacing:0;color:var(--tx2);opacity:0.85;}
+.fuel thead.col-head td{background:var(--bg-sec);text-align:center;font-size:7pt;font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:0.05em;padding:1mm;}
+.fuel thead.col-head td .sub{font-size:6.5pt;font-weight:400;text-transform:none;letter-spacing:0;color:var(--tx2);opacity:0.85;}
 
-.fuel .row-lbl{font-size:9pt;font-weight:600;color:var(--tx);padding:2.5mm 2.5mm;}
-.fuel .cell{height:10mm;padding:1mm 1mm !important;}
-.fuel .cell-inp{width:100%;min-height:5mm;text-align:center;font-size:9pt;font-weight:500;padding:1mm;border-bottom:1px solid var(--bd2);}
+.fuel .row-lbl{font-size:8pt;font-weight:600;color:var(--tx);padding:1.5mm 2mm;}
+.fuel .cell{height:7mm;padding:0.6mm 0.8mm !important;}
+.fuel .cell-inp{width:100%;min-height:4mm;text-align:center;font-size:8.5pt;font-weight:500;padding:0.5mm;border-bottom:1px solid var(--bd2);}
 .fuel .cell-inp.derived{color:var(--tx2);background:repeating-linear-gradient(-45deg,#fafaf7,#fafaf7 2px,#f3f1ec 2px,#f3f1ec 4px);border-radius:1mm;border-bottom:1px solid var(--bd);}
 
-.fuel .reserve-head td{background:#fafaf7;padding:2mm 2.5mm;font-size:9pt;font-weight:600;}
-.fuel .reserve-sub .row-lbl{padding-left:6mm;font-weight:500;font-size:8.5pt;color:var(--tx2);}
+.fuel .reserve-head td{background:#fafaf7;padding:1.2mm 2mm;font-size:8pt;font-weight:600;}
+.fuel .reserve-sub .row-lbl{padding-left:5mm;font-weight:500;font-size:7.5pt;color:var(--tx2);}
 .fuel tr.emph td{background:#fafaf7;}
 .fuel tr.emph .row-lbl{font-weight:700;}
 .fuel.mode-electric .fuel-only{display:none;}
-.fuel.mode-electric .reserve-sub .row-lbl{padding-left:2.5mm;font-weight:600;font-size:9pt;color:var(--tx);}
+.fuel.mode-electric .reserve-sub .row-lbl{padding-left:2mm;font-weight:600;font-size:8pt;color:var(--tx);}
 
-.fuel-note{margin-top:3mm;font-size:7pt;color:var(--tx2);line-height:1.5;font-style:italic;}
+.fuel-note{margin-top:1.5mm;font-size:6.5pt;color:var(--tx2);line-height:1.4;font-style:italic;}
+
+/* ═══ TO / LDG MINI PICTURES (below endurance calc) ═══ */
+.toldg{margin-top:3mm;display:grid;grid-template-columns:1fr 1fr;gap:2.5mm;}
+.toldg-card{border:0.5px solid var(--bd);border-radius:2mm;padding:1.5mm 2mm 1mm;background:#fff;}
+.toldg-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:0.5mm;}
+.toldg-title{font-size:7pt;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--tx2);}
+.toldg-cond{font-size:6.5pt;color:var(--tx2);}
+.toldg-svg{display:block;width:100%;height:22mm;}
+.toldg-nums{display:flex;justify-content:space-between;font-size:7pt;color:var(--tx2);margin-top:0.5mm;}
+.toldg-nums b{color:var(--tx);font-weight:700;font-size:8.5pt;margin-left:2px;}
 
 /* ═══ PRINT ═══ */
 @media print{
-  @page{size:A4 landscape;margin:2cm 0 0 1cm;}
+  @page{size:A4 landscape;margin:1cm 0 0 1cm;}
   body{background:#fff;padding:0;}
   .nav,.toolbar{display:none;}
   .page-wrap{padding:0;gap:0;}
   .sheet{box-shadow:none !important;width:287mm !important;height:190mm !important;grid-template-columns:1fr 1fr !important;}
+  /* Preserve the light grey background on column headers + fuel section headers */
+  .wp th,.fuel .title-row td,.fuel thead.col-head td{background:var(--bg-sec) !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   .sheet.view-nav .fuel-half,
   .sheet.view-fuel .nav-half{display:flex !important;}
   .add-wp-row{display:none;}
@@ -168,8 +193,8 @@ textarea{border:none;background:transparent;outline:none;padding:0;margin:0;resi
   <span class="nav-brand"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>Velis Electro</span>
   <a href="index.html" class="nav-tab">Route Planner</a>
   <a href="velis_takeoff.html" class="nav-tab">Takeoff &amp; Landing</a>
-  <a href="velis_performance.html" class="nav-tab">Performance</a>
   <a href="velis_navplan.html" class="nav-tab active">NAV Plan</a>
+  <a href="velis_performance.html" class="nav-tab">Performance</a>
 </div></nav>
 
 <div class="page-wrap">
@@ -180,10 +205,10 @@ textarea{border:none;background:transparent;outline:none;padding:0;margin:0;resi
       <button type="button" data-view="view-fuel">Endurance calc</button>
     </div>
     <span class="sep">|</span>
+    <button id="btn-import">Import…</button>
     <button id="btn-clear">Clear form</button>
     <button id="btn-print" class="primary">Print</button>
     <span class="grow"></span>
-    <span class="status" id="status">Both halves print together on one A4. Auto-saved locally.</span>
   </div>
 
   <div class="sheet view-nav" id="sheet">
@@ -194,20 +219,34 @@ textarea{border:none;background:transparent;outline:none;padding:0;margin:0;resi
 
       <div class="hdr">
         <div class="hdr-row r1">
-          <div class="fld"><span class="fld-lbl">ACFT Ident</span><input class="fld-inp" data-h="ident"></div>
-          <div class="fld"><span class="fld-lbl">Type</span><input class="fld-inp" data-h="type"></div>
-          <div class="fld"><span class="fld-lbl">Pilot</span><input class="fld-inp" data-h="pilot"></div>
-          <div class="fld"><span class="fld-lbl">Date</span><input class="fld-inp" data-h="date"></div>
+          <div class="fld" data-col="ident"><span class="fld-lbl">ACFT Ident</span><input class="fld-inp" data-h="ident"></div>
+          <div class="fld" data-col="type"><span class="fld-lbl">Type</span><input class="fld-inp" data-h="type"></div>
+          <div class="fld" data-col="pilot"><span class="fld-lbl">Pilot</span><input class="fld-inp" data-h="pilot"></div>
+          <div class="fld" data-col="date"><span class="fld-lbl">Date</span><input class="fld-inp" data-h="date"></div>
         </div>
-        <div class="hdr-row r3">
-          <div class="fld"><span class="fld-lbl">Hobbs</span><input class="fld-inp" data-h="hobbs"></div>
-          <div class="fld"><span class="fld-lbl">Start</span><input class="fld-inp" data-h="startT"></div>
-          <div class="fld"><span class="fld-lbl">End</span><input class="fld-inp" data-h="endT"></div>
-        </div>
-        <div class="hdr-row r4">
-          <div class="fld"><span class="fld-lbl">RWY</span><input class="fld-inp" data-h="rwy"></div>
-          <div class="fld"><span class="fld-lbl">QNH</span><input class="fld-inp" data-h="qnh"></div>
-          <div class="fld"><span class="fld-lbl">Wind</span><input class="fld-inp" data-h="wind"></div>
+        <div class="hdr-deparr">
+          <div class="hdr-section">
+            <div class="hdr-subrow r-ab">
+              <div class="fld"><span class="fld-lbl">DEP Hobbs</span><input class="fld-inp" data-h="depHobbs"></div>
+              <div class="fld"><span class="fld-lbl">Start</span><input class="fld-inp" data-h="startT"></div>
+            </div>
+            <div class="hdr-subrow r-cd">
+              <div class="fld"><span class="fld-lbl">DEP RWY</span><input class="fld-inp" data-h="depRwy"></div>
+              <div class="fld"><span class="fld-lbl">QNH</span><input class="fld-inp" data-h="depQnh"></div>
+              <div class="fld"><span class="fld-lbl">Wind</span><input class="fld-inp" data-h="depWind"></div>
+            </div>
+          </div>
+          <div class="hdr-section">
+            <div class="hdr-subrow r-ab">
+              <div class="fld"><span class="fld-lbl">DEST Hobbs</span><input class="fld-inp" data-h="dstHobbs"></div>
+              <div class="fld"><span class="fld-lbl">End</span><input class="fld-inp" data-h="endT"></div>
+            </div>
+            <div class="hdr-subrow r-cd">
+              <div class="fld"><span class="fld-lbl">DEST RWY</span><input class="fld-inp" data-h="dstRwy"></div>
+              <div class="fld"><span class="fld-lbl">QNH</span><input class="fld-inp" data-h="dstQnh"></div>
+              <div class="fld"><span class="fld-lbl">Wind</span><input class="fld-inp" data-h="dstWind"></div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -227,7 +266,7 @@ textarea{border:none;background:transparent;outline:none;padding:0;margin:0;resi
             <th>EET</th>
             <th>ATO</th>
             <th>Wind</th>
-            <th>Freq /<br>Remarks</th>
+            <th>Remarks</th>
           </tr>
         </thead>
         <tbody id="wp-body">
@@ -308,8 +347,35 @@ textarea{border:none;background:transparent;outline:none;padding:0;margin:0;resi
         </table>
         <div class="fuel-note" id="fuel-note"></div>
       </div>
+
+      <!-- ═══ Takeoff + Landing mini pictures ═══ -->
+      <div class="toldg" id="toldg-section">
+        <div class="toldg-card">
+          <div class="toldg-head"><span class="toldg-title">Takeoff</span><span class="toldg-cond" id="toldg-cond-to"></span></div>
+          <svg id="nav-svg-to" class="toldg-svg" viewBox="0 0 700 160"></svg>
+          <div class="toldg-nums"><span>Ground roll<b id="toldg-to-gr">—</b></span><span>50 ft obst.<b id="toldg-to-ob">—</b></span></div>
+        </div>
+        <div class="toldg-card">
+          <div class="toldg-head"><span class="toldg-title">Landing</span><span class="toldg-cond" id="toldg-cond-ld"></span></div>
+          <svg id="nav-svg-ld" class="toldg-svg" viewBox="0 0 700 160"></svg>
+          <div class="toldg-nums"><span>Ground roll<b id="toldg-ld-gr">—</b></span><span>50 ft obst.<b id="toldg-ld-ob">—</b></span></div>
+        </div>
+      </div>
     </div>
 
+  </div>
+</div>
+
+<!-- ═══ Import-from-Sky-Demon modal ═══ -->
+<div class="plan-modal" id="import-modal" hidden>
+  <div class="plan-modal-box" style="min-width:560px;">
+    <h3>Import from Sky Demon</h3>
+    <p class="hint">Paste the nav-log text copied from Sky Demon. Waypoints replace the current route; header fields (ACFT, Pilot, RWY, QNH…) are not touched.</p>
+    <textarea id="import-ta" class="import-ta" spellcheck="false" placeholder="SR 04:35 Z, MCT 04:03 Z    MSA    Level    TAS    Trk    Wind    Hdg    GS    Dist    Time …"></textarea>
+    <div class="plan-modal-actions">
+      <button id="import-cancel">Cancel</button>
+      <button id="import-do" class="primary">Import</button>
+    </div>
   </div>
 </div>
 
@@ -324,12 +390,36 @@ const TREND_NEXT={'':'up',up:'down',down:''};
 const TREND_CHAR={'':'',up:'↗',down:'↘'};
 const trendBtnHTML=(t,attr)=>`<button class="trend-btn ${t?'':'empty'}" ${attr} data-trend="${t}" title="Toggle climb / descent / level">${TREND_CHAR[t]||''}</button>`;
 const DEFAULT_STATE=()=>({
-  hdr:{ident:'',type:'',pilot:'',date:'',hobbs:'',startT:'',endT:'',rwy:'',qnh:'',wind:''},
+  hdr:{ident:'',type:'',pilot:'',date:'',
+       depHobbs:'',startT:'',depRwy:'',depQnh:'',depWind:'',
+       dstHobbs:'',endT:'',dstRwy:'',dstQnh:'',dstWind:''},
   route:[EMPTY_WP(),EMPTY_WP()],   // DEP, DEST (always present)
   altn:EMPTY_WP(),
   comments:'',
-  end:{mode:'electric',ff:'',tf:'',tripT:'',altT:'',extraT:''}
+  totalsRemark:{u:'',l:''},
+  end:{mode:'electric',ff:'',tf:'',tripT:'',altT:'',extraT:''},
+  meta:{id:null,name:'',dirty:false}
 });
+
+// totalsRemark used to be a single string — promote to {u,l}
+function normTotalsRemark(v){
+  if(!v) return {u:'',l:''};
+  if(typeof v==='string') return {u:v,l:''};
+  return {u:v.u||'',l:v.l||''};
+}
+
+// Migrate pre-split headers (single hobbs/rwy/qnh/wind) into the DEP-side fields.
+function migrateHdr(oldHdr){
+  const h={...(oldHdr||{})};
+  const map={hobbs:'depHobbs',rwy:'depRwy',qnh:'depQnh',wind:'depWind'};
+  for(const [o,n] of Object.entries(map)){
+    if(h[o]!==undefined){
+      if(!h[n]) h[n]=h[o];
+      delete h[o];
+    }
+  }
+  return h;
+}
 
 let state=loadState();
 
@@ -338,14 +428,17 @@ function loadState(){
     const raw=localStorage.getItem(STATE_KEY);
     if(!raw) return DEFAULT_STATE();
     const s=JSON.parse(raw),d=DEFAULT_STATE();
-    return{hdr:{...d.hdr,...(s.hdr||{})},
+    return{hdr:{...d.hdr,...migrateHdr(s.hdr)},
       route:Array.isArray(s.route)&&s.route.length>=2?s.route.map(r=>({...EMPTY_WP(),...r})):d.route,
       altn:{...d.altn,...(s.altn||{})},
       comments:s.comments||'',
-      end:{...d.end,...(s.end||{})}};
+      totalsRemark:normTotalsRemark(s.totalsRemark),
+      end:{...d.end,...(s.end||{})},
+      meta:{...d.meta,...(s.meta||{})}};
   }catch(e){return DEFAULT_STATE();}
 }
-function saveState(){localStorage.setItem(STATE_KEY,JSON.stringify(state));}
+function saveLocal(){localStorage.setItem(STATE_KEY,JSON.stringify(state));}
+function saveState(){if(!state.meta)state.meta={id:null,name:'',dirty:false};state.meta.dirty=true;saveLocal();window.velisPlan&&window.velisPlan.markDirty();}
 
 /* ─── Parsers / formatters ─── */
 const parseNum=s=>{const v=parseFloat(String(s).replace(',','.'));return isFinite(v)?v:NaN;};
@@ -371,29 +464,34 @@ function buildRouteHTML(){
   let html='';
   state.route.forEach((r,i)=>{
     const role=i===0?'dep':(i===last?'dest':'wp');
-    if(i===last) html+=addRow();   // + row immediately before DEST
-    html+=wpRow(r,i,role);
+    let eetExtra='';
+    if(i===1&&last===1) eetExtra='+10';     // single leg absorbs both TO and LDG
+    else if(i===1) eetExtra='+5';           // first leg — takeoff buffer
+    else if(i===last) eetExtra='+5';        // last leg — landing buffer
+    if(i===last) html+=addRow();            // + row immediately before DEST
+    html+=wpRow(r,i,role,eetExtra);
   });
   return html;
 }
 
-function wpRow(r,i,role){
+function wpRow(r,i,role,eetExtra){
   const canDel=role==='wp';
   return `<tr class="${role}" data-idx="${i}">
     <td class="dual">
       <input class="dual-inp u" data-f="freq" value="${esc(r.freq)}">
       <input class="dual-inp l" data-f="ident" value="${esc(r.ident)}">
     </td>
-    <td><input class="single-inp" data-f="wp" value="${esc(r.wp)}" style="${canDel?'padding-right:5mm;':''}">${canDel?`<button class="del-btn" data-del="${i}" title="Remove waypoint">×</button>`:''}</td>
+    <td><input class="single-inp" data-f="wp" value="${esc(r.wp)}"></td>
     <td><input class="single-inp" data-f="hdg" value="${esc(r.hdg)}"></td>
     <td><input class="single-inp" data-f="dist" inputmode="decimal" value="${esc(r.dist)}"></td>
     <td class="alt-td"><div class="alt-wrap">${trendBtnHTML(r.altTrend||'',`data-trend-idx="${i}"`)}<input class="single-inp alt-inp" data-f="alt" value="${esc(r.alt)}"></div></td>
-    <td><input class="single-inp" data-f="eet" value="${esc(r.eet)}"></td>
+    <td><input class="single-inp" data-f="eet" value="${esc(r.eet)}">${eetExtra?`<span class="eet-extra">${eetExtra}</span>`:''}</td>
     <td><input class="single-inp" data-f="ato" value="${esc(r.ato)}"></td>
     <td><input class="single-inp" data-f="wind" value="${esc(r.wind)}"></td>
     <td class="dual">
-      <input class="dual-inp u" data-f="freqR" value="${esc(r.freqR)}">
+      <input class="dual-inp u" data-f="freqR" value="${esc(r.freqR)}"${canDel?' style="padding-right:5mm;"':''}>
       <input class="dual-inp l" data-f="remark" value="${esc(r.remark)}">
+      ${canDel?`<button class="del-btn" data-del="${i}" title="Remove waypoint">×</button>`:''}
     </td>
   </tr>`;
 }
@@ -407,8 +505,12 @@ function totalsRow(){
     <td class="lbl" colspan="3">Totals</td>
     <td class="val">${totalDist>0?totalDist.toFixed(0):''}</td>
     <td></td>
-    <td class="val">${totalMin>0?fmtTime(totalMin):''}</td>
-    <td></td><td></td><td></td>
+    <td class="val">${totalMin>0?fmtTime(totalMin):''}${totalMin>0?'<span class="tot-extra">+10</span>':''}</td>
+    <td></td><td></td>
+    <td class="dual totals-rem">
+      <input class="dual-inp u" data-totals-rem="u" value="${esc((state.totalsRemark&&state.totalsRemark.u)||'')}">
+      <input class="dual-inp l" data-totals-rem="l" value="${esc((state.totalsRemark&&state.totalsRemark.l)||'')}">
+    </td>
   </tr>`;
 }
 function altnRow(){
@@ -491,10 +593,17 @@ function wireRowInputs(){
     state.route.splice(state.route.length-1,0,EMPTY_WP());
     saveState();renderWP();refreshEndurance();
   });
+  tb.querySelectorAll('tr.totals [data-totals-rem]').forEach(inp=>{
+    inp.addEventListener('input',()=>{
+      if(!state.totalsRemark||typeof state.totalsRemark!=='object') state.totalsRemark={u:'',l:''};
+      state.totalsRemark[inp.dataset.totalsRem]=inp.value;
+      saveState();
+    });
+  });
 }
 
 function refreshTotals(){
-  // Recompute only the totals row in-place
+  // Recompute the totals row in-place (dist + time, with a +10 TO/LDG badge on time)
   const tb=document.getElementById('wp-body');
   const tr=tb.querySelector('tr.totals');
   if(!tr) return;
@@ -502,7 +611,7 @@ function refreshTotals(){
   const totalMin=state.route.reduce((s,r)=>s+(parseTime(r.eet)||0),0);
   const tds=tr.querySelectorAll('td');
   tds[1].textContent=totalDist>0?totalDist.toFixed(0):'';
-  tds[3].textContent=totalMin>0?fmtTime(totalMin):'';
+  tds[3].innerHTML=(totalMin>0?fmtTime(totalMin)+'<span class="tot-extra">+10</span>':'');
 }
 
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -557,12 +666,11 @@ E.altT.value=state.end.altT||'';
 E.extraT.value=state.end.extraT||'';
 
 function batteryKwh(){
-  // Reconstruct total-battery capacity from Route-Planner-stored values; fallback to Velis nominal.
+  // velis_usable_kwh = full usable capacity (NOM × SOH) written by the Route Planner.
+  // The Route Planner's %SOC is expressed against this same capacity, so it's the right divisor here.
   const usable=parseFloat(localStorage.getItem('velis_usable_kwh'));
-  const soc0=parseFloat(localStorage.getItem('velis_soc0_pct'));
-  const res=parseFloat(localStorage.getItem('velis_reserve_pct'));
-  if(isFinite(usable)&&isFinite(soc0)&&isFinite(res)&&soc0>res) return usable*100/(soc0-res);
-  return 21; // Velis nominal usable kWh
+  if(isFinite(usable)&&usable>0) return usable;
+  return 23.3; // Velis nominal usable kWh at SOH ≈ 94 %
 }
 function endurancePull(){
   // Electric only: pull Avg power + Trip time from the Route Planner (if empty),
@@ -706,7 +814,8 @@ function refreshEndurance(){
 document.getElementById('btn-clear').addEventListener('click',()=>{
   if(!confirm('Clear the NAV plan form? This cannot be undone.')) return;
   state=DEFAULT_STATE();
-  saveState();
+  saveLocal();
+  window.velisPlan&&window.velisPlan.markDirty();
   // Rehydrate all inputs from default state
   document.querySelectorAll('input[data-h]').forEach(inp=>{inp.value=state.hdr[inp.dataset.h]||'';});
   ta.value='';
@@ -734,12 +843,173 @@ document.querySelectorAll('#view-seg button').forEach(btn=>{
   });
 });
 
+/* ═════════════════════════════════════════════════════════════════════
+   BUNDLE SYNC — plan_sync.js owns the Save/Load UI; we just hook its
+   lifecycle events so our in-memory state flushes to / reloads from
+   localStorage at the right times.
+   ═════════════════════════════════════════════════════════════════════ */
+
+// Fired just before plan_sync.js snapshots localStorage into the bundle.
+document.addEventListener('velis:before-save',()=>{saveLocal();});
+
+// Fired after plan_sync.js writes the loaded bundle's localStorage keys.
+document.addEventListener('velis:after-load',()=>{
+  state=loadState();
+  if(state.meta) state.meta.dirty=false;
+  document.querySelectorAll('input[data-h]').forEach(inp=>{inp.value=state.hdr[inp.dataset.h]||'';});
+  ta.value=state.comments||'';
+  E.mode.value=state.end.mode||'electric';
+  E.ffInp.value=state.end.ff||'';
+  E.tfInp.value=state.end.tf||'';
+  E.tripT.value=state.end.tripT||'';
+  E.altT.value=state.end.altT||'';
+  E.extraT.value=state.end.extraT||'';
+  renderWP();
+  refreshEndurance();
+});
+
+/* ═════════════════════════════════════════════════════════════════════
+   SKY DEMON IMPORT — paste nav-log text, replace the route
+   ═════════════════════════════════════════════════════════════════════ */
+
+function parseSkyDemon(text){
+  const lines=text.split(/\r?\n/);
+  const wps=[];
+  let pending=null;           // {name,elev}
+  const dropQuote=s=>(s||'').replace(/[’'`]/g,'');
+  const isWind=p=>/^\d{3}\/\d{1,2}$/.test(p);
+  const looksNumeric=p=>/^[\d'’.,]+$/.test(p)||isWind(p);
+  const tokenize=l=>l.split(/\t+|\s{2,}/).map(p=>p.trim()).filter(Boolean);
+  const flushPending=()=>{
+    if(!pending) return;
+    wps.push({name:pending.name,elev:pending.elev||'',data:null});
+    pending=null;
+  };
+  for(const raw of lines){
+    const line=raw.trim();
+    if(!line) continue;
+    if(/^S[RS]\s+\d/i.test(line)) continue;           // "SR 04:35 Z, MCT …" / "SS 18:18 …"
+    if(/^MSA\b/i.test(line)) continue;                // column header
+    if(/^°[tm]\b/.test(line)) continue;               // units row "°t … °m kt nm"
+    if(/^\d[\d'’]*\s*ft\s*\(/.test(line)){            // elevation line "1'526 ft (55 hPa)"
+      if(pending) pending.elev=line;
+      continue;
+    }
+    const parts=tokenize(line);
+    const numCount=parts.filter(looksNumeric).length;
+    const isData=parts.length>=5&&numCount>=5&&parts.some(isWind);
+    if(isData){
+      if(!pending) continue;
+      const windIdx=parts.findIndex(isWind);
+      const offset=windIdx-4;                         // align so MSA=0, Level=1, …, Time=8
+      const g=i=>parts[i+offset];
+      wps.push({name:pending.name,elev:pending.elev||'',data:{
+        msa:dropQuote(g(0)),level:dropQuote(g(1)),tas:g(2),trk:g(3),
+        wind:g(4),hdg:g(5),gs:g(6),dist:g(7),eet:g(8)
+      }});
+      pending=null;
+    } else {
+      flushPending();
+      pending={name:line,elev:''};
+    }
+  }
+  flushPending();
+  return wps;
+}
+
+function wpFromSkyDemon(w,prevAlt){
+  const name=w.name||'';
+  const mIcao=name.match(/^([A-Z]{4})\s+(.+)$/);
+  const ident=mIcao?mIcao[1]:'';
+  const wpName=mIcao?mIcao[2]:name;
+  const dropQuote=s=>(s||'').replace(/[’'`,]/g,'');
+  const toNum=s=>{const n=parseFloat(dropQuote(s));return isFinite(n)?n:null;};
+  const elevFt=toNum((w.elev.match(/^([\d'’]+)\s*ft/)||[])[1]);
+  const lvl=w.data?toNum(w.data.level):null;
+  const curAlt=lvl??elevFt;
+  let trend='';
+  if(prevAlt!=null&&curAlt!=null){
+    if(curAlt>prevAlt) trend='up';
+    else if(curAlt<prevAlt) trend='down';
+  }
+  const alt=w.data?dropQuote(w.data.level||''):(elevFt!=null?String(elevFt):'');
+  const distNum=w.data&&w.data.dist?parseFloat(dropQuote(w.data.dist)):NaN;
+  const dist=isFinite(distNum)?String(Math.ceil(distNum)):'';
+  const eet=w.data&&w.data.eet?dropQuote(w.data.eet):'';
+  const hdg=w.data?w.data.hdg||'':'';
+  const wind=w.data?w.data.wind||'':'';
+  return {
+    leg:{...EMPTY_WP(),ident,wp:wpName,alt,altTrend:trend,dist,eet,hdg,wind},
+    curAlt
+  };
+}
+
+document.getElementById('btn-import').addEventListener('click',()=>{
+  const ta=document.getElementById('import-ta');
+  ta.value='';
+  document.getElementById('import-modal').hidden=false;
+  setTimeout(()=>ta.focus(),0);
+});
+document.getElementById('import-cancel').addEventListener('click',()=>{
+  document.getElementById('import-modal').hidden=true;
+});
+document.getElementById('import-do').addEventListener('click',()=>{
+  const text=document.getElementById('import-ta').value;
+  const parsed=parseSkyDemon(text);
+  if(parsed.length<2){
+    alert('Could not find at least 2 waypoints in the pasted text. Paste the nav-log block including the departure and destination lines.');
+    return;
+  }
+  const hasContent=state.route.some(r=>r.wp||r.ident||r.freq||r.hdg||r.dist||r.alt||r.eet||r.wind||r.remark);
+  if(hasContent&&!confirm(`Replace the current route with ${parsed.length} imported waypoint(s)?`)) return;
+
+  let prevAlt=null;
+  state.route=parsed.map(w=>{
+    const {leg,curAlt}=wpFromSkyDemon(w,prevAlt);
+    prevAlt=curAlt;
+    return leg;
+  });
+  state.meta.dirty=true;saveLocal();
+  window.velisPlan&&window.velisPlan.markDirty();
+  renderWP();refreshEndurance();
+  document.getElementById('import-modal').hidden=true;
+});
+
 /* ═══ Init ═══ */
 renderWP();
 refreshEndurance();
-// Re-pull totals when returning from the Route Planner tab
+// Re-pull totals when returning from another page (plan_sync.js owns the dirty dot)
 window.addEventListener('pageshow',refreshEndurance);
+
+/* ═════════════════════════════════════════════════════════════════════
+   TAKEOFF / LANDING mini pictures — uses window.takeoffCalc
+   ═════════════════════════════════════════════════════════════════════ */
+async function renderToLdg(){
+  if(!window.takeoffCalc) return;
+  try{
+    const POH=await window.takeoffCalc.loadPOH();
+    const s=window.takeoffCalc.readState();
+    const to=window.takeoffCalc.computeTakeoff(POH,s);
+    const ld=window.takeoffCalc.computeLanding(POH,s);
+    const cond=`${s.alt.toLocaleString()} ft · ${s.oat>=0?'+':''}${s.oat}°C · ${s.wind===0?'calm':(s.wind>0?s.wind+' HW':Math.abs(s.wind)+' TW')} · ${s.surface}${s.condition==='wet'?' wet':''}${s.slope?(' · '+(s.slope>0?'+':'')+s.slope+'%'):''}`;
+    document.getElementById('toldg-cond-to').textContent=cond;
+    document.getElementById('toldg-cond-ld').textContent=cond;
+    document.getElementById('toldg-to-gr').textContent=' '+Math.round(to.gr)+' m';
+    document.getElementById('toldg-to-ob').textContent=' '+Math.round(to.ob)+' m';
+    document.getElementById('toldg-ld-gr').textContent=' '+Math.round(ld.gr)+' m';
+    document.getElementById('toldg-ld-ob').textContent=' '+Math.round(ld.ob)+' m';
+    window.takeoffCalc.drawTakeoff(document.getElementById('nav-svg-to'),to.gr,to.ob,{W:700,H:160,fontSize:10});
+    window.takeoffCalc.drawLanding(document.getElementById('nav-svg-ld'),ld.gr,ld.ob,{W:700,H:160,fontSize:10});
+  }catch(e){/* POH fetch can fail when served from file://; ignore silently */}
+}
+// takeoff_calc.js is deferred; wait until DOM+deferred scripts have loaded
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',renderToLdg);
+else renderToLdg();
+window.addEventListener('pageshow',renderToLdg);
+document.addEventListener('velis:after-load',renderToLdg);
 </script>
+<script src="takeoff_calc.js" defer></script>
+<script src="plan_sync.js" defer></script>
 
 </body>
 </html>

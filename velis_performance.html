@@ -68,6 +68,7 @@ h4{font-size:10.5px;font-weight:600;color:var(--tx2);margin:0 0 8px;text-transfo
 .ptable td.hl{background:rgba(24,95,165,0.10);}
 .ptable td.hl-strong{background:rgba(24,95,165,0.22);color:var(--blue);font-weight:700;}
 .ptable tr.row-sel td{background:var(--blue-bg);font-weight:600;}
+.ptable tr.row-near td{background:rgba(24,95,165,0.08);}
 .ptable td.col-first{text-align:left;font-weight:400;color:var(--tx2);font-size:11px;max-width:260px;}
 .ptable td.col-interp{background:#dde8f5;color:var(--blue);font-weight:700;font-size:12px;border-left:2px solid var(--blue);}
 
@@ -110,8 +111,8 @@ hr{border:none;border-top:0.5px solid var(--bd);margin:12px 0;}
     </span>
     <a href="index.html" class="nav-tab">Route Planner</a>
     <a href="velis_takeoff.html" class="nav-tab">Takeoff &amp; Landing</a>
-    <a href="velis_performance.html" class="nav-tab active">Performance</a>
     <a href="velis_navplan.html" class="nav-tab">NAV Plan</a>
+    <a href="velis_performance.html" class="nav-tab active">Performance</a>
   </div>
 </nav>
 
@@ -165,13 +166,12 @@ hr{border:none;border-top:0.5px solid var(--bd);margin:12px 0;}
 
 <!-- ═══ CRUISE POWER ═══ -->
 <div class="card">
-  <h3>Cruise power setting</h3>
-  <div class="pwr-btns" id="pwr-btns"></div>
+  <h3>Cruise power reference</h3>
   <table class="ptable" id="pwr-table">
     <thead><tr><th>Power (kW)</th><th>RPM</th><th>KIAS</th><th>KCAS</th><th>kts</th></tr></thead>
     <tbody id="pwr-tbody"></tbody>
   </table>
-  <div class="info">Selected: <strong id="cruise-info">—</strong></div>
+  <div class="info">Current setting: <strong id="cruise-info">—</strong> &middot; change it with the Cruise power slider on the <a href="index.html">Route Planner</a>.</div>
 </div>
 
 <!-- ═══ %SOC TABLE ═══ -->
@@ -299,17 +299,6 @@ function buildPwrTable() {
     `<tr id="pr${i}"><td style="font-weight:700;">${r.kw}</td><td>${r.rpm.toLocaleString()}</td>` +
     `<td>${r.kias}</td><td><em>${r.kcas}</em></td><td>${r.kias}</td></tr>`
   ).join('');
-  const box = document.getElementById('pwr-btns');
-  box.innerHTML = PWR.map(r =>
-    `<button class="pwr-btn${r.kw===selPwr?' active':''}" data-kw="${r.kw}">${r.kw} kW</button>`
-  ).join('');
-  box.addEventListener('click', e => {
-    const btn = e.target.closest('.pwr-btn');
-    if (!btn) return;
-    selPwr = +btn.dataset.kw;
-    box.querySelectorAll('.pwr-btn').forEach(b => b.classList.toggle('active', +b.dataset.kw===selPwr));
-    save(); update();
-  });
 }
 
 function buildSOCTable() {
@@ -370,13 +359,19 @@ function update() {
   const roc = interpROC(refalt, isaDev);
   document.getElementById('roc-result').textContent = Math.round(roc);
 
-  // ── Power table highlighting ──
-  PWR.forEach((_, i) => {
-    document.getElementById(`pr${i}`).className = PWR[i].kw === selPwr ? 'row-sel' : '';
+  // ── Power table highlighting (exact row, or bracket pair if between POH values) ──
+  const pwrKws = PWR.map(r => r.kw);
+  const pb = bracket(pwrKws, selPwr);
+  PWR.forEach((r, i) => {
+    let cls = '';
+    if (r.kw === selPwr) cls = 'row-sel';
+    else if (i === pb.i || i === pb.i + 1) cls = 'row-near';
+    document.getElementById(`pr${i}`).className = cls;
   });
   const crSpd = interpCruiseSpeed(selPwr);
+  const exact = PWR.some(r => r.kw === selPwr);
   document.getElementById('cruise-info').textContent =
-    `${selPwr} kW · ${crSpd.kias.toFixed(0)} kts`;
+    `${selPwr} kW · ${crSpd.kias.toFixed(0)} kts${exact ? '' : ' (interpolated)'}`;
 
   // ── %SOC interpolated column ──
   SOC_PHASES.forEach((p, i) => {
@@ -412,7 +407,8 @@ function update() {
 function save() {
   const ids = { velis_vy:'vy', velis_vx:'vx', velis_vglide:'vglide', velis_glide_ratio:'glide-ratio' };
   Object.entries(ids).forEach(([k,id]) => localStorage.setItem(k, document.getElementById(id).value));
-  localStorage.setItem('velis_cruise_kw', selPwr);
+  if (window.velisPlan) window.velisPlan.markDirty();
+  else localStorage.setItem('velis_bundle_mtime', String(Date.now()));
 }
 
 function load() {
@@ -436,69 +432,17 @@ async function init(){
   ['vy','vx','vglide','glide-ratio'].forEach(id =>
     document.getElementById(id).addEventListener('input', () => { save(); update(); })
   );
-  // Listen for localStorage changes from Route Planner (e.g. OAT, SOH, altitude)
-  window.addEventListener('storage', () => { update(); });
-
-// ── Save / Load performance settings as JSON file ──
-function getPerfState(){
-  return {
-    vy:document.getElementById('vy').value,
-    vx:document.getElementById('vx').value,
-    vglide:document.getElementById('vglide').value,
-    glideRatio:document.getElementById('glide-ratio').value,
-    cruiseKw:selPwr
-  };
-}
-function applyPerfState(state){
-  if(state.vy!==undefined) document.getElementById('vy').value=state.vy;
-  if(state.vx!==undefined) document.getElementById('vx').value=state.vx;
-  if(state.vglide!==undefined) document.getElementById('vglide').value=state.vglide;
-  if(state.glideRatio!==undefined) document.getElementById('glide-ratio').value=state.glideRatio;
-  if(state.cruiseKw!==undefined){
-    selPwr=+state.cruiseKw;
-    document.querySelectorAll('.pwr-btn').forEach(b=>b.classList.toggle('active',+b.dataset.kw===selPwr));
-  }
-  save(); update();
-}
-function showPerfStatus(msg){
-  const el=document.getElementById('perf-status');
-  el.textContent=msg;
-  setTimeout(()=>{el.textContent='';},3000);
-}
-
-  document.getElementById('perf-save').addEventListener('click',()=>{
-    const data={type:'velis_performance',savedAt:new Date().toISOString(),settings:getPerfState()};
-    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url; a.download='velis_performance.json'; a.click();
-    URL.revokeObjectURL(url);
-    showPerfStatus('Saved: velis_performance.json');
-  });
-
-  document.getElementById('perf-load-btn').addEventListener('click',()=>{
-    document.getElementById('perf-file').click();
-  });
-  document.getElementById('perf-file').addEventListener('change',(e)=>{
-    const file=e.target.files[0];
-    if(!file) return;
-    const reader=new FileReader();
-    reader.onload=(ev)=>{
-      try{
-        const data=JSON.parse(ev.target.result);
-        applyPerfState(data.settings||data);
-        showPerfStatus('Loaded: '+file.name);
-      }catch(err){
-        showPerfStatus('Error: invalid JSON file');
-      }
-    };
-    reader.readAsText(file);
-    e.target.value='';
-  });
+  // Listen for localStorage changes from Route Planner (e.g. OAT, SOH, altitude, cruise power)
+  window.addEventListener('storage', () => { load(); update(); });
+  // Re-sync when returning to this tab from the Route Planner,
+  // or after plan_sync.js loads a bundle in-place.
+  window.addEventListener('pageshow', () => { load(); update(); });
+  document.addEventListener('velis:after-load', () => { load(); update(); });
 
   update();
 }
 init();
 </script>
+<script src="plan_sync.js" defer></script>
 </body>
 </html>
