@@ -75,7 +75,10 @@ textarea{border:none;background:transparent;outline:none;padding:0;margin:0;resi
 
 .hdr{display:grid;gap:2mm 3mm;margin-bottom:3mm;font-size:9pt;}
 .hdr-row{display:grid;grid-template-columns:repeat(12,1fr);align-items:end;gap:3mm;}
-.hdr-row.r1 .fld{grid-column:span 3;}
+.hdr-row.r1 .fld[data-col="ident"]{grid-column:span 2;}
+.hdr-row.r1 .fld[data-col="type"]{grid-column:span 2;}
+.hdr-row.r1 .fld[data-col="pilot"]{grid-column:span 5;}
+.hdr-row.r1 .fld[data-col="date"]{grid-column:span 3;}
 .hdr-deparr{display:grid;grid-template-columns:1fr 1fr;gap:4mm;margin-top:1mm;}
 .hdr-section{display:grid;gap:1.8mm;}
 .sec-lbl{font-size:7pt;font-weight:700;color:var(--tx2);letter-spacing:0.08em;text-transform:uppercase;border-bottom:0.5px solid var(--bd);padding:0 0 0.5mm;}
@@ -230,10 +233,10 @@ textarea{border:none;background:transparent;outline:none;padding:0;margin:0;resi
 
       <div class="hdr">
         <div class="hdr-row r1">
-          <div class="fld"><span class="fld-lbl">ACFT Ident</span><input class="fld-inp" data-h="ident"></div>
-          <div class="fld"><span class="fld-lbl">Type</span><input class="fld-inp" data-h="type"></div>
-          <div class="fld"><span class="fld-lbl">Pilot</span><input class="fld-inp" data-h="pilot"></div>
-          <div class="fld"><span class="fld-lbl">Date</span><input class="fld-inp" data-h="date"></div>
+          <div class="fld" data-col="ident"><span class="fld-lbl">ACFT Ident</span><input class="fld-inp" data-h="ident"></div>
+          <div class="fld" data-col="type"><span class="fld-lbl">Type</span><input class="fld-inp" data-h="type"></div>
+          <div class="fld" data-col="pilot"><span class="fld-lbl">Pilot</span><input class="fld-inp" data-h="pilot"></div>
+          <div class="fld" data-col="date"><span class="fld-lbl">Date</span><input class="fld-inp" data-h="date"></div>
         </div>
         <div class="hdr-deparr">
           <div class="hdr-section">
