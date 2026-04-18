@@ -12,7 +12,7 @@ Pipistrel Velis Electro flight planner — four static HTML pages + two shared J
 npx live-server --open=index.html
 ```
 
-All pages `fetch('velis_electro_poh.json')`, so they must be served over HTTP (not `file://`). Backend is optional in dev — the Save/Load FAB just fails politely if the API is unreachable. To run the backend locally see `backend/README.md`; to point the frontend at a local backend set `window.VELIS_API_BASE = 'http://localhost:8003/api'` in the devtools console before interacting.
+All pages `fetch('velis_electro_poh.json')`, so they must be served over HTTP (not `file://`). The calculator works stand-alone; the backend only handles user accounts + Save/Load. To run the backend locally see `backend/README.md`; to point the frontend at a local backend set `window.VELIS_API_BASE = 'http://localhost:8003/api'` in the devtools console. Because the auth session is a same-origin cookie, dev normally means serving frontend + backend through one proxy (or skipping sign-in locally).
 
 ## Deployment
 
@@ -38,12 +38,12 @@ Backend — Docker Compose service `flightplanner` on the same VPS (`/opt/docker
 
 ### Shared JS modules
 
-- **`plan_sync.js`** — loaded by every page. Injects a floating disc (FAB) top-right of the viewport, a slim plan-status line in the nav bar, a settings modal and a load-plan modal. Owns `api()`, auth helpers, `doSave` / `doSaveAs` / `doLoad`, dirty tracking, Cmd/Ctrl+S shortcut. Exposes `window.velisPlan = { save, saveAs, load, openSettings, markDirty, markSaved, bundleDirty, updateStatus }`.
+- **`plan_sync.js`** — loaded by every page. Injects a floating disc (FAB) top-right of the viewport, a slim plan-status line in the nav bar, the auth modal (passwordless magic-link sign-in / account creation) and a load-plan modal. Owns `api()` (cookie-credentialed fetch wrapper), session refresh via `/api/auth/me`, `doSave` / `doSaveAs` / `doLoad` / `doLogout`, dirty tracking, Cmd/Ctrl+S shortcut. Exposes `window.velisPlan = { save, saveAs, load, openAuth, logout, markDirty, markSaved, bundleDirty, updateStatus, user }`.
 - **`takeoff_calc.js`** — POH loader + `computeTakeoff` / `computeLanding` + `drawTakeoff` / `drawLanding` SVG renderers + `readState()` (reads `velis_takeoff`). Exposed at `window.takeoffCalc`. Used by the NAV Plan for its mini-pictures; the Takeoff page still has its own inline functions (intentional — lets it keep showing the step-by-step detailed calculation).
 
 ### Backend (`backend/`)
 
-Flask + Gunicorn, MySQL connector to the shared MariaDB container. Single `flight_plans` table: `id`, `owner`, `name`, `updated_at`, `plan_json` (LONGTEXT). Auth is a shared API key via `X-API-Key`; `owner` is a per-user label the pilot picks in the settings modal. Endpoints: `GET /api/ping`, `GET /api/plans`, `GET /api/plans/:id`, `POST /api/plans`, `PUT /api/plans/:id`, `DELETE /api/plans/:id`. Duplicate `(owner, name)` → 409. Full detail in `backend/README.md`.
+Flask + Gunicorn, MySQL connector to the shared MariaDB container. Four tables: `users` (id, email, first_name, last_name, email_verified_at, last_login_at), `magic_tokens` (one-shot email-verification / sign-in links, 24 h for verify, 1 h for login), `sessions` (90-day cookie tokens), `flight_plans` (`id, user_id, name, updated_at, plan_json`; UNIQUE `(user_id, name)`). Auth is passwordless: register with first/last/email → email contains a magic link → `/api/auth/verify/<token>` sets an HttpOnly session cookie and returns a branded boarding-pass landing page. Endpoints: `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/verify/<token>`, `GET /api/auth/me`, `POST /api/auth/logout`, `GET /api/ping`, `GET /api/plans`, `GET /api/plans/:id`, `POST /api/plans`, `PUT /api/plans/:id`, `DELETE /api/plans/:id`. Plan endpoints require the session cookie and scope rows to the owning user. Duplicate `(user_id, name)` → 409. Full detail (env vars, SMTP, public URL) in `backend/README.md`.
 
 ### Save / Load bundle
 
@@ -62,7 +62,7 @@ The backend just stores JSON blobs. `plan_sync.js` builds and applies them:
 ### Cross-page state
 
 - **Shared localStorage keys** (all prefixed `velis_`): `velis_route_state`, `velis_takeoff`, `velis_navplan_state`, `velis_vy`, `velis_vx`, `velis_vglide`, `velis_glide_ratio`, `velis_cruise_kw`, `velis_soh`, `velis_oat`, `velis_total_kwh`, `velis_usable_kwh`, `velis_total_min`, `velis_total_dist`, `velis_soc0_pct`, `velis_reserve_pct`.
-- **Excluded from the save bundle**: `velis_navplan_auth` (per-browser API key + owner label), `velis_navplan_view` (NAV Plan on-screen view toggle), `velis_bundle_mtime` / `velis_bundle_stime` (dirty-tracking timestamps).
+- **Excluded from the save bundle**: `velis_user` (cached `{id,email,first_name,last_name}` from `/api/auth/me`), `velis_navplan_view` (NAV Plan on-screen view toggle), `velis_bundle_mtime` / `velis_bundle_stime` (dirty-tracking timestamps). The session itself lives in an HttpOnly cookie, not localStorage. On logout — or when `/me` reports a different user than the cache — every `velis_*` key is wiped.
 - **Dirty indicator**: any page mutating state calls `window.velisPlan.markDirty()`, which bumps `velis_bundle_mtime`. A successful Save / Load bumps `velis_bundle_stime`. The disc and nav-bar status show a dot when `mtime > stime`.
 - **Events dispatched on `document`**: `velis:before-save` (pages flush in-memory state to localStorage) and `velis:after-load` (pages re-read localStorage and re-render). NAV Plan is the only page that needs `before-save`; all four pages listen for `after-load` so loading from any page refreshes them in place.
 

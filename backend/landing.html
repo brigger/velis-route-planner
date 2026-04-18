@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en" class="{{STATE}}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Velis Electro — {{GREETING}}</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,800;1,9..144,400;1,9..144,800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0a0b; --bg-panel:#13131a; --line:#232327;
+  --ink:#f5f2ec; --ink-mute:#898579; --ink-dim:#4a4842;
+  --amber:#ffb020; --amber-dim:#a67110;
+  --red:#e0342c; --green:#7ed97a; --paper:#f2eee4;
+  --stamp:{{STAMP_COLOR}};
+  --f-display:'Fraunces',Georgia,serif;
+  --f-sans:'Archivo',system-ui,sans-serif;
+  --f-mono:'JetBrains Mono',ui-monospace,monospace;
+}
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--f-sans);-webkit-font-smoothing:antialiased;min-height:100vh;}
+body{
+  background-image:
+    radial-gradient(ellipse 80% 60% at 30% 0%,rgba(255,176,32,0.08),transparent 60%),
+    radial-gradient(ellipse 60% 50% at 100% 100%,rgba(224,52,44,0.04),transparent 60%);
+}
+html.error body{
+  background-image:
+    radial-gradient(ellipse 80% 60% at 30% 0%,rgba(224,52,44,0.10),transparent 60%),
+    radial-gradient(ellipse 60% 50% at 100% 100%,rgba(224,52,44,0.05),transparent 60%);
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:999;opacity:0.05;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.wrap{max-width:1100px;margin:0 auto;padding:48px 28px 80px;}
+.nav{display:flex;align-items:center;justify-content:space-between;padding-bottom:28px;border-bottom:1px solid var(--line);margin-bottom:56px;}
+.logo{display:flex;align-items:center;gap:10px;font-family:var(--f-mono);font-size:12px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:var(--ink);}
+.logo-mark{width:28px;height:28px;border:1.5px solid var(--amber);color:var(--amber);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-family:var(--f-display);font-weight:800;font-size:14px;font-style:italic;}
+.logo-sub{color:var(--ink-mute);font-weight:500;letter-spacing:0.16em;}
+.tag{font-family:var(--f-mono);font-size:10.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-mute);}
+.hero{display:grid;grid-template-columns:1fr;gap:48px;align-items:start;}
+@media(min-width:900px){.hero{grid-template-columns:1.15fr 1fr;gap:72px;}}
+.hero-left{max-width:560px;}
+.eyebrow{display:inline-block;font-family:var(--f-mono);font-size:11px;letter-spacing:0.20em;text-transform:uppercase;color:var(--amber);margin-bottom:18px;padding:5px 10px;border:1px solid rgba(255,176,32,0.35);border-radius:3px;}
+html.error .eyebrow{color:var(--red);border-color:rgba(224,52,44,0.45);}
+h1.greeting{font-family:var(--f-display);font-weight:600;font-size:clamp(42px,6.8vw,76px);line-height:1.02;letter-spacing:-0.02em;margin:0 0 22px;color:var(--ink);}
+h1.greeting em{font-style:italic;color:var(--amber);font-weight:400;}
+html.error h1.greeting em{color:var(--red);}
+.subtitle{font-size:17px;line-height:1.55;color:#c8c3b7;margin:0 0 32px;max-width:46ch;}
+.cta-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center;}
+.cta{display:inline-flex;align-items:center;gap:10px;padding:14px 22px;background:var(--amber);color:#0a0a0b;font-weight:700;font-size:14px;letter-spacing:0.02em;text-decoration:none;border-radius:8px;transition:transform .1s,box-shadow .15s;box-shadow:0 8px 24px rgba(255,176,32,0.25);}
+.cta:hover{transform:translateY(-1px);box-shadow:0 12px 28px rgba(255,176,32,0.35);}
+.cta .arrow{display:inline-block;transition:transform .15s;}
+.cta:hover .arrow{transform:translateX(3px);}
+html.error .cta{background:var(--ink);color:var(--bg);box-shadow:0 8px 24px rgba(245,242,236,0.10);}
+.meta-line{font-family:var(--f-mono);font-size:11px;color:var(--ink-mute);letter-spacing:0.08em;text-transform:uppercase;}
+/* BOARDING PASS */
+.pass{background:var(--paper);color:#0a0a0b;border-radius:4px;transform:rotate(-1.25deg);box-shadow:0 30px 80px rgba(0,0,0,0.55),0 10px 30px rgba(0,0,0,0.35);position:relative;overflow:hidden;}
+.pass::after{content:'';position:absolute;left:0;right:0;top:50%;height:0;border-top:2px dashed #c4bda8;}
+.pass-body{padding:28px 26px 20px;}
+.pass-head{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:14px;border-bottom:1px solid #d9d2c1;margin-bottom:18px;}
+.pass-brand{font-family:var(--f-mono);font-size:10px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:#6b6660;}
+.pass-brand strong{color:#0a0a0b;}
+.pass-callsign{font-family:var(--f-mono);font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--stamp);font-weight:700;border:1.5px solid var(--stamp);border-radius:3px;padding:3px 8px;}
+.pass-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px 22px;margin-bottom:22px;}
+.pass-field{display:flex;flex-direction:column;gap:3px;}
+.pass-field.full{grid-column:1 / -1;}
+.pass-lbl{font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:#898579;}
+.pass-val{font-family:var(--f-display);font-weight:600;font-size:22px;line-height:1.1;color:#0a0a0b;letter-spacing:-0.01em;}
+.pass-val.small{font-size:15px;font-weight:500;word-break:break-all;}
+.pass-val.mono{font-family:var(--f-mono);font-size:13px;font-weight:500;letter-spacing:0.02em;}
+.pass-foot{display:flex;justify-content:space-between;align-items:flex-end;margin-top:12px;padding-top:30px;position:relative;}
+.pass-foot::before{content:'';position:absolute;top:0;left:0;right:0;border-top:2px dashed #c4bda8;}
+.stamp{display:inline-block;padding:10px 16px;border:2.5px solid var(--stamp);color:var(--stamp);font-family:var(--f-mono);font-weight:800;font-size:13px;letter-spacing:0.22em;transform:rotate(-5deg);border-radius:2px;text-transform:uppercase;}
+.barcode{display:flex;align-items:flex-end;gap:2px;height:34px;}
+.barcode i{display:block;width:2px;background:#0a0a0b;}
+.barcode i:nth-child(1){height:100%;}
+.barcode i:nth-child(2){height:65%;}
+.barcode i:nth-child(3){height:90%;width:3px;}
+.barcode i:nth-child(4){height:50%;}
+.barcode i:nth-child(5){height:100%;}
+.barcode i:nth-child(6){height:80%;width:3px;}
+.barcode i:nth-child(7){height:60%;}
+.barcode i:nth-child(8){height:95%;}
+.barcode i:nth-child(9){height:70%;width:3px;}
+.barcode i:nth-child(10){height:100%;}
+.barcode i:nth-child(11){height:55%;}
+.barcode i:nth-child(12){height:85%;width:3px;}
+.barcode i:nth-child(13){height:100%;}
+.pass-stub{border-top:1px solid #d9d2c1;background:#e7e1d0;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;font-family:var(--f-mono);font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:#6b6660;font-weight:700;}
+.pass-stub strong{color:#0a0a0b;}
+/* NOTCHES */
+.pass::before{content:'';position:absolute;left:-9px;top:50%;transform:translateY(-50%);width:18px;height:18px;background:var(--bg);border-radius:50%;}
+.pass-notch-r{position:absolute;right:-9px;top:50%;transform:translateY(-50%);width:18px;height:18px;background:var(--bg);border-radius:50%;}
+.footer{margin-top:64px;padding-top:28px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:16px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-dim);}
+.footer strong{color:var(--ink-mute);}
+@media(max-width:640px){.pass{transform:none;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="nav">
+    <div class="logo">
+      <span class="logo-mark">V</span>
+      <span>Velis<span class="logo-sub"> · electro</span></span>
+    </div>
+    <span class="tag">Flight Planner · Check-in</span>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-left">
+      <span class="eyebrow">Check-in · {{CALLSIGN}}</span>
+      <h1 class="greeting">{{GREETING}}</h1>
+      <p class="subtitle">{{SUBTITLE}}</p>
+      <div class="cta-row">
+        <a href="{{CTA_URL}}" class="cta">{{CTA_LABEL}} <span class="arrow">→</span></a>
+        <span class="meta-line">{{TIMESTAMP}}</span>
+      </div>
+    </div>
+
+    <aside class="pass" aria-label="Boarding pass">
+      <span class="pass-notch-r"></span>
+      <div class="pass-body">
+        <div class="pass-head">
+          <span class="pass-brand"><strong>Velis Electro</strong> · Boarding pass</span>
+          <span class="pass-callsign">{{CALLSIGN}}</span>
+        </div>
+        <div class="pass-grid">
+          <div class="pass-field">
+            <span class="pass-lbl">Passenger</span>
+            <span class="pass-val">{{CAPTAIN}}</span>
+          </div>
+          <div class="pass-field">
+            <span class="pass-lbl">Status</span>
+            <span class="pass-val mono">{{STATUS}}</span>
+          </div>
+          <div class="pass-field full">
+            <span class="pass-lbl">Account</span>
+            <span class="pass-val small">{{EMAIL}}</span>
+          </div>
+          <div class="pass-field">
+            <span class="pass-lbl">Flight</span>
+            <span class="pass-val mono">VLE · 001</span>
+          </div>
+          <div class="pass-field">
+            <span class="pass-lbl">Gate</span>
+            <span class="pass-val mono">A · 07</span>
+          </div>
+        </div>
+        <div class="pass-foot">
+          <span class="stamp">{{STATUS}}</span>
+          <div class="barcode"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        </div>
+      </div>
+      <div class="pass-stub">
+        <span>Issued <strong>{{TIMESTAMP}}</strong></span>
+        <span>SEQ · <strong>001</strong></span>
+      </div>
+    </aside>
+  </section>
+
+  <footer class="footer">
+    <span><strong>Velis Electro</strong> · Flight Planner</span>
+    <span>Pipistrel · {{TIMESTAMP}}</span>
+  </footer>
+</div>
+</body>
+</html>

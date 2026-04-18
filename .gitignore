@@ -8,3 +8,7 @@ pipistrel_velis_3leg_v2.html
 
 # macOS
 .DS_Store
+
+# Python
+__pycache__/
+*.pyc

@@ -1,29 +1,31 @@
 /* ═════════════════════════════════════════════════════════════════════
-   plan_sync.js — shared Save / Load / Save-as UI and bundle sync
-   Loaded by every HTML page. Injects its own CSS, nav-bar status line,
-   floating disc (FAB) + popup menu, and two modals (settings + plan
-   list). Pages communicate via custom events `velis:before-save` and
-   `velis:after-load`.
+   plan_sync.js — shared Save / Load / Save-as UI, bundle sync, and
+   passwordless user authentication (email magic link).
+   Loaded by every HTML page. Injects CSS, nav-bar status line, floating
+   disc (FAB) + popup menu, an auth modal and a load-plan modal. Pages
+   communicate via `velis:before-save` and `velis:after-load`.
    ═════════════════════════════════════════════════════════════════════ */
 (function(){
   "use strict";
 
   const API_BASE       = (typeof window!=='undefined'&&typeof window.VELIS_API_BASE==='string') ? window.VELIS_API_BASE : '/velis-planner/api';
-  const AUTH_KEY       = 'velis_navplan_auth';
+  const USER_KEY       = 'velis_user';                 // cached {id,email,first_name,last_name}
   const NAV_STATE_KEY  = 'velis_navplan_state';
   const MTIME_KEY      = 'velis_bundle_mtime';
   const STIME_KEY      = 'velis_bundle_stime';
-  const BUNDLE_EXCLUDE = new Set([AUTH_KEY,'velis_navplan_view',MTIME_KEY,STIME_KEY]);
+  const VIEW_KEY       = 'velis_navplan_view';
+  const BUNDLE_EXCLUDE = new Set([USER_KEY,VIEW_KEY,MTIME_KEY,STIME_KEY]);
 
   /* ─── CSS ─── */
   const CSS = `
 .plan-status-grow{flex:1 1 auto;}
-.plan-status{font-size:11px;color:var(--tx2,#6b6660);padding:11px 60px 11px 10px;align-self:center;display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:360px;font-family:var(--font,inherit);}
+.plan-status{font-size:11px;color:var(--tx2,#6b6660);padding:11px 60px 11px 10px;align-self:center;display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:400px;font-family:var(--font,inherit);}
 .plan-status .dot{width:6px;height:6px;border-radius:50%;background:#D46A1D;flex-shrink:0;display:none;}
 .plan-status.dirty .dot{display:inline-block;}
 .plan-status .name{color:var(--tx,#1a1a1a);font-weight:500;overflow:hidden;text-overflow:ellipsis;}
-.plan-status .owner{color:var(--tx2,#6b6660);}
+.plan-status .who{color:var(--tx2,#6b6660);}
 .plan-status .sep{color:var(--bd2,#ccc8c0);}
+.plan-status .signin{color:var(--blue,#185FA5);cursor:pointer;text-decoration:underline;font-weight:500;background:none;border:none;padding:0;font:inherit;}
 
 .plan-fab{position:fixed;top:14px;right:16px;width:44px;height:44px;border-radius:50%;border:1px solid var(--bd,#e2ddd6);background:var(--bg-card,#fff);color:var(--tx,#1a1a1a);cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,0.12),0 1px 3px rgba(0,0,0,0.08);display:flex;align-items:center;justify-content:center;z-index:200;padding:0;transition:transform 0.12s,box-shadow 0.12s;}
 .plan-fab:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,0,0,0.16),0 2px 4px rgba(0,0,0,0.10);}
@@ -32,25 +34,46 @@
 .plan-fab .dot{position:absolute;top:6px;right:6px;width:10px;height:10px;border-radius:50%;background:#D46A1D;border:2px solid var(--bg-card,#fff);display:none;}
 .plan-fab.dirty .dot{display:block;}
 
-.plan-menu{position:fixed;top:66px;right:16px;background:var(--bg-card,#fff);border:1px solid var(--bd,#e2ddd6);border-radius:var(--rad-md,8px);box-shadow:0 10px 30px rgba(0,0,0,0.18),0 2px 6px rgba(0,0,0,0.08);min-width:220px;padding:4px;z-index:201;display:none;font-family:var(--font,inherit);}
+.plan-menu{position:fixed;top:66px;right:16px;background:var(--bg-card,#fff);border:1px solid var(--bd,#e2ddd6);border-radius:var(--rad-md,8px);box-shadow:0 10px 30px rgba(0,0,0,0.18),0 2px 6px rgba(0,0,0,0.08);min-width:240px;padding:4px;z-index:201;display:none;font-family:var(--font,inherit);}
 .plan-menu[data-open="1"]{display:block;}
 .plan-menu button{display:flex;align-items:center;width:100%;min-height:44px;padding:10px 14px;border:none;background:transparent;font-family:inherit;font-size:13px;color:var(--tx,#1a1a1a);text-align:left;cursor:pointer;border-radius:6px;gap:8px;}
 .plan-menu button:hover{background:var(--bg-sec,#f5f4f1);}
 .plan-menu button:disabled{opacity:0.45;cursor:not-allowed;}
+.plan-menu .who{padding:10px 14px 6px;font-size:10.5px;color:var(--tx2,#6b6660);font-weight:600;text-transform:uppercase;letter-spacing:0.04em;}
+.plan-menu .who .em{text-transform:none;letter-spacing:0;font-weight:500;color:var(--tx,#1a1a1a);display:block;font-size:12px;margin-top:2px;}
 .plan-menu .sep{height:1px;background:var(--bd,#e2ddd6);margin:4px 6px;}
 .plan-menu .kbd{margin-left:auto;font-size:10.5px;color:var(--tx2,#6b6660);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;}
 
 .plan-modal{position:fixed;inset:0;background:rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;z-index:300;font-family:var(--font,inherit);}
 .plan-modal[hidden]{display:none;}
-.plan-modal-box{background:#fff;border-radius:var(--rad-lg,14px);padding:20px 24px;min-width:340px;max-width:520px;max-height:80vh;overflow:auto;box-shadow:0 10px 40px rgba(0,0,0,0.2);}
+.plan-modal-box{background:#fff;border-radius:var(--rad-lg,14px);padding:20px 24px;min-width:340px;max-width:440px;max-height:80vh;overflow:auto;box-shadow:0 10px 40px rgba(0,0,0,0.2);}
 .plan-modal-box h3{margin:0 0 14px;font-size:14px;font-weight:700;letter-spacing:-0.01em;}
 .plan-modal-box label{display:block;font-size:10.5px;color:var(--tx2,#6b6660);font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:12px;}
-.plan-modal-box label input{display:block;width:100%;margin-top:4px;padding:8px 10px;border:1px solid var(--bd2,#ccc8c0);border-radius:6px;font-size:14px;color:var(--tx,#1a1a1a);font-weight:400;text-transform:none;letter-spacing:0;background:#fff;box-sizing:border-box;}
-.plan-modal-box .hint{font-size:10.5px;color:var(--tx2,#6b6660);margin:-6px 0 14px;font-style:italic;line-height:1.4;}
-.plan-modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;}
-.plan-modal-actions button{font-family:inherit;font-size:12px;font-weight:600;padding:8px 16px;min-height:36px;border:1px solid var(--bd,#e2ddd6);border-radius:6px;background:var(--bg-sec,#f5f4f1);color:var(--tx2,#6b6660);cursor:pointer;}
+.plan-modal-box label input{display:block;width:100%;margin-top:4px;padding:10px 12px;border:1px solid var(--bd2,#ccc8c0);border-radius:6px;font-size:14px;color:var(--tx,#1a1a1a);font-weight:400;text-transform:none;letter-spacing:0;background:#fff;box-sizing:border-box;}
+.plan-modal-box label input:focus{outline:none;border-color:var(--blue,#185FA5);box-shadow:0 0 0 3px rgba(24,95,165,0.15);}
+.plan-modal-box .hint{font-size:12px;color:var(--tx2,#6b6660);margin:-2px 0 16px;line-height:1.4;}
+.plan-modal-box .err{font-size:12px;color:#B03030;background:#FBEAEA;border-radius:6px;padding:10px 12px;margin:0 0 14px;line-height:1.4;display:none;}
+.plan-modal-box .err.show{display:block;}
+.plan-modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;align-items:center;}
+.plan-modal-actions button{font-family:inherit;font-size:12px;font-weight:600;padding:9px 18px;min-height:38px;border:1px solid var(--bd,#e2ddd6);border-radius:6px;background:var(--bg-sec,#f5f4f1);color:var(--tx2,#6b6660);cursor:pointer;}
 .plan-modal-actions button.primary{border-color:var(--blue,#185FA5);background:var(--blue,#185FA5);color:#fff;}
 .plan-modal-actions button.primary:hover{background:#124a82;}
+.plan-modal-actions button:disabled{opacity:0.6;cursor:wait;}
+.plan-modal-actions .spacer{flex:1;}
+
+.auth-tabs{display:flex;gap:2px;background:var(--bg-sec,#f5f4f1);border-radius:8px;padding:3px;margin:0 0 16px;}
+.auth-tabs button{flex:1;font-family:inherit;font-size:12px;font-weight:600;padding:8px 10px;border:none;border-radius:6px;background:transparent;color:var(--tx2,#6b6660);cursor:pointer;}
+.auth-tabs button.active{background:#fff;color:var(--tx,#1a1a1a);box-shadow:0 1px 2px rgba(0,0,0,0.06);}
+.auth-pane{display:none;}
+.auth-pane.active{display:block;}
+.auth-ok{display:none;text-align:center;padding:8px 4px 4px;}
+.auth-ok.show{display:block;}
+.auth-ok .icon{width:56px;height:56px;border-radius:50%;background:#E8F5E8;color:#2C8A2C;display:inline-flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:28px;}
+.auth-ok h4{margin:0 0 8px;font-size:16px;font-weight:700;letter-spacing:-0.01em;color:var(--tx,#1a1a1a);}
+.auth-ok p{margin:0 0 6px;font-size:13px;color:var(--tx2,#6b6660);line-height:1.5;}
+.auth-ok .em{color:var(--tx,#1a1a1a);font-weight:600;}
+.auth-ok .small{font-size:11px;color:var(--tx2,#6b6660);margin-top:14px;}
+.auth-ok .link{background:none;border:none;padding:0;color:var(--blue,#185FA5);cursor:pointer;font:inherit;text-decoration:underline;}
 
 .plan-list{display:flex;flex-direction:column;gap:2px;margin:4px 0;}
 .plan-li{display:flex;align-items:center;justify-content:space-between;padding:12px 10px;border-radius:6px;cursor:pointer;font-size:13px;gap:12px;min-height:44px;}
@@ -81,23 +104,46 @@
 
   const MENU_HTML = `
 <div class="plan-menu" id="plan-menu" role="menu">
+  <div class="who" id="plan-menu-who" hidden>Signed in<span class="em" id="plan-menu-who-em"></span></div>
+  <div class="sep" id="plan-menu-who-sep" hidden></div>
   <button type="button" data-act="save">Save<span class="kbd">⌘S</span></button>
   <button type="button" data-act="save-as">Save as…</button>
   <button type="button" data-act="load">Load…</button>
   <div class="sep"></div>
-  <button type="button" data-act="settings">API settings ⚙</button>
+  <button type="button" data-act="signin" id="plan-menu-signin">Sign in</button>
+  <button type="button" data-act="logout" id="plan-menu-logout" hidden>Sign out</button>
 </div>`;
 
-  const SETTINGS_HTML = `
-<div class="plan-modal" id="plan-settings-modal" hidden>
+  const AUTH_HTML = `
+<div class="plan-modal" id="plan-auth-modal" hidden>
   <div class="plan-modal-box">
-    <h3>API settings</h3>
-    <p class="hint">Shared API key (set once on the VPS) and your pilot label (used to scope saved plans).</p>
-    <label>API key<input id="plan-set-key" type="password" autocomplete="off"></label>
-    <label>Owner (short name)<input id="plan-set-owner" autocomplete="off" placeholder="e.g. patrick"></label>
-    <div class="plan-modal-actions">
-      <button type="button" id="plan-set-cancel">Cancel</button>
-      <button type="button" id="plan-set-save" class="primary">Save</button>
+    <h3 id="plan-auth-title">Sign in</h3>
+    <div class="auth-tabs" id="plan-auth-tabs">
+      <button type="button" data-tab="signin" class="active">Sign in</button>
+      <button type="button" data-tab="register">Create account</button>
+    </div>
+    <div class="err" id="plan-auth-err"></div>
+    <div class="auth-pane active" data-pane="signin">
+      <p class="hint">Enter the email you registered with — we'll email you a one-tap sign-in link.</p>
+      <label>Email<input id="plan-auth-signin-email" type="email" autocomplete="email" placeholder="you@example.com"></label>
+    </div>
+    <div class="auth-pane" data-pane="register">
+      <p class="hint">No password needed. Enter your details and we'll email you a verification link.</p>
+      <label>First name<input id="plan-auth-first" type="text" autocomplete="given-name"></label>
+      <label>Last name<input id="plan-auth-last" type="text" autocomplete="family-name"></label>
+      <label>Email<input id="plan-auth-email" type="email" autocomplete="email" placeholder="you@example.com"></label>
+    </div>
+    <div class="auth-ok" id="plan-auth-ok">
+      <div class="icon">✓</div>
+      <h4>Check your inbox</h4>
+      <p>We sent a magic link to <span class="em" id="plan-auth-sent-to"></span>.</p>
+      <p>Click the link in the email and you'll be signed in on this device.</p>
+      <p class="small">Not seeing it? Check spam, or <button type="button" class="link" id="plan-auth-resend">send again</button>.</p>
+    </div>
+    <div class="plan-modal-actions" id="plan-auth-actions">
+      <button type="button" id="plan-auth-close">Close</button>
+      <span class="spacer"></span>
+      <button type="button" id="plan-auth-submit" class="primary">Send magic link</button>
     </div>
   </div>
 </div>`;
@@ -115,17 +161,15 @@
 
   /* ─── Helpers ─── */
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-  function getAuth(){try{return JSON.parse(localStorage.getItem(AUTH_KEY))||{};}catch(e){return {};}}
-  function setAuth(a){localStorage.setItem(AUTH_KEY,JSON.stringify(a));}
+  function getCachedUser(){try{return JSON.parse(localStorage.getItem(USER_KEY))||null;}catch(e){return null;}}
+  function setCachedUser(u){if(u) localStorage.setItem(USER_KEY,JSON.stringify(u)); else localStorage.removeItem(USER_KEY);}
 
   async function api(path,opts={}){
-    const auth=getAuth();
     const r=await fetch(API_BASE+path,{
+      credentials:'include',
       ...opts,
       headers:{
         'Content-Type':'application/json',
-        'X-API-Key':auth.key||'',
-        'X-Owner':auth.owner||'default',
         ...(opts.headers||{})
       }
     });
@@ -138,10 +182,42 @@
     return r.json();
   }
 
-  function ensureAuth(){
-    const a=getAuth();
-    if(!a.key||!a.owner){openSettings();return false;}
-    return true;
+  /* ─── User session tracking ─── */
+  let currentUser = null;        // in-memory echo of cache
+  let authPollTimer = null;
+
+  async function refreshUser(){
+    try{
+      const r=await api('/auth/me');
+      const before=currentUser&&currentUser.id;
+      const after=r.authenticated?r.user:null;
+      if((before||null)!==(after&&after.id||null)){
+        if(before && !after){
+          // was logged in → logged out: clear all velis_* localStorage
+          wipeVelisLocal();
+        } else if(before && after && before!==after.id){
+          // different user: clear previous plan state
+          wipeVelisLocal();
+        }
+      }
+      currentUser=after;
+      setCachedUser(after);
+      repaint();
+      return after;
+    }catch(e){
+      // Network error — keep whatever we had cached, but if it was authenticated,
+      // the next action will 401 and prompt reauth.
+      return currentUser;
+    }
+  }
+
+  function wipeVelisLocal(){
+    const keys=[];
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(k&&k.startsWith('velis_')) keys.push(k);
+    }
+    for(const k of keys) localStorage.removeItem(k);
   }
 
   /* ─── Dirty tracking ─── */
@@ -166,29 +242,48 @@
     const el=document.getElementById('plan-status');
     if(!el) return;
     const meta=currentMeta();
-    const auth=getAuth();
     const dirty=bundleDirty();
-    let parts=[];
-    parts.push('<span class="dot"></span>');
-    if(meta.id){
-      parts.push(`<span class="name">${esc(meta.name||('Plan #'+meta.id))}</span>`);
-      parts.push(`<span>${dirty?'unsaved':'saved'}</span>`);
+    const parts=['<span class="dot"></span>'];
+    if(!currentUser){
+      parts.push('<button type="button" class="signin" data-signin-link="1">Sign in</button>');
+      parts.push('<span>to save plans</span>');
     } else {
-      parts.push(`<span>${dirty?'Unsaved draft':'Not saved to server'}</span>`);
-    }
-    if(auth.owner){
+      if(meta.id){
+        parts.push(`<span class="name">${esc(meta.name||('Plan #'+meta.id))}</span>`);
+        parts.push(`<span>${dirty?'unsaved':'saved'}</span>`);
+      } else {
+        parts.push(`<span>${dirty?'Unsaved draft':'Not saved to server'}</span>`);
+      }
       parts.push('<span class="sep">·</span>');
-      parts.push(`<span class="owner">${esc(auth.owner)}</span>`);
+      parts.push(`<span class="who">${esc(currentUser.email)}</span>`);
     }
     el.innerHTML=parts.join('');
     el.classList.toggle('dirty',dirty);
+    const link=el.querySelector('[data-signin-link]');
+    if(link) link.addEventListener('click',openAuthModal);
   }
 
   function updateFabDirty(){
     const fab=document.getElementById('plan-fab');
     if(fab) fab.classList.toggle('dirty',bundleDirty());
   }
-  function repaint(){updateStatus();updateFabDirty();}
+  function updateMenuWho(){
+    const who=document.getElementById('plan-menu-who');
+    const sep=document.getElementById('plan-menu-who-sep');
+    const em =document.getElementById('plan-menu-who-em');
+    const sig=document.getElementById('plan-menu-signin');
+    const lo =document.getElementById('plan-menu-logout');
+    if(!who) return;
+    if(currentUser){
+      who.hidden=false; sep.hidden=false;
+      em.textContent=currentUser.email;
+      sig.hidden=true; lo.hidden=false;
+    } else {
+      who.hidden=true; sep.hidden=true;
+      sig.hidden=false; lo.hidden=true;
+    }
+  }
+  function repaint(){updateStatus();updateFabDirty();updateMenuWho();}
 
   /* ─── Bundle I/O ─── */
   function collectBundle(){
@@ -212,6 +307,15 @@
   }
 
   /* ─── Actions ─── */
+  function ensureAuth(){
+    if(!currentUser){openAuthModal();return false;}
+    return true;
+  }
+  async function handle401(retryFn){
+    // Session expired → refresh /me, force login, optionally retry
+    await refreshUser();
+    if(!currentUser) openAuthModal();
+  }
   async function doSave(){
     if(!ensureAuth()) return;
     const meta=currentMeta();
@@ -220,8 +324,8 @@
       await api(`/plans/${meta.id}`,{method:'PUT',body:JSON.stringify({plan_json:collectBundle()})});
       markBundleSaved();
     }catch(e){
+      if(e.status===401){await handle401();return;}
       if(e.status===404){
-        // Deleted server-side — clear the stale id and fall back to Save As
         persistMeta({id:null,name:meta.name});
         return doSaveAs();
       }
@@ -240,8 +344,9 @@
       persistMeta({id:res.id,name:res.name});
       markBundleSaved();
     }catch(e){
+      if(e.status===401){await handle401();return;}
       if(e.status===409){
-        alert(`A plan named "${name.trim()}" already exists for this owner. Pick a different name.`);
+        alert(`A plan named "${name.trim()}" already exists. Pick a different name.`);
         return doSaveAs();
       }
       alert('Save As failed: '+e.message);
@@ -256,7 +361,7 @@
     try{
       const plans=await api('/plans');
       if(!plans.length){
-        listEl.innerHTML='<div class="plan-empty">No saved plans yet for this owner.</div>';
+        listEl.innerHTML='<div class="plan-empty">No saved plans yet.</div>';
         return;
       }
       listEl.innerHTML=plans.map(p=>{
@@ -267,8 +372,18 @@
         </div>`;
       }).join('');
     }catch(e){
+      if(e.status===401){closeLoadModal();await handle401();return;}
       listEl.innerHTML=`<div class="plan-empty">Could not list plans: ${esc(e.message)}</div>`;
     }
+  }
+
+  async function doLogout(){
+    try{await api('/auth/logout',{method:'POST'});}catch(e){}
+    wipeVelisLocal();
+    currentUser=null;
+    setCachedUser(null);
+    repaint();
+    openAuthModal();
   }
 
   function suggestedFromNavplan(){
@@ -280,7 +395,6 @@
     }catch(e){return '';}
   }
 
-  // Write meta back into velis_navplan_state (so Load flows survive pageshow)
   function persistMeta(meta){
     try{
       const raw=localStorage.getItem(NAV_STATE_KEY);
@@ -290,27 +404,144 @@
     }catch(e){}
   }
 
-  /* ─── Modals ─── */
-  function openSettings(){
-    const a=getAuth();
-    document.getElementById('plan-set-key').value=a.key||'';
-    document.getElementById('plan-set-owner').value=a.owner||'';
-    document.getElementById('plan-settings-modal').hidden=false;
-  }
-  function closeSettings(){document.getElementById('plan-settings-modal').hidden=true;}
-  function closeLoadModal(){document.getElementById('plan-load-modal').hidden=true;}
+  /* ─── Auth modal ─── */
+  let pendingEmail=null;          // last email sent → "resend" target
+  let pendingPayload=null;        // last POST body → for resend
+  let pendingEndpoint=null;       // '/auth/register' or '/auth/login'
 
-  function wireSettingsModal(){
-    document.getElementById('plan-set-cancel').addEventListener('click',closeSettings);
-    document.getElementById('plan-set-save').addEventListener('click',()=>{
-      const key=document.getElementById('plan-set-key').value.trim();
-      const owner=document.getElementById('plan-set-owner').value.trim();
-      if(!key||!owner){alert('Both API key and owner are required.');return;}
-      setAuth({key,owner});
-      closeSettings();
-      repaint();
+  function openAuthModal(tab){
+    const cached=getCachedUser();
+    const defaultTab = tab || (cached ? 'signin' : 'register');
+    setAuthTab(defaultTab);
+    clearAuthError();
+    hideAuthOk();
+    if(cached && defaultTab==='signin'){
+      const em=document.getElementById('plan-auth-signin-email');
+      if(em) em.value=cached.email||'';
+    }
+    document.getElementById('plan-auth-modal').hidden=false;
+    startAuthPoll();
+    setTimeout(()=>{
+      const focus=defaultTab==='signin'?'plan-auth-signin-email':'plan-auth-first';
+      const el=document.getElementById(focus);
+      if(el) el.focus();
+    },50);
+  }
+  function closeAuthModal(){
+    document.getElementById('plan-auth-modal').hidden=true;
+    stopAuthPoll();
+  }
+  function setAuthTab(tab){
+    document.querySelectorAll('#plan-auth-tabs button').forEach(b=>{
+      b.classList.toggle('active',b.dataset.tab===tab);
+    });
+    document.querySelectorAll('#plan-auth-modal .auth-pane').forEach(p=>{
+      p.classList.toggle('active',p.dataset.pane===tab);
+    });
+    document.getElementById('plan-auth-title').textContent=(tab==='signin')?'Sign in':'Create account';
+    const sub=document.getElementById('plan-auth-submit');
+    sub.textContent=(tab==='signin')?'Send sign-in link':'Create account';
+    hideAuthOk();
+    clearAuthError();
+  }
+  function currentAuthTab(){
+    const active=document.querySelector('#plan-auth-tabs button.active');
+    return active?active.dataset.tab:'signin';
+  }
+  function showAuthError(msg){
+    const el=document.getElementById('plan-auth-err');
+    el.textContent=msg;
+    el.classList.add('show');
+  }
+  function clearAuthError(){
+    const el=document.getElementById('plan-auth-err');
+    el.textContent='';
+    el.classList.remove('show');
+  }
+  function showAuthOk(email){
+    document.getElementById('plan-auth-sent-to').textContent=email;
+    document.getElementById('plan-auth-ok').classList.add('show');
+    document.querySelectorAll('#plan-auth-modal .auth-pane').forEach(p=>p.classList.remove('active'));
+    document.getElementById('plan-auth-tabs').style.display='none';
+    document.getElementById('plan-auth-submit').hidden=true;
+    document.getElementById('plan-auth-title').textContent='Magic link sent';
+  }
+  function hideAuthOk(){
+    document.getElementById('plan-auth-ok').classList.remove('show');
+    document.getElementById('plan-auth-tabs').style.display='';
+    document.getElementById('plan-auth-submit').hidden=false;
+    const tab=currentAuthTab();
+    document.querySelectorAll('#plan-auth-modal .auth-pane').forEach(p=>{
+      p.classList.toggle('active',p.dataset.pane===tab);
     });
   }
+  async function submitAuth(){
+    clearAuthError();
+    const tab=currentAuthTab();
+    const sub=document.getElementById('plan-auth-submit');
+    let endpoint, payload, email;
+    if(tab==='signin'){
+      email=(document.getElementById('plan-auth-signin-email').value||'').trim();
+      if(!email){showAuthError('Enter your email.');return;}
+      endpoint='/auth/login';
+      payload={email};
+    } else {
+      const first=(document.getElementById('plan-auth-first').value||'').trim();
+      const last =(document.getElementById('plan-auth-last').value||'').trim();
+      email      =(document.getElementById('plan-auth-email').value||'').trim();
+      if(!first||!last||!email){showAuthError('All fields are required.');return;}
+      endpoint='/auth/register';
+      payload={first_name:first,last_name:last,email};
+    }
+    sub.disabled=true;
+    try{
+      const r=await api(endpoint,{method:'POST',body:JSON.stringify(payload)});
+      pendingEmail=email;
+      pendingPayload=payload;
+      pendingEndpoint=endpoint;
+      showAuthOk(r.email||email);
+    }catch(e){
+      let msg=e.message;
+      try{const j=JSON.parse(e.message.replace(/^\d+\s*/,''));if(j&&j.error)msg=j.error;}catch(_){}
+      showAuthError(msg||'Something went wrong. Try again.');
+    }finally{
+      sub.disabled=false;
+    }
+  }
+  async function resendAuth(){
+    if(!pendingEndpoint||!pendingPayload) return;
+    try{
+      const r=await api(pendingEndpoint,{method:'POST',body:JSON.stringify(pendingPayload)});
+      const el=document.getElementById('plan-auth-sent-to');
+      if(el) el.textContent=r.email||pendingEmail;
+    }catch(e){/* silent */}
+  }
+
+  function startAuthPoll(){
+    stopAuthPoll();
+    authPollTimer=setInterval(async ()=>{
+      if(document.getElementById('plan-auth-modal').hidden){stopAuthPoll();return;}
+      const u=await refreshUser();
+      if(u){closeAuthModal();}
+    },3000);
+  }
+  function stopAuthPoll(){if(authPollTimer){clearInterval(authPollTimer);authPollTimer=null;}}
+
+  function wireAuthModal(){
+    document.getElementById('plan-auth-tabs').addEventListener('click',ev=>{
+      const b=ev.target.closest('button[data-tab]');
+      if(b) setAuthTab(b.dataset.tab);
+    });
+    document.getElementById('plan-auth-close').addEventListener('click',closeAuthModal);
+    document.getElementById('plan-auth-submit').addEventListener('click',submitAuth);
+    document.getElementById('plan-auth-resend').addEventListener('click',resendAuth);
+    document.querySelectorAll('#plan-auth-modal input').forEach(inp=>{
+      inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();submitAuth();}});
+    });
+  }
+
+  /* ─── Load modal ─── */
+  function closeLoadModal(){document.getElementById('plan-load-modal').hidden=true;}
   function wireLoadModal(){
     document.getElementById('plan-load-cancel').addEventListener('click',closeLoadModal);
     document.getElementById('plan-list').addEventListener('click',async ev=>{
@@ -323,7 +554,10 @@
           await api(`/plans/${pid}`,{method:'DELETE'});
           if(String(currentMeta().id)===String(pid)) persistMeta({id:null,name:''});
           doLoad();
-        }catch(e){alert('Delete failed: '+e.message);}
+        }catch(e){
+          if(e.status===401){closeLoadModal();await handle401();return;}
+          alert('Delete failed: '+e.message);
+        }
         return;
       }
       const item=ev.target.closest('.plan-li');
@@ -335,7 +569,10 @@
         persistMeta({id:p.id,name:p.name});
         markBundleSaved();
         closeLoadModal();
-      }catch(e){alert('Load failed: '+e.message);}
+      }catch(e){
+        if(e.status===401){closeLoadModal();await handle401();return;}
+        alert('Load failed: '+e.message);
+      }
     });
   }
 
@@ -349,11 +586,10 @@
   function onDocClickOnce(ev){
     const m=document.getElementById('plan-menu');
     const f=document.getElementById('plan-fab');
-    if(m && m.contains(ev.target)) return; // click inside menu → ignore (its own handler runs)
-    if(f && f.contains(ev.target)) return; // click on FAB → its handler toggles
+    if(m && m.contains(ev.target)) return;
+    if(f && f.contains(ev.target)) return;
     closeMenu();
   }
-
   function wireFab(){
     document.getElementById('plan-fab').addEventListener('click',ev=>{
       ev.stopPropagation();
@@ -370,7 +606,8 @@
       if(act==='save') doSave();
       else if(act==='save-as') doSaveAs();
       else if(act==='load') doLoad();
-      else if(act==='settings') openSettings();
+      else if(act==='signin') openAuthModal();
+      else if(act==='logout') doLogout();
     });
   }
   function wireKeyboard(){
@@ -381,7 +618,7 @@
       }
       if(e.key==='Escape'){
         closeMenu();
-        const s=document.getElementById('plan-settings-modal');if(s&&!s.hidden) closeSettings();
+        const a=document.getElementById('plan-auth-modal');if(a&&!a.hidden) closeAuthModal();
         const l=document.getElementById('plan-load-modal');if(l&&!l.hidden) closeLoadModal();
       }
     });
@@ -402,10 +639,10 @@
   }
   function injectFabAndModals(){
     if(document.getElementById('plan-fab')) return;
-    document.body.insertAdjacentHTML('beforeend',FAB_HTML+MENU_HTML+SETTINGS_HTML+LOAD_HTML);
+    document.body.insertAdjacentHTML('beforeend',FAB_HTML+MENU_HTML+AUTH_HTML+LOAD_HTML);
     wireFab();
     wireMenu();
-    wireSettingsModal();
+    wireAuthModal();
     wireLoadModal();
   }
 
@@ -414,7 +651,11 @@
     injectNavStatus();
     injectFabAndModals();
     wireKeyboard();
+    currentUser=getCachedUser();
     repaint();
+    // Re-check /me in the background to catch cookie expiry / fresh sign-in.
+    refreshUser();
+    window.addEventListener('focus',()=>{ refreshUser(); });
     window.addEventListener('storage',e=>{
       if(!e.key||e.key.startsWith('velis_')) repaint();
     });
@@ -426,8 +667,11 @@
 
   /* ─── Public API ─── */
   window.velisPlan = {
-    save:doSave, saveAs:doSaveAs, load:doLoad, openSettings,
+    save:doSave, saveAs:doSaveAs, load:doLoad,
+    openSettings:openAuthModal,  // legacy alias
+    openAuth:openAuthModal, logout:doLogout,
     markDirty:markBundleDirty, markSaved:markBundleSaved,
-    bundleDirty, updateStatus:repaint
+    bundleDirty, updateStatus:repaint,
+    get user(){return currentUser;}
   };
 })();
