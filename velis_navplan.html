@@ -697,6 +697,9 @@ function applyModeUI(){
   tbl.classList.toggle('mode-electric',mode==='electric');
   tbl.classList.toggle('mode-fuel',mode==='fuel');
 
+  const toldg=document.getElementById('toldg-section');
+  if(toldg) toldg.style.display=(mode==='electric')?'':'none';
+
   // Reserve row sits BEFORE min in fuel mode, AFTER min in electric mode
   const finalRow=document.getElementById('final-row');
   const minRow=document.getElementById('min-row');
