@@ -288,7 +288,7 @@ def auth_login():
     return jsonify({"status": "check_inbox", "email": email}), 200
 
 
-@app.get("/api/auth/verify/<token>")
+@app.route("/api/auth/verify/<token>", methods=["GET", "POST"])
 def auth_verify(token):
     c = conn(); cur = c.cursor(dictionary=True)
     cur.execute(
@@ -308,6 +308,20 @@ def auth_verify(token):
     if row["expires_at"] < datetime.utcnow():
         cur.close(); c.close()
         return landing_html(error="expired"), 400
+
+    # GET never consumes the token — email scanners pre-fetch links and would
+    # burn the token before the pilot has a chance to click. The POST below
+    # (triggered by the "Confirm check-in" button) is what actually signs them in.
+    if request.method == "GET":
+        cur.close(); c.close()
+        body = landing_html(
+            first_name=row["first_name"], last_name=row["last_name"],
+            email=row["email"], purpose=row["purpose"], state="confirm",
+            confirm_token=token,
+        )
+        resp = make_response(body)
+        resp.headers["Content-Type"] = "text/html; charset=utf-8"
+        return resp
 
     cur.execute("UPDATE magic_tokens SET used_at = NOW() WHERE id = %s", (row["tid"],))
     if row["email_verified_at"] is None:
@@ -470,9 +484,12 @@ def delete_plan(pid):
 
 
 # ── landing page ───────────────────────────────────────────────────────
-def landing_html(first_name="", last_name="", email="", purpose="verify", error=None):
+def landing_html(first_name="", last_name="", email="", purpose="verify",
+                 error=None, state=None, confirm_token=None):
     template = pathlib.Path(__file__).with_name("landing.html").read_text()
     now = datetime.utcnow().strftime("%Y-%m-%d · %H:%M UTC")
+    site = build_site_url() or "/"
+
     if error:
         titles = {
             "invalid": ("Clearance denied", "That link isn't recognised. It may have been typed wrong or already been superseded by a newer one."),
@@ -480,15 +497,34 @@ def landing_html(first_name="", last_name="", email="", purpose="verify", error=
             "expired": ("Clearance expired", "This link has timed out. Request a new one from the flight planner and we'll send a fresh link to your inbox."),
         }
         title, body = titles.get(error, titles["invalid"])
-        state, callsign, status = "error", "DENIED", "REJECTED"
+        state_cls, callsign, status = "error", "DENIED", "REJECTED"
         stamp_color = "#e0342c"
-        greeting = title
-        subtitle = body
-        captain = ""
-        email_line = ""
-        cta_label = "Back to flight planner"
+        greeting    = title
+        subtitle    = body
+        captain     = ""
+        email_line  = ""
+        cta_html    = f'<a href="{esc(site)}" class="cta">Back to flight planner <span class="arrow">→</span></a>'
+    elif state == "confirm":
+        # Interstitial: GET only. The button below POSTs to consume the token.
+        state_cls, callsign, status = "ok", "PENDING", "CONFIRM"
+        stamp_color = "#ffb020"
+        if purpose == "verify":
+            greeting = "One tap to take off."
+            subtitle = "Confirm your check-in to activate your account and sign in on this device."
+            cta_label = "Confirm & take off"
+        else:
+            greeting = "Ready when you are."
+            subtitle = "Confirm to sign in to your flight planner on this device."
+            cta_label = "Confirm & sign in"
+        captain    = f"{first_name} {last_name}".strip()
+        email_line = email
+        # Empty action → POSTs back to the current URL, which already includes
+        # the correct /velis-planner prefix (Nginx reverse proxy).
+        cta_html   = (f'<form class="cta-form" method="POST" action="">'
+                      f'<button type="submit" class="cta">{esc(cta_label)} <span class="arrow">→</span></button>'
+                      f'</form>')
     else:
-        state, callsign, status = "ok", "CLEARED", "ACTIVE"
+        state_cls, callsign, status = "ok", "CLEARED", "ACTIVE"
         stamp_color = "#7ed97a"
         if purpose == "verify":
             greeting = "Cleared for takeoff."
@@ -498,11 +534,10 @@ def landing_html(first_name="", last_name="", email="", purpose="verify", error=
             subtitle = "You're signed in on this device. Your saved plans are a click away."
         captain    = f"{first_name} {last_name}".strip()
         email_line = email
-        cta_label  = "Continue to flight planner"
+        cta_html   = f'<a href="{esc(site)}" class="cta">Continue to flight planner <span class="arrow">→</span></a>'
 
-    site = build_site_url() or "/"
     replacements = {
-        "{{STATE}}":       state,
+        "{{STATE}}":       state_cls,
         "{{GREETING}}":    esc(greeting),
         "{{SUBTITLE}}":    esc(subtitle),
         "{{CAPTAIN}}":     esc(captain),
@@ -511,8 +546,7 @@ def landing_html(first_name="", last_name="", email="", purpose="verify", error=
         "{{STATUS}}":      status,
         "{{STAMP_COLOR}}": stamp_color,
         "{{TIMESTAMP}}":   now,
-        "{{CTA_URL}}":     esc(site),
-        "{{CTA_LABEL}}":   esc(cta_label),
+        "{{CTA_HTML}}":    cta_html,
     }
     out = template
     for k, v in replacements.items():

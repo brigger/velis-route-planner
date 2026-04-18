@@ -51,8 +51,9 @@ h1.greeting em{font-style:italic;color:var(--amber);font-weight:400;}
 html.error h1.greeting em{color:var(--red);}
 .subtitle{font-size:17px;line-height:1.55;color:#c8c3b7;margin:0 0 32px;max-width:46ch;}
 .cta-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center;}
-.cta{display:inline-flex;align-items:center;gap:10px;padding:14px 22px;background:var(--amber);color:#0a0a0b;font-weight:700;font-size:14px;letter-spacing:0.02em;text-decoration:none;border-radius:8px;transition:transform .1s,box-shadow .15s;box-shadow:0 8px 24px rgba(255,176,32,0.25);}
+.cta{display:inline-flex;align-items:center;gap:10px;padding:14px 22px;background:var(--amber);color:#0a0a0b;font-weight:700;font-size:14px;letter-spacing:0.02em;text-decoration:none;border-radius:8px;transition:transform .1s,box-shadow .15s;box-shadow:0 8px 24px rgba(255,176,32,0.25);border:none;font-family:var(--f-sans);cursor:pointer;}
 .cta:hover{transform:translateY(-1px);box-shadow:0 12px 28px rgba(255,176,32,0.35);}
+.cta-form{display:inline;margin:0;}
 .cta .arrow{display:inline-block;transition:transform .15s;}
 .cta:hover .arrow{transform:translateX(3px);}
 html.error .cta{background:var(--ink);color:var(--bg);box-shadow:0 8px 24px rgba(245,242,236,0.10);}
@@ -116,7 +117,7 @@ html.error .cta{background:var(--ink);color:var(--bg);box-shadow:0 8px 24px rgba
       <h1 class="greeting">{{GREETING}}</h1>
       <p class="subtitle">{{SUBTITLE}}</p>
       <div class="cta-row">
-        <a href="{{CTA_URL}}" class="cta">{{CTA_LABEL}} <span class="arrow">→</span></a>
+        {{CTA_HTML}}
         <span class="meta-line">{{TIMESTAMP}}</span>
       </div>
     </div>
