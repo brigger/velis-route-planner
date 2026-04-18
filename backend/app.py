@@ -30,11 +30,13 @@ SMTP_USERNAME = os.getenv("SMTP_USERNAME", "")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
 FROM_EMAIL    = os.getenv("FROM_EMAIL", SMTP_USERNAME)
 
-# Public base URL used to build verification links sent by email.
-# e.g. https://example.com/velis-planner  → link: {PUBLIC_URL}/api/auth/verify/<tok>
-PUBLIC_URL = os.getenv("PUBLIC_URL", "").rstrip("/")
-# Where "Continue to Flight Planner" should send the pilot after verification.
-SITE_URL   = os.getenv("SITE_URL", PUBLIC_URL or "/").rstrip("/") or "/"
+# Path prefix the app is mounted at (e.g. "/velis-planner"). Host + scheme
+# are derived from the incoming request so cookies match whatever origin
+# the pilot is actually using (brigger.com vs www.brigger.com etc).
+PATH_PREFIX = os.getenv("PATH_PREFIX", "").rstrip("/")
+# Legacy fallback only — used if we can't resolve the request origin.
+PUBLIC_URL  = os.getenv("PUBLIC_URL", "").rstrip("/")
+SITE_URL    = os.getenv("SITE_URL", PUBLIC_URL or "/").rstrip("/") or "/"
 
 SESSION_COOKIE_NAME   = os.getenv("SESSION_COOKIE_NAME", "velis_session")
 SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "0") == "1"
@@ -79,6 +81,27 @@ def esc(s):
     return (str(s if s is not None else "")
             .replace("&", "&amp;").replace("<", "&lt;")
             .replace(">", "&gt;").replace('"', "&quot;").replace("'", "&#39;"))
+
+
+def request_origin():
+    """Scheme + host the pilot is actually using (respects reverse proxy)."""
+    proto = request.headers.get("X-Forwarded-Proto") or ("https" if request.is_secure else "http")
+    host  = request.headers.get("X-Forwarded-Host") or request.host
+    return f"{proto}://{host}"
+
+
+def build_verify_url(token):
+    base = request_origin() + PATH_PREFIX
+    if not base.startswith("http"):
+        base = PUBLIC_URL  # fallback
+    return f"{base}/api/auth/verify/{token}"
+
+
+def build_site_url():
+    origin = request_origin()
+    if origin.startswith("http"):
+        return origin + PATH_PREFIX + "/"
+    return SITE_URL
 
 
 def valid_email(raw):
@@ -213,8 +236,6 @@ def auth_register():
     ok_l, last  = valid_name(data.get("last_name"))
     if not (ok_e and ok_f and ok_l):
         return jsonify({"error": "Email, first name and last name are required."}), 400
-    if not PUBLIC_URL:
-        return jsonify({"error": "PUBLIC_URL is not configured on the server."}), 500
 
     c = conn(); cur = c.cursor(dictionary=True)
     try:
@@ -233,7 +254,7 @@ def auth_register():
         cur.close(); c.close()
 
     tok = make_magic_token(user_id, "verify", VERIFY_HOURS)
-    url = f"{PUBLIC_URL}/api/auth/verify/{tok}"
+    url = build_verify_url(tok)
     try:
         send_magic_email(email, first, url, "verify")
     except Exception as e:
@@ -248,8 +269,6 @@ def auth_login():
     ok_e, email = valid_email(data.get("email"))
     if not ok_e:
         return jsonify({"error": "Invalid email."}), 400
-    if not PUBLIC_URL:
-        return jsonify({"error": "PUBLIC_URL is not configured on the server."}), 500
 
     c = conn(); cur = c.cursor(dictionary=True)
     cur.execute("SELECT id, first_name FROM users WHERE email = %s", (email,))
@@ -260,7 +279,7 @@ def auth_login():
         return jsonify({"status": "check_inbox", "email": email}), 200
 
     tok = make_magic_token(row["id"], "login", LOGIN_LINK_HOURS)
-    url = f"{PUBLIC_URL}/api/auth/verify/{tok}"
+    url = build_verify_url(tok)
     try:
         send_magic_email(email, row["first_name"] or "", url, "login")
     except Exception as e:
@@ -481,7 +500,7 @@ def landing_html(first_name="", last_name="", email="", purpose="verify", error=
         email_line = email
         cta_label  = "Continue to flight planner"
 
-    site = SITE_URL or "/"
+    site = build_site_url() or "/"
     replacements = {
         "{{STATE}}":       state,
         "{{GREETING}}":    esc(greeting),
