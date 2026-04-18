@@ -309,10 +309,11 @@ def auth_verify(token):
         cur.close(); c.close()
         return landing_html(error="expired"), 400
 
-    # GET never consumes the token — email scanners pre-fetch links and would
-    # burn the token before the pilot has a chance to click. The POST below
-    # (triggered by the "Confirm check-in" button) is what actually signs them in.
-    if request.method == "GET":
+    # Only POST consumes the token. GET, HEAD, and anything else just render
+    # the interstitial. Email scanners commonly fire HEAD (or GET, or both)
+    # to check links — treating only POST as consumption keeps the token safe
+    # until the pilot actually clicks the "Confirm check-in" button.
+    if request.method != "POST":
         cur.close(); c.close()
         body = landing_html(
             first_name=row["first_name"], last_name=row["last_name"],
