@@ -29,6 +29,7 @@ SMTP_PORT     = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USERNAME = os.getenv("SMTP_USERNAME", "")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
 FROM_EMAIL    = os.getenv("FROM_EMAIL", SMTP_USERNAME)
+ADMIN_EMAIL   = os.getenv("ADMIN_EMAIL", "patrick@brigger.com")
 
 # Path prefix the app is mounted at (e.g. "/velis-planner"). Host + scheme
 # are derived from the incoming request so cookies match whatever origin
@@ -159,6 +160,35 @@ def send_magic_email(to_email, first_name, url, purpose):
     log.info("sent %s link to %s", purpose, to_email)
 
 
+def send_admin_new_user_email(user_email, first_name, last_name):
+    """Best-effort ops ping — never blocks registration if it fails."""
+    if not ADMIN_EMAIL or not SMTP_USERNAME:
+        return
+    subject = f"Velis Planner — new signup: {first_name} {last_name}"
+    html = (
+        f"<!DOCTYPE html><html><body style=\"font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#0a0a0b;max-width:520px;margin:0 auto;padding:20px;\">"
+        f"<h2 style=\"margin:0 0 14px;font-weight:700;\">New Velis Planner signup</h2>"
+        f"<table style=\"font-size:14px;border-collapse:collapse;\">"
+        f"<tr><td style=\"color:#6b6660;padding:4px 18px 4px 0;\">Name</td><td><strong>{esc(first_name)} {esc(last_name)}</strong></td></tr>"
+        f"<tr><td style=\"color:#6b6660;padding:4px 18px 4px 0;\">Email</td><td><a href=\"mailto:{esc(user_email)}\" style=\"color:#185FA5;\">{esc(user_email)}</a></td></tr>"
+        f"<tr><td style=\"color:#6b6660;padding:4px 18px 4px 0;\">When</td><td>{datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}</td></tr>"
+        f"</table>"
+        f"<p style=\"color:#898579;font-size:12px;margin-top:28px;\">User has not yet verified their email — verification link was sent to their inbox.</p>"
+        f"</body></html>"
+    )
+    msg = MIMEMultipart("alternative")
+    msg["From"]    = FROM_EMAIL
+    msg["To"]      = ADMIN_EMAIL
+    msg["Subject"] = subject
+    msg.attach(MIMEText(html, "html"))
+    s = smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=15)
+    s.starttls()
+    s.login(SMTP_USERNAME, SMTP_PASSWORD)
+    s.sendmail(FROM_EMAIL, ADMIN_EMAIL, msg.as_string())
+    s.quit()
+    log.info("admin new-user notification sent to %s for %s", ADMIN_EMAIL, user_email)
+
+
 def make_magic_token(user_id, purpose, hours):
     token = secrets.token_urlsafe(32)
     exp = datetime.utcnow() + timedelta(hours=hours)
@@ -237,6 +267,7 @@ def auth_register():
     if not (ok_e and ok_f and ok_l):
         return jsonify({"error": "Email, first name and last name are required."}), 400
 
+    is_new_user = False
     c = conn(); cur = c.cursor(dictionary=True)
     try:
         cur.execute("SELECT id, first_name FROM users WHERE email = %s", (email,))
@@ -250,6 +281,7 @@ def auth_register():
                 (email, first, last),
             )
             user_id = cur.lastrowid
+            is_new_user = True
     finally:
         cur.close(); c.close()
 
@@ -260,6 +292,11 @@ def auth_register():
     except Exception as e:
         log.exception("send failed")
         return jsonify({"error": "Could not send confirmation email — please try again."}), 502
+    if is_new_user:
+        try:
+            send_admin_new_user_email(email, first, last)
+        except Exception:
+            log.exception("admin notification failed")  # non-fatal
     return jsonify({"status": "check_inbox", "email": email}), 201
 
 
