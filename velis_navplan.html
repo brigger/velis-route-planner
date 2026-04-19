@@ -19,6 +19,14 @@ body{margin:0;background:var(--bg-page);font-family:var(--font);color:var(--tx);
 .nav-tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600;}
 
 .page-wrap{padding:16px 16px 24px;display:flex;flex-direction:column;align-items:center;gap:10px;}
+@media (max-width:700px){
+  /* Sheet is 148.5 mm (≈ 561 px) — wider than any phone viewport.
+     Center-aligning puts its left edge in negative-x that browsers
+     can't scroll into, so the left gutter (freq column, "NAV FLIGHTPLAN"
+     label) gets clipped. Left-align instead; horizontal scroll takes
+     the user right. */
+  .page-wrap{align-items:flex-start;}
+}
 
 /* ═══ TOOLBAR (screen only) ═══ */
 .toolbar{max-width:297mm;width:100%;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;background:var(--bg-card);border:0.5px solid var(--bd);border-radius:8px;font-size:12px;}
