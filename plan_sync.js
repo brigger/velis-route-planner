@@ -16,8 +16,28 @@
   const VIEW_KEY       = 'velis_navplan_view';
   const BUNDLE_EXCLUDE = new Set([USER_KEY,VIEW_KEY,MTIME_KEY,STIME_KEY]);
 
+  /* ─── Nav definition ─── */
+  // Single source of truth for the site menu. Add / rename / re-order tabs here.
+  // Admin-only tabs (is_admin flag on currentUser) have admin:true.
+  const NAV_TABS = [
+    { href: 'index.html',             label: 'Route Planner'      },
+    { href: 'velis_takeoff.html',     label: 'Takeoff & Landing'  },
+    { href: 'velis_navplan.html',     label: 'NAV Plan'           },
+    { href: 'velis_performance.html', label: 'Performance'        },
+    { href: 'velis_about.html',       label: 'About'              },
+    { href: 'velis_admin.html',       label: 'Dashboard', admin:true },
+  ];
+
   /* ─── CSS ─── */
   const CSS = `
+.nav{background:var(--bg-card,#fff);border-bottom:1px solid var(--bd,#e2ddd6);position:sticky;top:0;z-index:10;backdrop-filter:blur(12px);background:rgba(255,255,255,0.92);}
+.nav-inner{max-width:1180px;margin:0 auto;padding:0 16px;display:flex;align-items:stretch;}
+.nav-brand{padding:11px 18px 11px 0;font-size:13px;font-weight:700;color:var(--tx,#1a1a1a);border-right:1px solid var(--bd,#e2ddd6);margin-right:4px;letter-spacing:-0.02em;display:flex;align-items:center;gap:6px;}
+.nav-brand svg{opacity:0.5;}
+.nav-tab{padding:11px 18px;font-size:12.5px;font-weight:500;color:var(--tx2,#6b6660);text-decoration:none;border-bottom:2px solid transparent;transition:all 0.15s;white-space:nowrap;}
+.nav-tab:hover{color:var(--tx,#1a1a1a);}
+.nav-tab.active{color:var(--blue,#185FA5);border-bottom-color:var(--blue,#185FA5);font-weight:600;}
+@media print{.nav{display:none !important;}}
 .plan-status-grow{flex:1 1 auto;}
 .plan-status{font-size:11px;color:var(--tx2,#6b6660);padding:11px 60px 11px 10px;align-self:center;display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:400px;font-family:var(--font,inherit);}
 .plan-status .dot{width:6px;height:6px;border-radius:50%;background:#D46A1D;flex-shrink:0;display:none;}
@@ -267,6 +287,45 @@
     const fab=document.getElementById('plan-fab');
     if(fab) fab.classList.toggle('dirty',bundleDirty());
   }
+  function currentPage(){
+    const m=(location.pathname||'').match(/([^/]+)(?:\?|#|$)/);
+    let page=m?m[1]:'';
+    if(!page||page==='/') page='index.html';
+    return page;
+  }
+  function updateNav(){
+    const navInner=document.querySelector('.nav .nav-inner');
+    if(!navInner) return;
+    const isAdmin=!!(currentUser&&currentUser.is_admin);
+    const page=currentPage();
+    // Remove any previously-rendered brand + tabs; leave the status span (if present) intact.
+    navInner.querySelectorAll('[data-nav="1"]').forEach(el=>el.remove());
+    const frag=document.createDocumentFragment();
+    const brand=document.createElement('span');
+    brand.className='nav-brand';
+    brand.dataset.nav='1';
+    brand.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>Velis Electro';
+    frag.appendChild(brand);
+    NAV_TABS.filter(t=>!t.admin||isAdmin).forEach(t=>{
+      const a=document.createElement('a');
+      a.href=t.href;
+      a.className='nav-tab'+(t.href===page?' active':'');
+      a.dataset.nav='1';
+      if(t.admin) a.dataset.adminTab='1';
+      a.textContent=t.label;
+      frag.appendChild(a);
+    });
+    // Insert at the start so status (if already there) stays on the right.
+    navInner.insertBefore(frag,navInner.firstChild);
+  }
+  function ensureNavShell(){
+    // If a page omits <nav class="nav">, create it at the very top of body.
+    if(document.querySelector('.nav .nav-inner')) return;
+    const nav=document.createElement('nav');
+    nav.className='nav';
+    nav.innerHTML='<div class="nav-inner"></div>';
+    document.body.insertBefore(nav,document.body.firstChild);
+  }
   function updateMenuWho(){
     const who=document.getElementById('plan-menu-who');
     const sep=document.getElementById('plan-menu-who-sep');
@@ -283,7 +342,7 @@
       sig.hidden=false; lo.hidden=true;
     }
   }
-  function repaint(){updateStatus();updateFabDirty();updateMenuWho();}
+  function repaint(){updateNav();updateStatus();updateFabDirty();updateMenuWho();}
 
   /* ─── Bundle I/O ─── */
   function collectBundle(){
@@ -648,6 +707,8 @@
 
   function boot(){
     injectCSS();
+    ensureNavShell();
+    updateNav();
     injectNavStatus();
     injectFabAndModals();
     wireKeyboard();

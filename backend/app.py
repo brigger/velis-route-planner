@@ -249,6 +249,23 @@ def require_user(fn):
     return wrap
 
 
+def is_admin_email(email):
+    return bool(ADMIN_EMAIL) and (email or "").strip().lower() == ADMIN_EMAIL.strip().lower()
+
+
+def require_admin(fn):
+    @wraps(fn)
+    def wrap(*a, **kw):
+        u = current_user()
+        if not u:
+            abort(401)
+        if not is_admin_email(u["email"]):
+            abort(403)
+        request.user = u
+        return fn(*a, **kw)
+    return wrap
+
+
 def set_session_cookie(resp, token):
     resp.set_cookie(
         SESSION_COOKIE_NAME, token,
@@ -390,6 +407,7 @@ def auth_me():
     return jsonify({"authenticated": True, "user": {
         "id": u["id"], "email": u["email"],
         "first_name": u["first_name"], "last_name": u["last_name"],
+        "is_admin": is_admin_email(u["email"]),
     }}), 200
 
 
@@ -408,6 +426,56 @@ def auth_logout():
     resp.set_cookie(SESSION_COOKIE_NAME, "", max_age=0,
                     httponly=True, secure=SESSION_COOKIE_SECURE, samesite="Lax", path="/")
     return resp
+
+
+# ── contact form ───────────────────────────────────────────────────────
+@app.post("/api/contact")
+def contact():
+    data = request.get_json(force=True, silent=True) or {}
+    ok_e, email = valid_email(data.get("email"))
+    ok_n, name  = valid_name(data.get("name"))
+    comment = (data.get("comment") or "").strip()
+    if not (ok_e and ok_n):
+        return jsonify({"error": "Name and a valid email are required."}), 400
+    if not (1 <= len(comment) <= 5000):
+        return jsonify({"error": "Comment must be 1–5000 characters."}), 400
+    if not ADMIN_EMAIL or not SMTP_USERNAME:
+        log.error("contact form: SMTP not configured")
+        return jsonify({"error": "Contact form is temporarily unavailable."}), 503
+
+    ua = (request.headers.get("User-Agent") or "")[:255]
+    ip = (request.headers.get("X-Forwarded-For") or request.remote_addr or "")[:64]
+    when = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+    body_html = (
+        f"<!DOCTYPE html><html><body style=\"font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#0a0a0b;max-width:560px;margin:0 auto;padding:20px;\">"
+        f"<h2 style=\"margin:0 0 14px;font-weight:700;\">Velis Planner — contact form</h2>"
+        f"<table style=\"font-size:14px;border-collapse:collapse;\">"
+        f"<tr><td style=\"color:#6b6660;padding:4px 18px 4px 0;vertical-align:top;\">From</td><td><strong>{esc(name)}</strong> &lt;<a href=\"mailto:{esc(email)}\" style=\"color:#185FA5;\">{esc(email)}</a>&gt;</td></tr>"
+        f"<tr><td style=\"color:#6b6660;padding:4px 18px 4px 0;vertical-align:top;\">When</td><td>{when}</td></tr>"
+        f"<tr><td style=\"color:#6b6660;padding:4px 18px 4px 0;vertical-align:top;\">IP</td><td>{esc(ip)}</td></tr>"
+        f"<tr><td style=\"color:#6b6660;padding:4px 18px 4px 0;vertical-align:top;\">UA</td><td style=\"color:#898579;font-size:12px;\">{esc(ua)}</td></tr>"
+        f"</table>"
+        f"<hr style=\"border:none;border-top:1px solid #e2ddd6;margin:18px 0;\">"
+        f"<pre style=\"white-space:pre-wrap;font-family:inherit;font-size:14px;line-height:1.55;margin:0;\">{esc(comment)}</pre>"
+        f"</body></html>"
+    )
+    msg = MIMEMultipart("alternative")
+    msg["From"]     = FROM_EMAIL
+    msg["To"]       = ADMIN_EMAIL
+    msg["Reply-To"] = email
+    msg["Subject"]  = f"Velis Planner — message from {name}"
+    msg.attach(MIMEText(body_html, "html"))
+    try:
+        s = smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=15)
+        s.starttls()
+        s.login(SMTP_USERNAME, SMTP_PASSWORD)
+        s.sendmail(FROM_EMAIL, ADMIN_EMAIL, msg.as_string())
+        s.quit()
+    except Exception:
+        log.exception("contact form send failed")
+        return jsonify({"error": "Could not send — please try again later."}), 502
+    log.info("contact form message from %s (%s)", email, name)
+    return jsonify({"ok": True}), 200
 
 
 # ── plan routes ────────────────────────────────────────────────────────
@@ -519,6 +587,44 @@ def delete_plan(pid):
     if not ok:
         abort(404)
     return {"ok": True}
+
+
+# ── admin routes ───────────────────────────────────────────────────────
+@app.get("/api/admin/users")
+@require_admin
+def admin_list_users():
+    c = conn(); cur = c.cursor(dictionary=True)
+    cur.execute(
+        "SELECT u.id, u.email, u.first_name, u.last_name, "
+        "       u.created_at, u.email_verified_at, u.last_login_at, "
+        "       (SELECT COUNT(*) FROM flight_plans p WHERE p.user_id = u.id) AS plan_count, "
+        "       (SELECT MAX(s.last_seen_at) FROM sessions s WHERE s.user_id = u.id) AS last_seen_at "
+        "FROM users u ORDER BY u.created_at DESC"
+    )
+    rows = cur.fetchall()
+    cur.close(); c.close()
+    for r in rows:
+        for k in ("created_at", "email_verified_at", "last_login_at", "last_seen_at"):
+            if r.get(k) is not None:
+                r[k] = r[k].isoformat()
+    return jsonify(rows)
+
+
+@app.get("/api/admin/plans")
+@require_admin
+def admin_list_plans():
+    c = conn(); cur = c.cursor(dictionary=True)
+    cur.execute(
+        "SELECT p.id, p.name, p.updated_at, p.user_id, "
+        "       u.email AS user_email, u.first_name AS user_first_name, u.last_name AS user_last_name "
+        "FROM flight_plans p JOIN users u ON u.id = p.user_id "
+        "ORDER BY p.updated_at DESC"
+    )
+    rows = cur.fetchall()
+    cur.close(); c.close()
+    for r in rows:
+        r["updated_at"] = r["updated_at"].isoformat()
+    return jsonify(rows)
 
 
 # ── landing page ───────────────────────────────────────────────────────

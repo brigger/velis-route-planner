@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Velis Electro — About</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--font:'DM Sans',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;--bg-page:#f0ede8;--bg-card:#fff;--bg-sec:#f5f4f1;--bd:#e2ddd6;--bd2:#ccc8c0;--tx:#1a1a1a;--tx2:#6b6660;--rad-lg:14px;--rad-md:8px;--blue:#185FA5;--blue-bg:#E6F1FB;--amber:#EF9F27;--amber-bg:#FDF3E0;}
+*,*::before,*::after{box-sizing:border-box;}
+body{margin:0;background:var(--bg-page);font-family:var(--font);color:var(--tx);padding:0 0 48px;}
+.page-wrap{max-width:780px;margin:0 auto;padding:0 16px;}
+.nav{background:var(--bg-card);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:10;backdrop-filter:blur(12px);background:rgba(255,255,255,0.92);}
+.nav-inner{max-width:1180px;margin:0 auto;padding:0 16px;display:flex;align-items:stretch;}
+.nav-brand{padding:11px 18px 11px 0;font-size:13px;font-weight:700;color:var(--tx);border-right:1px solid var(--bd);margin-right:4px;letter-spacing:-0.02em;display:flex;align-items:center;gap:6px;}
+.nav-brand svg{opacity:0.5;}
+.nav-tab{padding:11px 18px;font-size:12.5px;font-weight:500;color:var(--tx2);text-decoration:none;border-bottom:2px solid transparent;transition:all 0.15s;}
+.nav-tab:hover{color:var(--tx);}
+.nav-tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600;}
+.wrap{padding:20px 0;}
+.card{background:var(--bg-card);border:0.5px solid var(--bd);border-radius:var(--rad-lg);padding:1.1rem 1.4rem;margin-bottom:16px;}
+h2{font-size:22px;font-weight:700;margin:0 0 12px;color:var(--tx);letter-spacing:-0.02em;}
+h3{font-size:15px;font-weight:700;margin:0 0 10px;color:var(--tx);letter-spacing:-0.02em;}
+p{font-size:14px;line-height:1.6;color:var(--tx);margin:0 0 10px;}
+.muted{color:var(--tx2);}
+.disclaimer{background:var(--amber-bg);border:0.5px solid #f3d392;border-left:4px solid var(--amber);border-radius:var(--rad-md);padding:12px 16px;font-size:13px;line-height:1.55;color:#5a3a0a;}
+.disclaimer strong{color:#3d2605;}
+form{display:flex;flex-direction:column;gap:12px;}
+label{display:block;font-size:11px;color:var(--tx2);font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px;}
+input[type=text],input[type=email],textarea{width:100%;padding:10px 12px;border:1px solid var(--bd2);border-radius:6px;font-family:inherit;font-size:14px;color:var(--tx);background:#fff;}
+input:focus,textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(24,95,165,0.15);}
+textarea{min-height:110px;resize:vertical;}
+.row-send{display:flex;align-items:center;gap:10px;}
+button.send{font-family:inherit;font-size:13px;font-weight:600;padding:10px 22px;border:1px solid var(--blue);background:var(--blue);color:#fff;border-radius:6px;cursor:pointer;}
+button.send:hover{background:#124a82;}
+button.send:disabled{opacity:0.55;cursor:wait;}
+.msg{font-size:13px;line-height:1.45;padding:10px 12px;border-radius:6px;}
+.msg-ok{background:#EAF3DE;color:#27500A;border:0.5px solid #C0DD97;}
+.msg-err{background:#FCEBEB;color:#791F1F;border:0.5px solid #F7C1C1;}
+.msg[hidden]{display:none;}
+</style>
+</head>
+<body>
+
+<nav class="nav"><div class="nav-inner"></div></nav>
+
+<div class="page-wrap"><div class="wrap">
+
+  <div class="card">
+    <h2>About this planner</h2>
+    <p>This project started because I love flying the Pipistrel Velis Electro — and because planning an electric flight with the POH tables alone was cumbersome. Every leg meant flipping between ROC charts, %SOC-per-phase tables and cruise-power interpolation by hand.</p>
+    <p>So I built the tool I wanted to have in the cockpit: sliders for the three things that actually change (SOH, OAT, cruise power), dynamic legs, and a single %SOC number at the end. It's free, open, and still evolving.</p>
+    <p class="muted" style="font-size:12px;">— Patrick</p>
+  </div>
+
+  <div class="card">
+    <h3>Disclaimer</h3>
+    <div class="disclaimer">
+      <strong>Use at the Pilot-in-Command's own risk.</strong> All calculations on this site are provided for planning convenience only. This site makes <strong>no warranty</strong> of correctness or accuracy, and accepts <strong>no responsibility</strong> for any consequence of their use. The official Pipistrel Velis Electro POH is the only authoritative source for performance and limitations. Always verify independently before flight.
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Send a comment</h3>
+    <p class="muted" style="font-size:13px;">Feedback, bug reports, feature ideas — all welcome.</p>
+    <form id="contact-form" novalidate>
+      <div>
+        <label for="c-name">Name</label>
+        <input type="text" id="c-name" name="name" autocomplete="name" required>
+      </div>
+      <div>
+        <label for="c-email">Email</label>
+        <input type="email" id="c-email" name="email" autocomplete="email" required>
+      </div>
+      <div>
+        <label for="c-comment">Comment</label>
+        <textarea id="c-comment" name="comment" required></textarea>
+      </div>
+      <div class="msg msg-ok" id="c-ok" hidden>Thanks — your message was sent.</div>
+      <div class="msg msg-err" id="c-err" hidden></div>
+      <div class="row-send">
+        <button type="submit" class="send" id="c-send">Send</button>
+        <span class="muted" style="font-size:12px;">Goes to patrick@brigger.com.</span>
+      </div>
+    </form>
+  </div>
+
+</div></div>
+
+<script>
+(function(){
+  const API_BASE=(typeof window!=='undefined'&&typeof window.VELIS_API_BASE==='string')?window.VELIS_API_BASE:'/velis-planner/api';
+  const form=document.getElementById('contact-form');
+  const okEl=document.getElementById('c-ok');
+  const errEl=document.getElementById('c-err');
+  const btn=document.getElementById('c-send');
+  function show(el,msg){if(msg!=null) el.textContent=msg; el.hidden=false;}
+  function hide(el){el.hidden=true;}
+
+  form.addEventListener('submit',async ev=>{
+    ev.preventDefault();
+    hide(okEl); hide(errEl);
+    const name=document.getElementById('c-name').value.trim();
+    const email=document.getElementById('c-email').value.trim();
+    const comment=document.getElementById('c-comment').value.trim();
+    if(!name||!email||!comment){show(errEl,'All fields are required.');return;}
+    btn.disabled=true;
+    try{
+      const r=await fetch(API_BASE+'/contact',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({name,email,comment})
+      });
+      if(!r.ok){
+        let msg='Could not send — please try again later.';
+        try{const j=await r.json();if(j&&j.error) msg=j.error;}catch(_){}
+        show(errEl,msg);
+        return;
+      }
+      form.reset();
+      show(okEl);
+    }catch(e){
+      show(errEl,'Network error — please try again.');
+    }finally{
+      btn.disabled=false;
+    }
+  });
+})();
+</script>
+<script src="plan_sync.js?v=3" defer></script>
+</body>
+</html>
