@@ -288,10 +288,11 @@
     if(fab) fab.classList.toggle('dirty',bundleDirty());
   }
   function currentPage(){
-    const m=(location.pathname||'').match(/([^/]+)(?:\?|#|$)/);
-    let page=m?m[1]:'';
-    if(!page||page==='/') page='index.html';
-    return page;
+    const path=location.pathname||'';
+    // Directory URL (trailing slash or bare) → index.html
+    if(!path||path.endsWith('/')) return 'index.html';
+    const last=path.substring(path.lastIndexOf('/')+1);
+    return last||'index.html';
   }
   function updateNav(){
     const navInner=document.querySelector('.nav .nav-inner');
