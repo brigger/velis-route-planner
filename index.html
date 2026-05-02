@@ -25,6 +25,9 @@
   h3{font-size:15px;font-weight:700;margin:0 0 12px;color:var(--tx);letter-spacing:-0.02em;}
   h4{font-size:10.5px;font-weight:600;color:var(--tx2);margin:0 0 8px;text-transform:uppercase;letter-spacing:0.06em;}
   .leg-badge{font-size:11px;font-weight:500;padding:2px 10px;border-radius:20px;display:inline-block;}
+  .badge-name{font:inherit;color:inherit;background:transparent;border:none;outline:none;padding:0;margin:0;text-align:center;width:auto;min-width:7ch;max-width:24ch;field-sizing:content;}
+  .badge-name::placeholder{color:inherit;opacity:0.7;font-style:italic;}
+  .badge-name:focus{background:rgba(255,255,255,0.55);border-radius:8px;}
   .sr{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
   .sr label{font-size:12px;color:var(--tx2);min-width:200px;font-weight:500;}
   .sv{font-size:12px;font-weight:600;color:var(--tx);min-width:72px;text-align:right;}
@@ -48,9 +51,8 @@
   .msg-warn{background:#FAEEDA;color:#633806;border:0.5px solid #FAC775;}
   .msg-err{background:#FCEBEB;color:#791F1F;border:0.5px solid #F7C1C1;}
   .note{font-size:10px;color:var(--tx2);line-height:1.6;}
-  .soc-strip{display:flex;align-items:stretch;gap:0;margin:10px 0 4px;}
-  .soc-wp{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
-  .soc-arrow{display:flex;align-items:center;color:var(--tx2);font-size:12px;padding-top:14px;flex-shrink:0;width:16px;justify-content:center;}
+  .soc-strip{position:relative;height:130px;margin:10px 0 4px;}
+  .soc-wp{position:absolute;top:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:3px;width:60px;}
   .soc-bar-wrap{width:36px;height:60px;border:1.5px solid var(--bd2);border-radius:4px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;position:relative;background:var(--bg-sec);}
   .soc-pct{font-size:12px;font-weight:600;}
   .soc-kwh{font-size:9px;color:var(--tx2);}
@@ -64,6 +66,9 @@
   .det-total{font-size:12px;margin-bottom:3px;display:flex;justify-content:space-between;}
   .add-btn{display:block;margin:0 auto 14px;padding:6px 18px;font-size:12px;font-weight:600;font-family:var(--font);color:var(--blue);background:var(--bg-card);border:1.5px dashed var(--blue);border-radius:var(--rad-md);cursor:pointer;opacity:0.7;transition:opacity 0.15s;}
   .add-btn:hover{opacity:1;}
+  .tool-bar{display:flex;justify-content:flex-end;margin-bottom:8px;}
+  .tool-btn{font-family:var(--font);font-size:11px;font-weight:600;padding:5px 12px;border:1px solid var(--bd);border-radius:6px;background:var(--bg-sec);color:var(--tx2);cursor:pointer;}
+  .tool-btn:hover{border-color:var(--tx2);color:var(--tx);}
   .del-btn{font-size:14px;font-weight:700;color:var(--tx2);background:none;border:1px solid var(--bd);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;line-height:1;transition:all 0.15s;}
   .del-btn:hover{color:#791F1F;border-color:#791F1F;background:#FCEBEB;}
   input[type=range]{-webkit-appearance:none;height:4px;border-radius:2px;background:#ddd;outline:none;flex:1;}
@@ -77,6 +82,7 @@
 <nav class="nav"><div class="nav-inner"></div></nav>
 
 <div class="page-wrap"><div class="wrap">
+  <div class="tool-bar"><button type="button" class="tool-btn" id="btn-import-navplan" title="Pull names, altitudes and leg distances from the NAV Plan">↓ Import from NAV Plan</button></div>
   <div style="font-size:10px;color:var(--tx2);text-align:center;margin-bottom:8px;font-style:italic;">Corrections for wind components not (yet) included in calculations</div>
   <div class="perf-banner"><div class="tags" id="perf-tags"></div></div>
 
@@ -92,7 +98,7 @@
 
   <!-- DEPARTURE -->
   <div class="card">
-    <div class="leg-badge" style="background:#E6F1FB;color:#0C447C;margin-bottom:10px;">Departure</div>
+    <div class="leg-badge" style="background:#E6F1FB;color:#0C447C;margin-bottom:10px;"><input class="badge-name" id="dep-name" placeholder="Departure" maxlength="48" autocomplete="off" spellcheck="false"></div>
     <div class="sr"><label>Departure altitude (ft AMSL)</label><input type="range" id="dep-alt" min="0" max="8000" step="25" value="1525"><span class="sv" id="dep-alt-v">1,525 ft</span></div>
   </div>
 
@@ -104,7 +110,7 @@
 
   <!-- DESTINATION -->
   <div class="card" id="dest-card">
-    <div class="leg-badge" style="background:#EAF3DE;color:#27500A;margin-bottom:10px;" id="dest-badge">Destination</div>
+    <div class="leg-badge" style="background:#EAF3DE;color:#27500A;margin-bottom:10px;" id="dest-badge"><input class="badge-name" id="arr-name" placeholder="Destination" maxlength="48" autocomplete="off" spellcheck="false"></div>
     <div class="chain-note" id="dest-chain">Starting altitude: —</div>
     <div class="sr"><label>Destination altitude (ft AMSL)</label><input type="range" id="arr-alt" min="0" max="8000" step="25" value="1525"><span class="sv" id="arr-alt-v">1,525 ft</span></div>
     <div class="sr"><label>Distance to destination (nm)</label><input type="range" id="arr-dist" min="2" max="120" step="1" value="22"><span class="sv" id="arr-dist-v">22 nm</span></div>
@@ -116,7 +122,13 @@
   </div>
 
   <!-- FLIGHT PROFILE -->
-  <div class="card"><h3>Flight profile</h3><div style="overflow-x:auto;"><svg id="svg" viewBox="0 0 760 240" width="100%" style="display:block;min-width:320px;"></svg></div></div>
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <h3 style="margin:0;">Flight profile</h3>
+      <button type="button" class="tool-btn" id="btn-optimize-alt" title="Adjust intermediate-leg altitudes to a feasible climb/descent profile (highest, departure and destination altitudes are kept).">Optimize ALT</button>
+    </div>
+    <div style="overflow-x:auto;"><svg id="svg" viewBox="0 0 760 240" width="100%" style="display:block;min-width:320px;"></svg></div>
+  </div>
 
   <!-- SOC WATERFALL -->
   <div class="card"><h3>SOC at each waypoint</h3><div class="soc-strip" id="soc-strip"></div><div style="font-size:10px;color:var(--tx2);margin-top:4px;">% of usable capacity remaining. Amber band = reserve floor.</div></div>
@@ -209,7 +221,9 @@ const DEST_COL={bg:'#EAF3DE',tx:'#27500A',c1:'#3B6D11',c2:'#639922'};
 function lc(i){return LCOL[i%LCOL.length];}
 
 /* ═══ ROUTE STATE ═══ */
-let legs=[{alt:5200,dist:27}]; // at least one intermediate waypoint
+let legs=[{alt:5200,dist:27,name:''}]; // at least one intermediate waypoint
+
+const escAttr=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 function renderLegs(){
   const c=document.getElementById('legs-container');
@@ -220,7 +234,7 @@ function renderLegs(){
     const canDel=legs.length>1;
     html+=`<div class="card" data-leg="${i}">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-        <div class="leg-badge" style="background:${col.bg};color:${col.tx};">Leg ${legNum}</div>
+        <div class="leg-badge" style="background:${col.bg};color:${col.tx};"><input class="badge-name leg-name" data-idx="${i}" placeholder="Leg ${legNum}" maxlength="48" autocomplete="off" spellcheck="false" value="${escAttr(leg.name||'')}"></div>
         ${canDel?`<button class="del-btn" data-idx="${i}" title="Remove leg">&times;</button>`:''}
       </div>
       <div class="chain-note leg-chain" data-idx="${i}">Starting altitude: —</div>
@@ -232,6 +246,13 @@ function renderLegs(){
   // Attach listeners
   c.querySelectorAll('.leg-alt,.leg-dist').forEach(el=>el.addEventListener('input',onLegInput));
   c.querySelectorAll('.del-btn').forEach(el=>el.addEventListener('click',onDeleteLeg));
+  c.querySelectorAll('.leg-name').forEach(el=>el.addEventListener('input',onLegNameInput));
+}
+
+function onLegNameInput(e){
+  const i=+e.target.dataset.idx;
+  legs[i].name=e.target.value;
+  saveState();
 }
 
 function onLegInput(e){
@@ -255,11 +276,23 @@ function onDeleteLeg(e){
 
 document.getElementById('add-leg-btn').addEventListener('click',()=>{
   const lastAlt=legs.length>0?legs[legs.length-1].alt:3000;
-  legs.push({alt:Math.max(1000,lastAlt-1000),dist:20});
+  legs.push({alt:Math.max(1000,lastAlt-1000),dist:20,name:''});
   renderLegs(); saveState(); update();
 });
 
 /* ═══ MAIN UPDATE ═══ */
+// Resolve the user-visible label for a route waypoint.
+//   wpLabel(i) — for results[i]: legs[0..N-1] then DEST at index N
+//   depLabel() — for the departure
+function depLabel(){
+  return (document.getElementById('dep-name').value||'').trim()||'Departure';
+}
+function wpLabel(i){
+  if(i<legs.length){
+    return (legs[i].name||'').trim()||('Leg '+(i+1));
+  }
+  return (document.getElementById('arr-name').value||'').trim()||'Destination';
+}
 function update(){
   const cruiseKw=+document.getElementById('cruise-kw').value;
   localStorage.setItem('velis_cruise_kw',cruiseKw);
@@ -309,7 +342,7 @@ function update(){
   });
   document.getElementById('dest-chain').textContent='Starting altitude: '+prevAlt.toLocaleString()+' ft';
   const destLegNum=legs.length+1;
-  document.getElementById('dest-badge').textContent='Leg '+destLegNum+' — Destination';
+  document.getElementById('arr-name').placeholder='Destination (Leg '+destLegNum+')';
 
   // ═══ CALCULATIONS ═══
   const toSoc=interpSOH(SOC_TAKEOFF,sohPct);
@@ -394,8 +427,7 @@ function update(){
   // Segment cards
   const sgHTML=results.map((r,i)=>{
     const col=i<results.length-1?lc(i):DEST_COL;
-    const ln=i+1;
-    return `<div class="seg-box" style="border-color:${col.c1};"><div class="seg-title" style="color:${col.c1};">Leg ${ln}${i===results.length-1?' (Dest)':''}</div>
+    return `<div class="seg-box" style="border-color:${col.c1};"><div class="seg-title" style="color:${col.c1};">${wpLabel(i)}${i===results.length-1?' (Dest)':''}</div>
       <div class="seg-row"><span class="seg-k">${r.isClimb?'Climb':'Descent'}</span><span class="seg-v">${mf(r.trans.min)} / ${n1(r.trans.nm)} nm</span></div>
       <div class="seg-row"><span class="seg-k">Cruise</span><span class="seg-v">${mf(r.cru.min)} / ${n1(r.cruDist)} nm</span></div>
       <div class="seg-row"><span class="seg-k">Energy</span><span class="seg-v">${n1(r.soc)} %SOC (${(socToKwh(r.soc)).toFixed(2)} kWh)</span></div></div>`;
@@ -403,16 +435,25 @@ function update(){
   document.getElementById('seg-grid').style.gridTemplateColumns=`repeat(${Math.min(results.length,3)},1fr)`;
   document.getElementById('seg-grid').innerHTML=sgHTML;
 
-  // SOC strip
-  const wpNames=['Departure',...legs.map((_,i)=>'Leg '+(i+1)),'Destination'];
+  // SOC strip \u2014 bars are positioned by cumulative distance to align horizontally
+  // with the flight profile's x-axis. Padding matches the SVG's PL/PR (52/20 of 760).
+  const wpNames=[depLabel(),...legs.map((_,i)=>wpLabel(i)),wpLabel(legs.length)];
   const strip=document.getElementById('soc-strip');
   strip.innerHTML='';
+  // Cumulative nm at each SOC waypoint (Dep, leg 1..N, Dest)
+  const totalNm=legs.reduce((s,l)=>s+l.dist,0)+arrDist;
+  const cumNm=[0]; let acc=0;
+  legs.forEach(l=>{acc+=l.dist;cumNm.push(acc);});
+  cumNm.push(acc+arrDist);
+  // SVG inner area = PL=52 / 688 / PR=20 of total 760 \u2192 6.842% .. 97.368%
+  const PAD_L=6.842, PAD_R=2.632, INNER=100-PAD_L-PAD_R;
   socs.forEach((pct,i)=>{
     const cp=Math.max(0,Math.min(100,pct)),fillH=Math.round(cp*0.6),resH=Math.round(resPct*100*0.6),col=socColor(cp);
+    const xPct=totalNm>0?PAD_L+(cumNm[i]/totalNm)*INNER:PAD_L;
     const wp=document.createElement('div');wp.className='soc-wp';
+    wp.style.left=xPct.toFixed(3)+'%';
     wp.innerHTML=`<div class="soc-bar-wrap"><div style="position:absolute;bottom:0;left:0;width:100%;height:${resH}px;background:#EF9F27;opacity:0.4;"></div><div style="width:100%;height:${fillH}px;background:${col};transition:height 0.3s;"></div></div><div class="soc-pct" style="color:${col};">${Math.round(cp)}%</div><div class="soc-kwh">${(cp/100*usable).toFixed(1)} kWh</div><div class="soc-label">${wpNames[i]}</div>`;
     strip.appendChild(wp);
-    if(i<socs.length-1){const a=document.createElement('div');a.className='soc-arrow';a.textContent='\u2192';strip.appendChild(a);}
   });
 
   // ═══ SVG PROFILE ═══
@@ -423,9 +464,9 @@ function update(){
   let det='',step='A',running2=startSocPct;
   results.forEach((r,i)=>{
     const col=i<results.length-1?lc(i):DEST_COL;
-    const ln=i+1;
     const isLast=i===results.length-1;
-    det+=`<div class="det-phase"><div class="det-head" style="color:${col.c1};">Leg ${ln}${isLast?' — to Destination':''}</div>`;
+    const lblHead=isLast?'→ '+wpLabel(legs.length):wpLabel(i);
+    det+=`<div class="det-phase"><div class="det-head" style="color:${col.c1};">${lblHead}</div>`;
     if(i===0){det+=`<div class="det-line">${step}) Takeoff + initial climb to 300 ft AGL = <span class="det-res">${n1(toSoc)} %SOC</span></div>`;step=String.fromCharCode(step.charCodeAt(0)+1);}
     if(r.isClimb&&r.trans.bands){
       det+=`<div class="det-line">${step}) Climb (V<sub>y</sub>) at 48 kW from ${r.prevAlt.toLocaleString()} to ${r.wpAlt.toLocaleString()} ft (${r.trans.delta.toLocaleString()} ft)</div>`;
@@ -446,11 +487,14 @@ function update(){
       step=String.fromCharCode(step.charCodeAt(0)+1);
     }
     running2-=r.soc;
-    det+=`<div class="det-line" style="margin-top:2px;"><strong>Leg ${ln} total = <span class="det-res">${n1(r.soc)} %SOC</span> \u00b7 SOC remaining: ${n1(Math.max(0,running2))}%</strong></div></div>`;
+    det+=`<div class="det-line" style="margin-top:2px;"><strong>${lblHead} total = <span class="det-res">${n1(r.soc)} %SOC</span> \u00b7 SOC remaining: ${n1(Math.max(0,running2))}%</strong></div></div>`;
   });
   det+=`<hr class="det-sep">`;
   det+=`<div class="det-total"><span>SOC at departure</span><strong>${n1(startSocPct)}% (${n1(usable*soc0)} kWh)</strong></div>`;
-  results.forEach((r,i)=>det+=`<div class="det-total"><span>\u2212 Leg ${i+1}</span><strong>${n1(r.soc)}%</strong></div>`);
+  results.forEach((r,i)=>{
+    const lbl=i===results.length-1?('\u2192 '+wpLabel(legs.length)):wpLabel(i);
+    det+=`<div class="det-total"><span>\u2212 ${lbl}</span><strong>${n1(r.soc)}%</strong></div>`;
+  });
   det+=`<hr class="det-sep">`;
   det+=`<div class="det-total"><span><strong>SOC at destination</strong></span><strong style="color:${socColor(arrSoc)};">${n1(arrSoc)}% (${n1(arrSoc/100*usable)} kWh)</strong></div>`;
   det+=`<div class="det-total"><span>Reserve requirement</span><strong>${Math.round(resPct*100)}% (${n1(reserveKwh)} kWh)</strong></div>`;
@@ -530,13 +574,13 @@ function drawSVG(depAlt,arrAlt,results){
     cumDist+=r.dist;
   });
 
-  // X-axis labels
+  // X-axis labels — keep them tight; truncate user names to 14 chars so they fit
+  const trim=s=>s&&s.length>14?s.slice(0,13)+'…':s;
   cumDist=0;let cumMin=0;
-  const xLabels=[[0,'Dep',0]];
+  const xLabels=[[0,trim(depLabel()),0]];
   results.forEach((r,i)=>{
     cumDist+=r.dist;cumMin+=r.min;
-    const label=i<results.length-1?'Leg '+(i+1):'Dest';
-    xLabels.push([cumDist,label,cumMin]);
+    xLabels.push([cumDist,trim(wpLabel(i)),cumMin]);
   });
   xLabels.forEach(([nm,lbl,cm])=>{
     h+=`<text x="${xp(nm).toFixed(1)}" y="${(PT+IH+13).toFixed(1)}" font-size="9" fill="${tc}" text-anchor="middle" font-weight="500">${lbl}</text>`;
@@ -564,6 +608,8 @@ function getFullState(){
     cruiseKw:document.getElementById('cruise-kw').value,
     depAlt:document.getElementById('dep-alt').value,arrAlt:document.getElementById('arr-alt').value,
     arrDist:document.getElementById('arr-dist').value,
+    depName:document.getElementById('dep-name').value,
+    arrName:document.getElementById('arr-name').value,
     approach:document.querySelector('input[name="approach"]:checked').value,
     legs:JSON.parse(JSON.stringify(legs))};
 }
@@ -576,8 +622,10 @@ function applyFullState(s){
   if(s.depAlt!==undefined)document.getElementById('dep-alt').value=s.depAlt;
   if(s.arrAlt!==undefined)document.getElementById('arr-alt').value=s.arrAlt;
   if(s.arrDist!==undefined)document.getElementById('arr-dist').value=s.arrDist;
+  if(s.depName!==undefined)document.getElementById('dep-name').value=s.depName;
+  if(s.arrName!==undefined)document.getElementById('arr-name').value=s.arrName;
   if(s.approach)document.querySelector(`input[name="approach"][value="${s.approach}"]`).checked=true;
-  if(s.legs&&Array.isArray(s.legs)&&s.legs.length>0) legs=s.legs;
+  if(s.legs&&Array.isArray(s.legs)&&s.legs.length>0) legs=s.legs.map(l=>({alt:l.alt,dist:l.dist,name:l.name||''}));
   renderLegs(); saveState(); update();
 }
 function saveState(){localStorage.setItem('velis_route_state',JSON.stringify(getFullState()));if(window.velisPlan)window.velisPlan.markDirty();else localStorage.setItem('velis_bundle_mtime',String(Date.now()));}
@@ -593,9 +641,134 @@ function loadState(){
     if(s.depAlt!==undefined)document.getElementById('dep-alt').value=s.depAlt;
     if(s.arrAlt!==undefined)document.getElementById('arr-alt').value=s.arrAlt;
     if(s.arrDist!==undefined)document.getElementById('arr-dist').value=s.arrDist;
+    if(s.depName!==undefined)document.getElementById('dep-name').value=s.depName;
+    if(s.arrName!==undefined)document.getElementById('arr-name').value=s.arrName;
     if(s.approach)document.querySelector(`input[name="approach"][value="${s.approach}"]`).checked=true;
-    if(s.legs&&Array.isArray(s.legs)&&s.legs.length>0) legs=s.legs;
+    if(s.legs&&Array.isArray(s.legs)&&s.legs.length>0) legs=s.legs.map(l=>({alt:l.alt,dist:l.dist,name:l.name||''}));
   }catch(e){}
+}
+
+/* ═══ OPTIMIZE ALT ═══
+   Reassign intermediate-leg altitudes to a feasible climb/descent profile.
+   Preserved: depAlt, arrAlt, the highest altitude (and any leg already at that
+   altitude — those legs cruise level). Leg distances are NOT changed.
+   Climb phase: each waypoint's alt = max altitude reachable from depAlt at
+   that waypoint's cumulative distance, capped at peakAlt (uses POH ROC).
+   Descent phase: glide from peak at the configured glide ratio, level off at
+   arrAlt if the descent reaches it before DEST. */
+function maxAltAtDistance(fromAlt,availNm,capAlt,oat,vyKts){
+  if(availNm<=0||capAlt<=fromAlt) return Math.min(fromAlt,capAlt);
+  const isaDev=getIsaDev(oat,fromAlt);
+  let alt=fromAlt,nmUsed=0;
+  while(alt<capAlt&&nmUsed<availNm){
+    const top=Math.min(alt+1000,capAlt);
+    const bd=top-alt,mid=(alt+top)/2;
+    const roc=interpROC(mid,isaDev);
+    const mn=bd/roc, nm=vyKts*(mn/60);
+    if(nmUsed+nm<=availNm){alt=top;nmUsed+=nm;}
+    else{const remNm=availNm-nmUsed,remMin=(remNm/vyKts)*60;alt+=remMin*roc;nmUsed=availNm;break;}
+  }
+  return alt;
+}
+function optimizeAltitudes(){
+  if(!legs.length){alert('No intermediate legs to optimize.');return;}
+  const depAlt=+document.getElementById('dep-alt').value;
+  const arrAlt=+document.getElementById('arr-alt').value;
+  const arrDist=+document.getElementById('arr-dist').value;
+  const oat=+document.getElementById('oat').value;
+  const vyKts=parseFloat(localStorage.getItem('velis_vy')??'75');
+
+  const N=legs.length, cumDist=[];
+  let acc=0; for(let i=0;i<N;i++){acc+=legs[i].dist;cumDist.push(acc);}
+  const destDist=acc+arrDist;
+
+  const peakAlt=Math.max(depAlt,arrAlt,...legs.map(l=>l.alt));
+  // Anchor = LAST leg whose altitude equals peakAlt — that single waypoint
+  // is preserved, and the descent toward DEST begins immediately after it.
+  // Earlier legs that happened to share peakAlt get recomputed along the
+  // climb curve, so you can see visually whether peakAlt is actually
+  // reachable in the available distance.
+  let anchorIdx=-1;
+  for(let i=N-1;i>=0;i--){if(legs[i].alt===peakAlt){anchorIdx=i;break;}}
+
+  let peakEndDist;
+  if(anchorIdx>=0) peakEndDist=cumDist[anchorIdx];
+  else if(depAlt>=arrAlt) peakEndDist=0;       // peak is at DEP
+  else peakEndDist=destDist;                    // peak is at DEST
+
+  for(let i=0;i<N;i++){
+    if(i===anchorIdx) continue;                 // anchor preserved
+    const d=cumDist[i];
+    let newAlt;
+    if(d<=peakEndDist){
+      // Climb phase: max altitude achievable from DEP at this distance
+      // (Vy + POH ROC), capped at peakAlt — once climb finishes, level cruise.
+      newAlt=maxAltAtDistance(depAlt,d,peakAlt,oat,vyKts);
+    } else {
+      // Descent phase: linear from (peakEndDist, peakAlt) → (destDist, arrAlt).
+      // Linear (not glide-ratio) so the profile lands exactly at arrAlt no
+      // matter how short the descent leg is.
+      const descTotal=destDist-peakEndDist;
+      const frac=descTotal>0?(d-peakEndDist)/descTotal:0;
+      newAlt=peakAlt - frac*(peakAlt-arrAlt);
+    }
+    legs[i].alt=Math.round(Math.max(500,Math.min(15000,newAlt)));
+  }
+  renderLegs(); saveState(); update();
+}
+
+/* ═══ IMPORT FROM NAV PLAN ═══ */
+function importFromNavPlan(){
+  const raw=localStorage.getItem('velis_navplan_state');
+  if(!raw){alert('No NAV Plan found. Open NAV Plan first and set up a route.');return;}
+  let s;try{s=JSON.parse(raw);}catch(e){alert('Could not read NAV Plan state.');return;}
+  const route=Array.isArray(s.route)?s.route:[];
+  if(route.length<3){
+    alert('Add at least one waypoint between Departure and Destination in NAV Plan first.');
+    return;
+  }
+  if(!confirm(`Replace the current route with ${route.length} waypoints from NAV Plan?`)) return;
+
+  const stripQuotes=v=>String(v||'').replace(/[',’]/g,'');
+  const parseAlt=v=>{const n=parseFloat(stripQuotes(v));return isFinite(n)?Math.round(n):null;};
+  const parseDist=v=>{const n=parseFloat(stripQuotes(v));return isFinite(n)?Math.max(1,Math.round(n)):null;};
+  const buildName=r=>{
+    const id=(r.ident||'').trim(),wp=(r.wp||'').trim();
+    return id&&wp?id+' '+wp:(id||wp);
+  };
+  const clamp=(n,lo,hi)=>Math.max(lo,Math.min(hi,n));
+
+  const dep=route[0],dest=route[route.length-1];
+
+  document.getElementById('dep-name').value=buildName(dep);
+  const depAlt=parseAlt(dep.alt);
+  if(depAlt!=null) document.getElementById('dep-alt').value=clamp(depAlt,0,8000);
+
+  document.getElementById('arr-name').value=buildName(dest);
+  const arrAlt=parseAlt(dest.alt);
+  if(arrAlt!=null) document.getElementById('arr-alt').value=clamp(arrAlt,0,8000);
+  const arrDist=parseDist(dest.dist);
+  if(arrDist!=null) document.getElementById('arr-dist').value=clamp(arrDist,2,120);
+
+  legs=[];
+  for(let i=1;i<route.length-1;i++){
+    const r=route[i];
+    const a=parseAlt(r.alt), d=parseDist(r.dist);
+    legs.push({
+      alt:a!=null?clamp(a,500,15000):3000,
+      dist:d!=null?clamp(d,2,120):20,
+      name:buildName(r)
+    });
+  }
+
+  // Refresh slider value labels
+  document.getElementById('dep-alt-v').textContent=(+document.getElementById('dep-alt').value).toLocaleString()+' ft';
+  document.getElementById('arr-alt-v').textContent=(+document.getElementById('arr-alt').value).toLocaleString()+' ft';
+  document.getElementById('arr-dist-v').textContent=document.getElementById('arr-dist').value+' nm';
+
+  renderLegs();
+  saveState();
+  update();
 }
 
 /* ═══ INIT ═══ */
@@ -605,11 +778,22 @@ async function init(){
   renderLegs();
   ['soh','soc0','res','oat','cruise-kw','dep-alt','arr-alt','arr-dist'].forEach(id=>
     document.getElementById(id).addEventListener('input',()=>{saveState();update();}));
+  ['dep-name','arr-name'].forEach(id=>
+    document.getElementById(id).addEventListener('input',()=>saveState()));
   document.querySelectorAll('input[name="approach"]').forEach(r=>r.addEventListener('change',()=>{saveState();update();}));
+  document.getElementById('btn-import-navplan').addEventListener('click',importFromNavPlan);
+  document.getElementById('btn-optimize-alt').addEventListener('click',optimizeAltitudes);
 
   // Re-read state after navigation or after plan_sync.js loads a bundle in-place
   window.addEventListener('pageshow',()=>{loadState();renderLegs();update();});
   document.addEventListener('velis:after-load',()=>{loadState();renderLegs();update();});
+
+  // First-ever visit: persist the on-screen defaults so other pages (NAV Plan
+  // import) can read them without requiring the user to nudge a slider first.
+  // Written directly — no markDirty, so a fresh visit doesn't look unsaved.
+  if(!localStorage.getItem('velis_route_state')){
+    localStorage.setItem('velis_route_state',JSON.stringify(getFullState()));
+  }
 
   update();
 }

@@ -37,9 +37,21 @@ body{margin:0;background:var(--bg-page);font-family:var(--font);color:var(--tx);
 .toolbar button.primary:hover{background:#124a82;}
 .toolbar .sep{color:var(--bd2);}
 
-/* ═══ IMPORT MODAL (Sky Demon paste) — reuses plan_sync.js's .plan-modal shell ═══ */
+/* ═══ IMPORT MODAL (Sky Demon paste / screenshot) — reuses plan_sync.js's .plan-modal shell ═══ */
 .import-ta{width:100%;min-height:280px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;line-height:1.45;border:1px solid var(--bd2);border-radius:6px;padding:8px 10px;color:var(--tx);background:#fafaf7;outline:none;resize:vertical;box-sizing:border-box;}
 .import-ta:focus{border-color:var(--blue);}
+.import-seg{margin-bottom:12px;}
+.import-pane[hidden]{display:none;}
+.import-drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1px dashed var(--bd2);border-radius:8px;padding:22px 14px;background:#fafaf7;text-align:center;cursor:pointer;color:var(--tx2);font-size:12px;transition:border-color 0.15s,background 0.15s;}
+.import-drop:hover{border-color:var(--blue);background:#f5f8fc;}
+.import-drop.has-file{border-style:solid;border-color:var(--blue);color:var(--tx);background:#f5f8fc;}
+.import-drop strong{color:var(--blue);font-weight:600;}
+.import-drop .sub{font-size:11px;color:var(--tx2);}
+.import-status{margin:10px 0 0;font-size:11.5px;color:var(--tx2);min-height:1.4em;line-height:1.4;}
+.import-status.err{color:#B03030;}
+.import-auth{margin:0 0 12px;font-size:11.5px;color:#7A5700;background:#FFF8E7;border:1px solid #F2DDA0;border-radius:6px;padding:8px 12px;line-height:1.4;}
+.import-auth a{color:var(--blue);font-weight:600;text-decoration:none;cursor:pointer;}
+.import-auth a:hover{text-decoration:underline;}
 .seg{display:inline-flex;border:1px solid var(--bd);border-radius:6px;overflow:hidden;background:var(--bg-card);}
 .seg button{border:none;border-radius:0;padding:6px 14px;background:transparent;color:var(--tx2);font-size:11.5px;font-weight:500;border-right:1px solid var(--bd);}
 .seg button:last-child{border-right:none;}
@@ -126,6 +138,9 @@ textarea{border:none;background:transparent;outline:none;padding:0;margin:0;resi
 .wp .del-btn{position:absolute;top:0.5mm;right:0.5mm;width:4mm;height:4mm;border:none;background:transparent;color:#B08888;cursor:pointer;font-size:11pt;line-height:1;border-radius:50%;padding:0;display:flex;align-items:center;justify-content:center;opacity:0.75;transition:opacity 0.12s,background 0.12s;}
 .wp .eet-extra{position:absolute;top:0.3mm;right:0.8mm;font-size:5.5pt;color:var(--tx2);font-weight:500;line-height:1;pointer-events:none;opacity:0.75;font-variant:tabular-nums;}
 .wp .del-btn:hover{opacity:1;color:#791F1F;background:#FCEBEB;}
+.wp .ins-btn{position:absolute;left:50%;bottom:-2.2mm;transform:translateX(-50%);width:4.5mm;height:4.5mm;border-radius:50%;border:0.5px solid var(--blue);background:#fff;color:var(--blue);font-size:10.5pt;line-height:1;cursor:pointer;opacity:0;z-index:3;transition:opacity 0.12s,background 0.12s,color 0.12s;font-family:var(--font);padding:0;display:flex;align-items:center;justify-content:center;}
+.wp tr:hover .ins-btn{opacity:0.85;}
+.wp .ins-btn:hover{opacity:1;background:var(--blue);color:#fff;}
 
 .add-wp-row td{padding:0;height:auto;border:none;background:#fff;}
 .add-wp{width:100%;padding:1.5mm;text-align:center;font-size:7.5pt;color:var(--blue);background:#fff;border:0.5px dashed var(--blue);font-weight:600;letter-spacing:0.04em;cursor:pointer;opacity:0.6;transition:opacity 0.15s;font-family:var(--font);}
@@ -191,7 +206,7 @@ textarea{border:none;background:transparent;outline:none;padding:0;margin:0;resi
   .sheet.view-nav .fuel-half,
   .sheet.view-fuel .nav-half{display:flex !important;}
   .add-wp-row{display:none;}
-  .del-btn{display:none !important;}
+  .del-btn,.ins-btn{display:none !important;}
   .trend-btn{border-right:none !important;}
   .cell-inp.derived{background:transparent !important;color:var(--tx) !important;border:none !important;border-bottom:1px solid var(--bd2) !important;}
   .wp tr.totals td.val{background:transparent !important;}
@@ -375,10 +390,38 @@ textarea{border:none;background:transparent;outline:none;padding:0;margin:0;resi
 
 <!-- ═══ Import-from-Sky-Demon modal ═══ -->
 <div class="plan-modal" id="import-modal" hidden>
-  <div class="plan-modal-box" style="min-width:560px;">
+  <div class="plan-modal-box" style="min-width:560px;max-width:600px;">
     <h3>Import from Sky Demon</h3>
-    <p class="hint">Paste the nav-log text copied from Sky Demon. Waypoints replace the current route; header fields (ACFT, Pilot, RWY, QNH…) are not touched.</p>
-    <textarea id="import-ta" class="import-ta" spellcheck="false" placeholder="SR 04:35 Z, MCT 04:03 Z    MSA    Level    TAS    Trk    Wind    Hdg    GS    Dist    Time …"></textarea>
+    <div class="seg import-seg">
+      <button type="button" data-import-mode="text" class="on">Paste text</button>
+      <button type="button" data-import-mode="image">Screenshot</button>
+      <button type="button" data-import-mode="rp">Route Planner</button>
+    </div>
+
+    <div class="import-pane" data-pane="text">
+      <p class="hint">Paste the nav-log text copied from Sky Demon. Waypoints replace the current route; header fields (ACFT, Pilot, RWY, QNH…) are not touched.</p>
+      <textarea id="import-ta" class="import-ta" spellcheck="false" placeholder="SR 04:35 Z, MCT 04:03 Z    MSA    Level    TAS    Trk    Wind    Hdg    GS    Dist    Time …"></textarea>
+    </div>
+
+    <div class="import-pane" data-pane="rp" hidden>
+      <p class="hint">Pull the route from the Route Planner page (names, altitudes, leg distances). Waypoints replace the current route; header fields are not touched.</p>
+      <div id="import-rp-summary" style="border:1px solid var(--bd2);border-radius:6px;padding:10px 12px;font-size:12px;background:var(--bg-sec);max-height:200px;overflow:auto;line-height:1.5;color:var(--tx);"></div>
+      <p class="import-status" id="import-rp-status"></p>
+    </div>
+
+    <div class="import-pane" data-pane="image" hidden>
+      <p class="hint">Take a screenshot of the Sky Demon nav-log table on iPad and pick it here. Waypoints will replace the current route; header fields are not touched.</p>
+      <div class="import-auth" id="import-auth-msg" hidden>
+        Screenshot import requires sign-in. <a id="import-img-signin">Sign in →</a>
+      </div>
+      <input type="file" id="import-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+      <div class="import-drop" id="import-drop">
+        <div><strong>Choose a screenshot…</strong></div>
+        <div class="sub">PNG, JPEG, WebP — max 8 MB</div>
+      </div>
+      <p class="import-status" id="import-img-status"></p>
+    </div>
+
     <div class="plan-modal-actions">
       <button id="import-cancel">Cancel</button>
       <button id="import-do" class="primary">Import</button>
@@ -483,6 +526,7 @@ function buildRouteHTML(){
 
 function wpRow(r,i,role,eetExtra){
   const canDel=role==='wp';
+  const canIns=role!=='dest';
   return `<tr class="${role}" data-idx="${i}">
     <td class="dual">
       <input class="dual-inp u" data-f="freq" value="${esc(r.freq)}">
@@ -491,7 +535,7 @@ function wpRow(r,i,role,eetExtra){
     <td><input class="single-inp" data-f="wp" value="${esc(r.wp)}"></td>
     <td><input class="single-inp" data-f="hdg" value="${esc(r.hdg)}"></td>
     <td><input class="single-inp" data-f="dist" inputmode="decimal" value="${esc(r.dist)}"></td>
-    <td class="alt-td"><div class="alt-wrap">${trendBtnHTML(r.altTrend||'',`data-trend-idx="${i}"`)}<input class="single-inp alt-inp" data-f="alt" value="${esc(r.alt)}"></div></td>
+    <td class="alt-td"><div class="alt-wrap">${trendBtnHTML(r.altTrend||'',`data-trend-idx="${i}"`)}<input class="single-inp alt-inp" data-f="alt" value="${esc(r.alt)}"></div>${canIns?`<button class="ins-btn" data-ins="${i}" title="Insert waypoint below" type="button">＋</button>`:''}</td>
     <td><input class="single-inp" data-f="eet" value="${esc(r.eet)}">${eetExtra?`<span class="eet-extra">${eetExtra}</span>`:''}</td>
     <td><input class="single-inp" data-f="ato" value="${esc(r.ato)}"></td>
     <td><input class="single-inp" data-f="wind" value="${esc(r.wind)}"></td>
@@ -592,6 +636,14 @@ function wireRowInputs(){
         state.route.splice(i,1);
         saveState();renderWP();refreshEndurance();
       }
+    });
+  });
+  tb.querySelectorAll('[data-ins]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const i=+btn.dataset.ins;
+      // Insert a new waypoint immediately after row i (DEP or any WP — never DEST)
+      state.route.splice(i+1,0,EMPTY_WP());
+      saveState();renderWP();refreshEndurance();
     });
   });
   const addBtn=document.getElementById('add-wp-btn');
@@ -954,25 +1006,13 @@ function wpFromSkyDemon(w,prevAlt){
   };
 }
 
-document.getElementById('btn-import').addEventListener('click',()=>{
-  const ta=document.getElementById('import-ta');
-  ta.value='';
-  document.getElementById('import-modal').hidden=false;
-  setTimeout(()=>ta.focus(),0);
-});
-document.getElementById('import-cancel').addEventListener('click',()=>{
-  document.getElementById('import-modal').hidden=true;
-});
-document.getElementById('import-do').addEventListener('click',()=>{
-  const text=document.getElementById('import-ta').value;
-  const parsed=parseSkyDemon(text);
-  if(parsed.length<2){
-    alert('Could not find at least 2 waypoints in the pasted text. Paste the nav-log block including the departure and destination lines.');
-    return;
+function applyImport(parsed){
+  if(!parsed||parsed.length<2){
+    alert('Could not find at least 2 waypoints. Make sure the input includes departure and destination.');
+    return false;
   }
   const hasContent=state.route.some(r=>r.wp||r.ident||r.freq||r.hdg||r.dist||r.alt||r.eet||r.wind||r.remark);
-  if(hasContent&&!confirm(`Replace the current route with ${parsed.length} imported waypoint(s)?`)) return;
-
+  if(hasContent&&!confirm(`Replace the current route with ${parsed.length} imported waypoint(s)?`)) return false;
   let prevAlt=null;
   state.route=parsed.map(w=>{
     const {leg,curAlt}=wpFromSkyDemon(w,prevAlt);
@@ -982,7 +1022,204 @@ document.getElementById('import-do').addEventListener('click',()=>{
   state.meta.dirty=true;saveLocal();
   window.velisPlan&&window.velisPlan.markDirty();
   renderWP();refreshEndurance();
+  return true;
+}
+
+// Server returns flat string rows; reshape to the {name, elev, data} form
+// produced by parseSkyDemon, so wpFromSkyDemon() can consume both.
+function rowsToParsed(rows){
+  return (rows||[]).map(r=>{
+    const has=r.msa||r.level||r.trk||r.wind||r.hdg||r.gs||r.dist||r.eet;
+    return {
+      name:r.name||'',
+      elev:r.elev||'',
+      data:has?{
+        msa:r.msa||'',level:r.level||'',tas:'',trk:r.trk||'',
+        wind:r.wind||'',hdg:r.hdg||'',gs:r.gs||'',dist:r.dist||'',eet:r.eet||''
+      }:null
+    };
+  });
+}
+
+let importMode='text';
+const importBtn=document.getElementById('import-do');
+const importStatusEl=document.getElementById('import-img-status');
+const importRpStatusEl=document.getElementById('import-rp-status');
+const importRpSummary=document.getElementById('import-rp-summary');
+const importDrop=document.getElementById('import-drop');
+const importFile=document.getElementById('import-file');
+const importAuthMsg=document.getElementById('import-auth-msg');
+
+function setImportStatus(msg,err){
+  importStatusEl.textContent=msg||'';
+  importStatusEl.classList.toggle('err',!!err);
+}
+function setImportRpStatus(msg,err){
+  importRpStatusEl.textContent=msg||'';
+  importRpStatusEl.classList.toggle('err',!!err);
+}
+function refreshImportAuthUI(){
+  const authed=!!(window.velisPlan&&window.velisPlan.user);
+  importAuthMsg.hidden=authed;
+}
+
+// Build SkyDemon-shaped rows from the Route Planner's localStorage state.
+function readRoutePlannerState(){
+  const raw=localStorage.getItem('velis_route_state');
+  if(!raw) return null;
+  try{return JSON.parse(raw);}catch(e){return null;}
+}
+function rpStateToParsed(s){
+  if(!s||!Array.isArray(s.legs)||s.legs.length===0) return null;
+  const rows=[];
+  // Departure: alt comes via elev (no leg precedes DEP, so data is null)
+  rows.push({
+    name:s.depName||'Departure',
+    elev:s.depAlt?String(s.depAlt)+' ft':'',
+    data:null
+  });
+  s.legs.forEach((leg,i)=>{
+    rows.push({
+      name:leg.name||('Leg '+(i+1)),
+      elev:'',
+      data:{msa:'',level:String(leg.alt||''),tas:'',trk:'',wind:'',hdg:'',gs:'',dist:String(leg.dist||''),eet:''}
+    });
+  });
+  rows.push({
+    name:s.arrName||'Destination',
+    elev:'',
+    data:{msa:'',level:String(s.arrAlt||''),tas:'',trk:'',wind:'',hdg:'',gs:'',dist:String(s.arrDist||''),eet:''}
+  });
+  return rows;
+}
+function refreshRpSummary(){
+  const s=readRoutePlannerState();
+  const rows=rpStateToParsed(s);
+  if(!rows){
+    importRpSummary.innerHTML='<em style="color:var(--tx2);">No route found. Open the Route Planner first and set up a route.</em>';
+    setImportRpStatus('');
+    return;
+  }
+  const fmt=v=>v?String(v).replace(/(\d)(?=(\d{3})+(?!\d))/g,"$1,"):'—';
+  let html='<table style="width:100%;border-collapse:collapse;font-size:11.5px;">';
+  rows.forEach((r,i)=>{
+    const role=i===0?'DEP':(i===rows.length-1?'DEST':'WP');
+    const alt=r.data?r.data.level:(r.elev.match(/(\d[\d'’]*)/)||[])[1]||'';
+    const dist=r.data?r.data.dist:'';
+    html+=`<tr style="border-bottom:1px solid var(--bd);">
+      <td style="padding:3px 6px;color:var(--tx2);width:40px;font-weight:600;font-size:10px;letter-spacing:0.04em;">${role}</td>
+      <td style="padding:3px 6px;">${r.name||'<span style="color:var(--tx2);">(unnamed)</span>'}</td>
+      <td style="padding:3px 6px;text-align:right;font-variant:tabular-nums;color:var(--tx2);">${fmt(alt)} ft</td>
+      <td style="padding:3px 6px;text-align:right;font-variant:tabular-nums;color:var(--tx2);width:60px;">${dist?dist+' nm':''}</td>
+    </tr>`;
+  });
+  html+='</table>';
+  importRpSummary.innerHTML=html;
+  setImportRpStatus('');
+}
+
+function setImportMode(mode){
+  importMode=mode;
+  document.querySelectorAll('[data-import-mode]').forEach(b=>{
+    b.classList.toggle('on',b.dataset.importMode===mode);
+  });
+  document.querySelectorAll('.import-pane').forEach(p=>{
+    p.hidden=p.dataset.pane!==mode;
+  });
+  setImportStatus('');
+  setImportRpStatus('');
+  if(mode==='image') refreshImportAuthUI();
+  if(mode==='rp') refreshRpSummary();
+  if(mode==='text') setTimeout(()=>document.getElementById('import-ta').focus(),0);
+}
+
+document.querySelectorAll('[data-import-mode]').forEach(b=>{
+  b.addEventListener('click',()=>setImportMode(b.dataset.importMode));
+});
+importDrop.addEventListener('click',()=>importFile.click());
+importFile.addEventListener('change',()=>{
+  const f=importFile.files&&importFile.files[0];
+  if(f){
+    importDrop.classList.add('has-file');
+    importDrop.firstElementChild.innerHTML='<strong>'+f.name.replace(/[<>&]/g,'')+'</strong>';
+    importDrop.lastElementChild.textContent=(f.size/1024).toFixed(0)+' KB · click to change';
+  } else {
+    importDrop.classList.remove('has-file');
+    importDrop.firstElementChild.innerHTML='<strong>Choose a screenshot…</strong>';
+    importDrop.lastElementChild.textContent='PNG, JPEG, WebP — max 8 MB';
+  }
+  setImportStatus('');
+});
+document.getElementById('import-img-signin').addEventListener('click',(e)=>{
+  e.preventDefault();
+  if(window.velisPlan&&window.velisPlan.openAuth) window.velisPlan.openAuth();
+});
+
+document.getElementById('btn-import').addEventListener('click',()=>{
+  document.getElementById('import-ta').value='';
+  importFile.value='';
+  importDrop.classList.remove('has-file');
+  importDrop.firstElementChild.innerHTML='<strong>Choose a screenshot…</strong>';
+  importDrop.lastElementChild.textContent='PNG, JPEG, WebP — max 8 MB';
+  setImportStatus('');
+  setImportMode('text');
+  document.getElementById('import-modal').hidden=false;
+});
+document.getElementById('import-cancel').addEventListener('click',()=>{
   document.getElementById('import-modal').hidden=true;
+});
+
+importBtn.addEventListener('click',async()=>{
+  if(importMode==='text'){
+    const text=document.getElementById('import-ta').value;
+    const parsed=parseSkyDemon(text);
+    if(applyImport(parsed)) document.getElementById('import-modal').hidden=true;
+    return;
+  }
+  if(importMode==='rp'){
+    const s=readRoutePlannerState();
+    const parsed=rpStateToParsed(s);
+    if(!parsed){
+      setImportRpStatus('No route found. Open the Route Planner first and set up a route.',true);
+      return;
+    }
+    if(applyImport(parsed)) document.getElementById('import-modal').hidden=true;
+    return;
+  }
+  refreshImportAuthUI();
+  if(!(window.velisPlan&&window.velisPlan.user)){
+    setImportStatus('Sign in to use screenshot import.',true);
+    return;
+  }
+  const file=importFile.files&&importFile.files[0];
+  if(!file){
+    setImportStatus('Choose a screenshot first.',true);
+    return;
+  }
+  importBtn.disabled=true;
+  setImportStatus('Reading the screenshot…');
+  try{
+    const fd=new FormData();
+    fd.append('image',file);
+    const API_BASE=(typeof window.VELIS_API_BASE==='string')?window.VELIS_API_BASE:'/velis-planner/api';
+    const r=await fetch(API_BASE+'/import/skydemon-image',{method:'POST',body:fd,credentials:'include'});
+    const data=await r.json().catch(()=>({}));
+    if(!r.ok){
+      if(r.status===401) setImportStatus('Your session expired — sign in again.',true);
+      else setImportStatus(data.error||('Server error ('+r.status+').'),true);
+      return;
+    }
+    const parsed=rowsToParsed(data.rows);
+    if(applyImport(parsed)){
+      document.getElementById('import-modal').hidden=true;
+    } else {
+      setImportStatus('');
+    }
+  }catch(e){
+    setImportStatus('Network error — please try again.',true);
+  }finally{
+    importBtn.disabled=false;
+  }
 });
 
 /* ═══ Init ═══ */

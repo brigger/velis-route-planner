@@ -20,9 +20,9 @@
   // Single source of truth for the site menu. Add / rename / re-order tabs here.
   // Admin-only tabs (is_admin flag on currentUser) have admin:true.
   const NAV_TABS = [
+    { href: 'velis_navplan.html',     label: 'NAV Plan'           },
     { href: 'index.html',             label: 'Route Planner'      },
     { href: 'velis_takeoff.html',     label: 'Takeoff & Landing'  },
-    { href: 'velis_navplan.html',     label: 'NAV Plan'           },
     { href: 'velis_performance.html', label: 'Performance'        },
     { href: 'velis_about.html',       label: 'About'              },
     { href: 'velis_admin.html',       label: 'Dashboard', admin:true },
@@ -471,7 +471,7 @@
 
   function openAuthModal(tab){
     const cached=getCachedUser();
-    const defaultTab = tab || (cached ? 'signin' : 'register');
+    const defaultTab = tab || 'signin';
     setAuthTab(defaultTab);
     clearAuthError();
     hideAuthOk();

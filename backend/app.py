@@ -1,3 +1,4 @@
+import base64
 import json
 import logging
 import os
@@ -44,6 +45,11 @@ SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "0") == "1"
 SESSION_DAYS          = int(os.getenv("SESSION_DAYS", "90"))
 VERIFY_HOURS          = 24
 LOGIN_LINK_HOURS      = 1
+
+# Sky Demon screenshot import (Claude vision)
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+IMPORT_MODEL      = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6")
+MAX_IMAGE_BYTES   = int(os.getenv("IMPORT_MAX_IMAGE_BYTES", str(8 * 1024 * 1024)))
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("velis-backend")
@@ -625,6 +631,125 @@ def admin_list_plans():
     for r in rows:
         r["updated_at"] = r["updated_at"].isoformat()
     return jsonify(rows)
+
+
+# ── Sky Demon screenshot → JSON via Claude vision ──────────────────────
+SKYDEMON_PROMPT = (
+    "Extract the navigation plan from this Sky Demon screenshot. The plan is the "
+    "table at the top with columns MSA / Level / Trk / Wind / Hdg / GS / Dist / Time. "
+    "Return a JSON array of objects in route order — one entry per visible row, "
+    "INCLUDING the departure and destination airport rows. Each object has these "
+    "string fields (use empty string for blank or unreadable cells; keep the "
+    "original thousands separator character — apostrophe ' or right-single-quote ’):\n"
+    "  name  — airport label like 'LSPG Kägiswil' or coordinate text 'N470121 E0082237'\n"
+    "  elev  — only on airport rows, e.g. \"1'526 ft (55 hPa)\"; '' on coordinate rows\n"
+    "  msa   — MSA cell\n"
+    "  level — Level cell\n"
+    "  trk   — Trk degrees\n"
+    "  wind  — Wind 'DDD/SS'\n"
+    "  hdg   — Hdg degrees\n"
+    "  gs    — Ground Speed (kt)\n"
+    "  dist  — Distance (nm)\n"
+    "  eet   — Time (minutes)\n"
+    "Skip the SR/MCT/SS/ECT lines, the column-header row, and any frequencies / "
+    "comms tables that appear below the plan. Output STRICT JSON only — no prose, "
+    "no markdown code fences."
+)
+
+
+def _detect_image_mime(blob, declared):
+    declared = (declared or "").lower()
+    if declared in ("image/png", "image/jpeg", "image/webp", "image/gif"):
+        return declared
+    if declared == "image/jpg":
+        return "image/jpeg"
+    if blob[:8] == b"\x89PNG\r\n\x1a\n":
+        return "image/png"
+    if blob[:3] == b"\xff\xd8\xff":
+        return "image/jpeg"
+    if blob[:4] == b"RIFF" and blob[8:12] == b"WEBP":
+        return "image/webp"
+    if blob[:6] in (b"GIF87a", b"GIF89a"):
+        return "image/gif"
+    return None
+
+
+def _strip_code_fence(text):
+    t = text.strip()
+    if not t.startswith("```"):
+        return t
+    t = t[3:]
+    if t.lower().startswith("json"):
+        t = t[4:]
+    if t.endswith("```"):
+        t = t[:-3]
+    return t.strip()
+
+
+@app.post("/api/import/skydemon-image")
+@require_user
+def import_skydemon_image():
+    if not ANTHROPIC_API_KEY:
+        return jsonify({"error": "Image import is not configured on the server."}), 503
+
+    f = request.files.get("image")
+    if f is None:
+        return jsonify({"error": "No image attached."}), 400
+    blob = f.read(MAX_IMAGE_BYTES + 1)
+    if len(blob) > MAX_IMAGE_BYTES:
+        return jsonify({"error": f"Image too large (max {MAX_IMAGE_BYTES // (1024*1024)} MB)."}), 413
+    if not blob:
+        return jsonify({"error": "Empty image."}), 400
+
+    mime = _detect_image_mime(blob, f.mimetype)
+    if not mime:
+        return jsonify({"error": "Unsupported image format. Use PNG, JPEG, WebP, or GIF."}), 400
+
+    try:
+        from anthropic import Anthropic
+    except ImportError:
+        log.error("anthropic SDK not installed")
+        return jsonify({"error": "Image import is not configured on the server."}), 503
+
+    client = Anthropic(api_key=ANTHROPIC_API_KEY)
+    b64 = base64.standard_b64encode(blob).decode("ascii")
+    try:
+        msg = client.messages.create(
+            model=IMPORT_MODEL,
+            max_tokens=4096,
+            messages=[{
+                "role": "user",
+                "content": [
+                    {"type": "image", "source": {
+                        "type": "base64", "media_type": mime, "data": b64,
+                    }},
+                    {"type": "text", "text": SKYDEMON_PROMPT},
+                ],
+            }],
+        )
+    except Exception:
+        log.exception("anthropic call failed")
+        return jsonify({"error": "Image parsing failed — please try again."}), 502
+
+    text = "".join(b.text for b in msg.content if getattr(b, "type", None) == "text")
+    text = _strip_code_fence(text)
+    try:
+        rows = json.loads(text)
+    except Exception:
+        log.warning("anthropic returned non-JSON: %s", text[:300])
+        return jsonify({"error": "Could not parse the screenshot — try a clearer image."}), 502
+    if not isinstance(rows, list) or len(rows) < 2:
+        return jsonify({"error": "Could not find at least 2 waypoints in the screenshot."}), 422
+
+    # Coerce every field to a string so the frontend can treat the response
+    # exactly like Sky Demon paste output.
+    keys = ("name", "elev", "msa", "level", "trk", "wind", "hdg", "gs", "dist", "eet")
+    cleaned = []
+    for r in rows:
+        if not isinstance(r, dict):
+            continue
+        cleaned.append({k: (str(r.get(k) or "")).strip() for k in keys})
+    return jsonify({"rows": cleaned})
 
 
 # ── landing page ───────────────────────────────────────────────────────
