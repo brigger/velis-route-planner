@@ -1006,6 +1006,47 @@ function wpFromSkyDemon(w,prevAlt){
   };
 }
 
+// Reconstruct the canonical name a NAV-Plan row would expose to imports —
+// "ICAO Name" when both ident + wp are filled, otherwise whichever is set.
+function navRowName(r){
+  const id=(r.ident||'').trim(),wp=(r.wp||'').trim();
+  return (id&&wp?id+' '+wp:(id||wp)).trim();
+}
+// Same shape + same names? Then importing from Route Planner should only
+// refresh the cells that the planner actually owns (alt + dist + altTrend),
+// preserving frequencies, comments, ATO, etc. that the pilot has typed in.
+function rpRouteMatchesCurrent(parsed){
+  if(!Array.isArray(parsed)||parsed.length!==state.route.length) return false;
+  for(let i=0;i<parsed.length;i++){
+    const a=(parsed[i].name||'').trim().toLowerCase();
+    const b=navRowName(state.route[i]).toLowerCase();
+    if(a!==b) return false;
+  }
+  return true;
+}
+function applyRpImport(parsed){
+  if(!parsed||parsed.length<2){
+    alert('Could not find at least 2 waypoints in the Route Planner.');
+    return false;
+  }
+  if(rpRouteMatchesCurrent(parsed)){
+    // In-place refresh — only the fields the Route Planner owns.
+    let prevAlt=null;
+    parsed.forEach((w,i)=>{
+      const {leg,curAlt}=wpFromSkyDemon(w,prevAlt);
+      state.route[i].alt=leg.alt;
+      state.route[i].altTrend=leg.altTrend;
+      state.route[i].dist=leg.dist;
+      prevAlt=curAlt;
+    });
+    state.meta.dirty=true;saveLocal();
+    window.velisPlan&&window.velisPlan.markDirty();
+    renderWP();refreshEndurance();
+    return true;
+  }
+  return applyImport(parsed);
+}
+
 function applyImport(parsed){
   if(!parsed||parsed.length<2){
     alert('Could not find at least 2 waypoints. Make sure the input includes departure and destination.');
@@ -1183,7 +1224,7 @@ importBtn.addEventListener('click',async()=>{
       setImportRpStatus('No route found. Open the Route Planner first and set up a route.',true);
       return;
     }
-    if(applyImport(parsed)) document.getElementById('import-modal').hidden=true;
+    if(applyRpImport(parsed)) document.getElementById('import-modal').hidden=true;
     return;
   }
   refreshImportAuthUI();
