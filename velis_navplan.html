@@ -963,7 +963,7 @@ function parseSkyDemon(text){
   const lines=text.split(/\r?\n/);
   const wps=[];
   let pending=null;           // {name,elev}
-  const dropQuote=s=>(s||'').replace(/[’'`]/g,'');
+  const dropQuote=window.velisWp.dropQuote;
   const isWind=p=>/^\d{3}\/\d{1,2}$/.test(p);
   const looksNumeric=p=>/^[\d'’.,]+$/.test(p)||isWind(p);
   const tokenize=l=>l.split(/\t+|\s{2,}/).map(p=>p.trim()).filter(Boolean);
@@ -1004,14 +1004,19 @@ function parseSkyDemon(text){
   return wps;
 }
 
+// Parsed-waypoint shape consumed by wpFromSkyDemon — produced by all three
+// import paths (parseSkyDemon for paste, rowsToParsed for screenshot,
+// rpStateToParsed for Route-Planner sync):
+//   { name:  string  e.g. "LSPG Kägiswil" or "N470121 E0082237"
+//     elev:  string  e.g. "1'526 ft (55 hPa)"  (only on airport rows; '' otherwise)
+//     data:  null    — DEP rows with no leg leading to them
+//          | { msa, level, tas, trk, wind, hdg, gs, dist, eet }  // strings
+//   }
 function wpFromSkyDemon(w,prevAlt){
-  const name=w.name||'';
-  const mIcao=name.match(/^([A-Z]{4})\s+(.+)$/);
-  const ident=mIcao?mIcao[1]:'';
-  const wpName=mIcao?mIcao[2]:name;
-  const dropQuote=s=>(s||'').replace(/[’'`,]/g,'');
+  const {ident, wp:wpName} = window.velisWp.splitName(w.name);
+  const dropQuote = window.velisWp.dropQuote;
   const toNum=s=>{const n=parseFloat(dropQuote(s));return isFinite(n)?n:null;};
-  const elevFt=toNum((w.elev.match(/^([\d'’]+)\s*ft/)||[])[1]);
+  const elevFt=toNum((String(w.elev||'').match(/^([\d'’]+)\s*ft/)||[])[1]);
   const lvl=w.data?toNum(w.data.level):null;
   const curAlt=lvl??elevFt;
   let trend='';
@@ -1033,10 +1038,7 @@ function wpFromSkyDemon(w,prevAlt){
 
 // Reconstruct the canonical name a NAV-Plan row would expose to imports —
 // "ICAO Name" when both ident + wp are filled, otherwise whichever is set.
-function navRowName(r){
-  const id=(r.ident||'').trim(),wp=(r.wp||'').trim();
-  return (id&&wp?id+' '+wp:(id||wp)).trim();
-}
+function navRowName(r){ return window.velisWp.joinName(r.ident, r.wp); }
 // Same shape + same names? Then importing from Route Planner should only
 // refresh the cells that the planner actually owns (alt + dist + altTrend),
 // preserving frequencies, comments, ATO, etc. that the pilot has typed in.

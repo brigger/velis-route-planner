@@ -740,14 +740,9 @@ function importFromNavPlan(){
   }
   if(!confirm(`Replace the current route with ${route.length} waypoints from NAV Plan?`)) return;
 
-  const stripQuotes=v=>String(v||'').replace(/[',’]/g,'');
-  const parseAlt=v=>{const n=parseFloat(stripQuotes(v));return isFinite(n)?Math.round(n):null;};
-  const parseDist=v=>{const n=parseFloat(stripQuotes(v));return isFinite(n)?Math.max(1,Math.round(n)):null;};
-  const buildName=r=>{
-    const id=(r.ident||'').trim(),wp=(r.wp||'').trim();
-    return id&&wp?id+' '+wp:(id||wp);
-  };
+  const {parseAlt, parseDist, joinName} = window.velisWp;
   const clamp=(n,lo,hi)=>Math.max(lo,Math.min(hi,n));
+  const buildName = r => joinName(r.ident, r.wp);
 
   const dep=route[0],dest=route[route.length-1];
 

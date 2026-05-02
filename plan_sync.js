@@ -4,7 +4,36 @@
    Loaded by every HTML page. Injects CSS, nav-bar status line, floating
    disc (FAB) + popup menu, an auth modal and a load-plan modal. Pages
    communicate via `velis:before-save` and `velis:after-load`.
+   Also exposes `window.velisWp` — small helpers for parsing waypoint
+   names / altitudes / distances. Used by both the Route Planner and
+   the NAV Plan, so the parsing rules can't drift between them.
    ═════════════════════════════════════════════════════════════════════ */
+
+/* eslint-disable */
+window.velisWp = (function(){
+  // 4-letter ICAO followed by whitespace + a name.  Used to split
+  // "LSPG Kägiswil" → ident "LSPG" + wp "Kägiswil".
+  const ICAO_RE = /^([A-Z]{4})\s+(.+)$/;
+  const dropQuote = s => String(s==null?'':s).replace(/[’'`,]/g,'');
+  function joinName(ident, wp){
+    const i=(ident||'').trim(), w=(wp||'').trim();
+    return i&&w ? i+' '+w : (i||w);
+  }
+  function splitName(name){
+    const m = String(name||'').match(ICAO_RE);
+    return m ? {ident:m[1], wp:m[2]} : {ident:'', wp:String(name||'')};
+  }
+  function parseAlt(v){
+    const n = parseFloat(dropQuote(v));
+    return isFinite(n) ? Math.round(n) : null;
+  }
+  function parseDist(v){
+    const n = parseFloat(dropQuote(v));
+    return isFinite(n) ? Math.max(1, Math.round(n)) : null;
+  }
+  return {ICAO_RE, dropQuote, joinName, splitName, parseAlt, parseDist};
+})();
+
 (function(){
   "use strict";
 
