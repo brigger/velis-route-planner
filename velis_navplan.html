@@ -36,6 +36,10 @@ body{margin:0;background:var(--bg-page);font-family:var(--font);color:var(--tx);
 .toolbar button:hover{border-color:var(--tx2);}
 .toolbar button.primary:hover{background:#124a82;}
 .toolbar .sep{color:var(--bd2);}
+.sync-btn{display:flex;align-items:center;gap:6px;border:1px solid #F2DDA0 !important;background:#FFF8E7 !important;color:#7A5700 !important;}
+.sync-btn:hover{border-color:#B78500 !important;background:#FFF1CB !important;}
+.sync-btn .sync-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#B78500;animation:sync-pulse 1.6s ease-in-out infinite;}
+@keyframes sync-pulse{0%,100%{opacity:0.5;}50%{opacity:1;}}
 
 /* ═══ IMPORT MODAL (Sky Demon paste / screenshot) — reuses plan_sync.js's .plan-modal shell ═══ */
 .import-ta{width:100%;min-height:280px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;line-height:1.45;border:1px solid var(--bd2);border-radius:6px;padding:8px 10px;color:var(--tx);background:#fafaf7;outline:none;resize:vertical;box-sizing:border-box;}
@@ -228,6 +232,11 @@ textarea{border:none;background:transparent;outline:none;padding:0;margin:0;resi
     </div>
     <span class="sep">|</span>
     <button id="btn-import">Import…</button>
+    <button id="btn-sync-rp" class="sync-btn" hidden type="button" title="NAV Plan is out of sync with the Route Planner — click to update altitudes and distances">
+      <span class="sync-dot"></span>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      Sync
+    </button>
     <button id="btn-clear">Clear form</button>
     <button id="btn-print" class="primary">Print</button>
     <span class="grow"></span>
@@ -395,18 +404,11 @@ textarea{border:none;background:transparent;outline:none;padding:0;margin:0;resi
     <div class="seg import-seg">
       <button type="button" data-import-mode="text" class="on">Paste text</button>
       <button type="button" data-import-mode="image">Screenshot</button>
-      <button type="button" data-import-mode="rp">Route Planner</button>
     </div>
 
     <div class="import-pane" data-pane="text">
       <p class="hint">Paste the nav-log text copied from Sky Demon. Waypoints replace the current route; header fields (ACFT, Pilot, RWY, QNH…) are not touched.</p>
       <textarea id="import-ta" class="import-ta" spellcheck="false" placeholder="SR 04:35 Z, MCT 04:03 Z    MSA    Level    TAS    Trk    Wind    Hdg    GS    Dist    Time …"></textarea>
-    </div>
-
-    <div class="import-pane" data-pane="rp" hidden>
-      <p class="hint">Pull the route from the Route Planner page (names, altitudes, leg distances). Waypoints replace the current route; header fields are not touched.</p>
-      <div id="import-rp-summary" style="border:1px solid var(--bd2);border-radius:6px;padding:10px 12px;font-size:12px;background:var(--bg-sec);max-height:200px;overflow:auto;line-height:1.5;color:var(--tx);"></div>
-      <p class="import-status" id="import-rp-status"></p>
     </div>
 
     <div class="import-pane" data-pane="image" hidden>
@@ -589,6 +591,7 @@ function renderWP(){
   const tb=document.getElementById('wp-body');
   tb.innerHTML=buildRouteHTML()+totalsRow()+altnRow();
   wireRowInputs();
+  if(typeof refreshSyncIndicator==='function') refreshSyncIndicator();
 }
 
 function wireRowInputs(){
@@ -600,6 +603,7 @@ function wireRowInputs(){
         state.route[i][inp.dataset.f]=inp.value;
         saveState();
         if(inp.dataset.f==='dist'||inp.dataset.f==='eet') refreshTotals();
+        if(['ident','wp','alt','dist'].includes(inp.dataset.f)) refreshSyncIndicator();
       });
     });
   });
@@ -888,6 +892,19 @@ document.getElementById('btn-clear').addEventListener('click',()=>{
 });
 document.getElementById('btn-print').addEventListener('click',()=>window.print());
 
+document.getElementById('btn-sync-rp').addEventListener('click',()=>{
+  const parsed=rpSyncDiff();
+  if(!parsed){refreshSyncIndicator();return;}
+  if(applyRpImport(parsed)) refreshSyncIndicator();
+});
+
+// Refresh whenever the user comes back to this tab — Route Planner may have
+// been edited on another page.
+window.addEventListener('pageshow',refreshSyncIndicator);
+window.addEventListener('storage',e=>{
+  if(e.key==='velis_route_state') refreshSyncIndicator();
+});
+
 /* ═══ View toggle (NAV Plan / Endurance) ═══ */
 const VIEW_KEY='velis_navplan_view';
 const sheetEl=document.getElementById('sheet');
@@ -1085,8 +1102,6 @@ function rowsToParsed(rows){
 let importMode='text';
 const importBtn=document.getElementById('import-do');
 const importStatusEl=document.getElementById('import-img-status');
-const importRpStatusEl=document.getElementById('import-rp-status');
-const importRpSummary=document.getElementById('import-rp-summary');
 const importDrop=document.getElementById('import-drop');
 const importFile=document.getElementById('import-file');
 const importAuthMsg=document.getElementById('import-auth-msg');
@@ -1094,10 +1109,6 @@ const importAuthMsg=document.getElementById('import-auth-msg');
 function setImportStatus(msg,err){
   importStatusEl.textContent=msg||'';
   importStatusEl.classList.toggle('err',!!err);
-}
-function setImportRpStatus(msg,err){
-  importRpStatusEl.textContent=msg||'';
-  importRpStatusEl.classList.toggle('err',!!err);
 }
 function refreshImportAuthUI(){
   const authed=!!(window.velisPlan&&window.velisPlan.user);
@@ -1133,30 +1144,27 @@ function rpStateToParsed(s){
   });
   return rows;
 }
-function refreshRpSummary(){
+// Detect divergence between NAV Plan and Route Planner. Returns the parsed
+// RP rows when the sync button should appear, or null when in-sync (or RP
+// has no data — nothing to sync from).
+function rpSyncDiff(){
   const s=readRoutePlannerState();
-  const rows=rpStateToParsed(s);
-  if(!rows){
-    importRpSummary.innerHTML='<em style="color:var(--tx2);">No route found. Open the Route Planner first and set up a route.</em>';
-    setImportRpStatus('');
-    return;
+  const parsed=rpStateToParsed(s);
+  if(!parsed||parsed.length<2) return null;
+  if(!rpRouteMatchesCurrent(parsed)) return parsed;
+  let prevAlt=null;
+  for(let i=0;i<parsed.length;i++){
+    const {leg,curAlt}=wpFromSkyDemon(parsed[i],prevAlt);
+    if(String(state.route[i].alt||'').trim()!==String(leg.alt||'').trim()) return parsed;
+    if(String(state.route[i].dist||'').trim()!==String(leg.dist||'').trim()) return parsed;
+    prevAlt=curAlt;
   }
-  const fmt=v=>v?String(v).replace(/(\d)(?=(\d{3})+(?!\d))/g,"$1,"):'—';
-  let html='<table style="width:100%;border-collapse:collapse;font-size:11.5px;">';
-  rows.forEach((r,i)=>{
-    const role=i===0?'DEP':(i===rows.length-1?'DEST':'WP');
-    const alt=r.data?r.data.level:(r.elev.match(/(\d[\d'’]*)/)||[])[1]||'';
-    const dist=r.data?r.data.dist:'';
-    html+=`<tr style="border-bottom:1px solid var(--bd);">
-      <td style="padding:3px 6px;color:var(--tx2);width:40px;font-weight:600;font-size:10px;letter-spacing:0.04em;">${role}</td>
-      <td style="padding:3px 6px;">${r.name||'<span style="color:var(--tx2);">(unnamed)</span>'}</td>
-      <td style="padding:3px 6px;text-align:right;font-variant:tabular-nums;color:var(--tx2);">${fmt(alt)} ft</td>
-      <td style="padding:3px 6px;text-align:right;font-variant:tabular-nums;color:var(--tx2);width:60px;">${dist?dist+' nm':''}</td>
-    </tr>`;
-  });
-  html+='</table>';
-  importRpSummary.innerHTML=html;
-  setImportRpStatus('');
+  return null;
+}
+function refreshSyncIndicator(){
+  const btn=document.getElementById('btn-sync-rp');
+  if(!btn) return;
+  btn.hidden=!rpSyncDiff();
 }
 
 function setImportMode(mode){
@@ -1168,9 +1176,7 @@ function setImportMode(mode){
     p.hidden=p.dataset.pane!==mode;
   });
   setImportStatus('');
-  setImportRpStatus('');
   if(mode==='image') refreshImportAuthUI();
-  if(mode==='rp') refreshRpSummary();
   if(mode==='text') setTimeout(()=>document.getElementById('import-ta').focus(),0);
 }
 
@@ -1215,16 +1221,6 @@ importBtn.addEventListener('click',async()=>{
     const text=document.getElementById('import-ta').value;
     const parsed=parseSkyDemon(text);
     if(applyImport(parsed)) document.getElementById('import-modal').hidden=true;
-    return;
-  }
-  if(importMode==='rp'){
-    const s=readRoutePlannerState();
-    const parsed=rpStateToParsed(s);
-    if(!parsed){
-      setImportRpStatus('No route found. Open the Route Planner first and set up a route.',true);
-      return;
-    }
-    if(applyRpImport(parsed)) document.getElementById('import-modal').hidden=true;
     return;
   }
   refreshImportAuthUI();
