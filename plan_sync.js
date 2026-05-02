@@ -181,8 +181,19 @@
 
   /* ─── Helpers ─── */
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  // Browsers throw QuotaExceededError when localStorage is full or in
+  // private-browsing modes. Centralize the catch so a write failure logs once
+  // instead of bringing down the next saveState() / markDirty() call.
+  let _quotaWarned = false;
+  function safeSetItem(key, val){
+    try{ localStorage.setItem(key, val); return true; }
+    catch(e){
+      if(!_quotaWarned){_quotaWarned=true; console.warn('localStorage write failed (quota?):', e); }
+      return false;
+    }
+  }
   function getCachedUser(){try{return JSON.parse(localStorage.getItem(USER_KEY))||null;}catch(e){return null;}}
-  function setCachedUser(u){if(u) localStorage.setItem(USER_KEY,JSON.stringify(u)); else localStorage.removeItem(USER_KEY);}
+  function setCachedUser(u){if(u) safeSetItem(USER_KEY,JSON.stringify(u)); else localStorage.removeItem(USER_KEY);}
 
   async function api(path,opts={}){
     const r=await fetch(API_BASE+path,{
@@ -246,8 +257,8 @@
     const s=parseInt(localStorage.getItem(STIME_KEY)||'0',10);
     return m>s;
   }
-  function markBundleDirty(){localStorage.setItem(MTIME_KEY,String(Date.now()));repaint();}
-  function markBundleSaved(){localStorage.setItem(STIME_KEY,String(Date.now()));repaint();}
+  function markBundleDirty(){safeSetItem(MTIME_KEY,String(Date.now()));repaint();}
+  function markBundleSaved(){safeSetItem(STIME_KEY,String(Date.now()));repaint();}
 
   function currentMeta(){
     try{
@@ -362,7 +373,7 @@
   }
   function applyBundle(bundle){
     const ls=bundle&&bundle.localStorage;
-    if(ls) for(const [k,v] of Object.entries(ls)) if(v!=null) localStorage.setItem(k,v);
+    if(ls) for(const [k,v] of Object.entries(ls)) if(v!=null) safeSetItem(k,v);
     document.dispatchEvent(new CustomEvent('velis:after-load',{detail:{bundle}}));
   }
 
@@ -460,7 +471,7 @@
       const raw=localStorage.getItem(NAV_STATE_KEY);
       const s=raw?JSON.parse(raw):{};
       s.meta={id:meta.id||null,name:meta.name||'',dirty:false};
-      localStorage.setItem(NAV_STATE_KEY,JSON.stringify(s));
+      safeSetItem(NAV_STATE_KEY,JSON.stringify(s));
     }catch(e){}
   }
 

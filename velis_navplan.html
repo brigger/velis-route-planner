@@ -1056,17 +1056,25 @@ function applyRpImport(parsed){
   }
   if(rpRouteMatchesCurrent(parsed)){
     // In-place refresh — only the fields the Route Planner owns.
-    let prevAlt=null;
+    let prevAlt=null, changed=false;
     parsed.forEach((w,i)=>{
       const {leg,curAlt}=wpFromSkyDemon(w,prevAlt);
-      state.route[i].alt=leg.alt;
-      state.route[i].altTrend=leg.altTrend;
-      state.route[i].dist=leg.dist;
+      const r=state.route[i];
+      if(r.alt!==leg.alt){r.alt=leg.alt;changed=true;}
+      if(r.altTrend!==leg.altTrend){r.altTrend=leg.altTrend;changed=true;}
+      if(r.dist!==leg.dist){r.dist=leg.dist;changed=true;}
       prevAlt=curAlt;
     });
-    state.meta.dirty=true;saveLocal();
-    window.velisPlan&&window.velisPlan.markDirty();
-    renderWP();refreshEndurance();
+    if(changed){
+      state.meta = {...(state.meta||{id:null,name:'',dirty:false}), dirty:true};
+      saveLocal();
+      window.velisPlan&&window.velisPlan.markDirty();
+      renderWP();refreshEndurance();
+    } else {
+      // Already in sync — make sure the indicator reflects that without
+      // dirtying the bundle.
+      refreshSyncIndicator();
+    }
     return true;
   }
   return applyImport(parsed);
@@ -1209,16 +1217,19 @@ document.querySelectorAll('[data-import-mode]').forEach(b=>{
   b.addEventListener('click',()=>setImportMode(b.dataset.importMode));
 });
 importDrop.addEventListener('click',()=>importFile.click());
+function setDropName(label, sub){
+  const strong=document.createElement('strong');strong.textContent=label;
+  importDrop.firstElementChild.replaceChildren(strong);
+  importDrop.lastElementChild.textContent=sub;
+}
 importFile.addEventListener('change',()=>{
   const f=importFile.files&&importFile.files[0];
   if(f){
     importDrop.classList.add('has-file');
-    importDrop.firstElementChild.innerHTML='<strong>'+f.name.replace(/[<>&]/g,'')+'</strong>';
-    importDrop.lastElementChild.textContent=(f.size/1024).toFixed(0)+' KB · click to change';
+    setDropName(f.name, (f.size/1024).toFixed(0)+' KB · click to change');
   } else {
     importDrop.classList.remove('has-file');
-    importDrop.firstElementChild.innerHTML='<strong>Choose a screenshot…</strong>';
-    importDrop.lastElementChild.textContent='PNG, JPEG, WebP — max 8 MB';
+    setDropName('Choose a screenshot…', 'PNG, JPEG, WebP — max 8 MB');
   }
   setImportStatus('');
 });
@@ -1231,8 +1242,7 @@ document.getElementById('btn-import').addEventListener('click',()=>{
   document.getElementById('import-ta').value='';
   importFile.value='';
   importDrop.classList.remove('has-file');
-  importDrop.firstElementChild.innerHTML='<strong>Choose a screenshot…</strong>';
-  importDrop.lastElementChild.textContent='PNG, JPEG, WebP — max 8 MB';
+  setDropName('Choose a screenshot…', 'PNG, JPEG, WebP — max 8 MB');
   setImportStatus('');
   setImportMode('text');
   document.getElementById('import-modal').hidden=false;
@@ -1256,6 +1266,10 @@ importBtn.addEventListener('click',async()=>{
   const file=importFile.files&&importFile.files[0];
   if(!file){
     setImportStatus('Choose a screenshot first.',true);
+    return;
+  }
+  if(file.size>8*1024*1024){
+    setImportStatus('Image too large (max 8 MB). Try a screenshot crop or compress first.',true);
     return;
   }
   importBtn.disabled=true;
