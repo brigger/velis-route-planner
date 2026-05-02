@@ -41,7 +41,8 @@ PUBLIC_URL  = os.getenv("PUBLIC_URL", "").rstrip("/")
 SITE_URL    = os.getenv("SITE_URL", PUBLIC_URL or "/").rstrip("/") or "/"
 
 SESSION_COOKIE_NAME   = os.getenv("SESSION_COOKIE_NAME", "velis_session")
-SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "0") == "1"
+# Default secure-by-default. Dev over plain HTTP must opt out via env var.
+SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "1") == "1"
 SESSION_DAYS          = int(os.getenv("SESSION_DAYS", "90"))
 VERIFY_HOURS          = 24
 LOGIN_LINK_HOURS      = 1
@@ -50,6 +51,25 @@ LOGIN_LINK_HOURS      = 1
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 IMPORT_MODEL      = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6")
 MAX_IMAGE_BYTES   = int(os.getenv("IMPORT_MAX_IMAGE_BYTES", str(8 * 1024 * 1024)))
+ANTHROPIC_TIMEOUT = float(os.getenv("ANTHROPIC_TIMEOUT", "30"))
+
+# Cached lazily — first request pays the SDK import + client construction cost.
+_anthropic_client = None
+
+
+def _get_anthropic_client():
+    global _anthropic_client
+    if _anthropic_client is not None:
+        return _anthropic_client
+    if not ANTHROPIC_API_KEY:
+        return None
+    try:
+        from anthropic import Anthropic
+    except ImportError:
+        log.error("anthropic SDK not installed")
+        return None
+    _anthropic_client = Anthropic(api_key=ANTHROPIC_API_KEY, timeout=ANTHROPIC_TIMEOUT)
+    return _anthropic_client
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("velis-backend")
@@ -291,6 +311,7 @@ def auth_register():
         return jsonify({"error": "Email, first name and last name are required."}), 400
 
     is_new_user = False
+    user_id = None
     c = conn(); cur = c.cursor(dictionary=True)
     try:
         cur.execute("SELECT id, first_name FROM users WHERE email = %s", (email,))
@@ -299,14 +320,27 @@ def auth_register():
             user_id = row["id"]
             first   = row["first_name"] or first
         else:
-            cur.execute(
-                "INSERT INTO users (email, first_name, last_name) VALUES (%s, %s, %s)",
-                (email, first, last),
-            )
-            user_id = cur.lastrowid
-            is_new_user = True
+            try:
+                cur.execute(
+                    "INSERT INTO users (email, first_name, last_name) VALUES (%s, %s, %s)",
+                    (email, first, last),
+                )
+                user_id = cur.lastrowid
+                is_new_user = True
+            except mysql.connector.IntegrityError:
+                # Concurrent register won the race — fall back to lookup.
+                cur.execute("SELECT id, first_name FROM users WHERE email = %s", (email,))
+                row2 = cur.fetchone()
+                if row2:
+                    user_id = row2["id"]
+                    first   = row2["first_name"] or first
+    except mysql.connector.Error:
+        log.exception("auth_register DB error")
+        user_id = None
     finally:
         cur.close(); c.close()
+    if user_id is None:
+        return jsonify({"error": "Could not register — please try again."}), 502
 
     tok = make_magic_token(user_id, "verify", VERIFY_HOURS)
     url = build_verify_url(tok)
@@ -384,7 +418,11 @@ def auth_verify(token):
         resp.headers["Content-Type"] = "text/html; charset=utf-8"
         return resp
 
-    cur.execute("UPDATE magic_tokens SET used_at = NOW() WHERE id = %s", (row["tid"],))
+    # Atomic consume — racing POSTs (e.g. user double-tapping) compete here.
+    cur.execute("UPDATE magic_tokens SET used_at = NOW() WHERE id = %s AND used_at IS NULL", (row["tid"],))
+    if cur.rowcount == 0:
+        cur.close(); c.close()
+        return landing_html(error="used"), 400
     if row["email_verified_at"] is None:
         cur.execute(
             "UPDATE users SET email_verified_at = NOW(), last_login_at = NOW() WHERE id = %s",
@@ -705,13 +743,10 @@ def import_skydemon_image():
     if not mime:
         return jsonify({"error": "Unsupported image format. Use PNG, JPEG, WebP, or GIF."}), 400
 
-    try:
-        from anthropic import Anthropic
-    except ImportError:
-        log.error("anthropic SDK not installed")
+    client = _get_anthropic_client()
+    if client is None:
         return jsonify({"error": "Image import is not configured on the server."}), 503
 
-    client = Anthropic(api_key=ANTHROPIC_API_KEY)
     b64 = base64.standard_b64encode(blob).decode("ascii")
     try:
         msg = client.messages.create(
@@ -727,8 +762,11 @@ def import_skydemon_image():
                 ],
             }],
         )
-    except Exception:
-        log.exception("anthropic call failed")
+    except Exception as e:
+        # Don't log.exception — anthropic-py error bodies can include the
+        # filename or text content of the request. type(e).__name__ is enough
+        # to distinguish timeout / rate-limit / 5xx in metrics without leakage.
+        log.error("anthropic call failed: %s", type(e).__name__)
         return jsonify({"error": "Image parsing failed — please try again."}), 502
 
     text = "".join(b.text for b in msg.content if getattr(b, "type", None) == "text")
