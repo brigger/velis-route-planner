@@ -127,6 +127,7 @@
       <h3 style="margin:0;">Flight profile</h3>
       <button type="button" class="tool-btn" id="btn-optimize-alt" title="Adjust intermediate-leg altitudes to a feasible climb/descent profile (highest, departure and destination altitudes are kept).">Optimize ALT</button>
     </div>
+    <div class="sr" title="Real-world climb performance is typically better than book values. Scales the POH ROC up by the chosen percentage; climb time, distance and SOC consumption all follow."><label>Performance adjustment (climb)</label><input type="range" id="perf-adj" min="0" max="10" step="1" value="0"><span class="sv" id="perf-adj-v">+0%</span></div>
     <div style="overflow-x:auto;"><svg id="svg" viewBox="0 0 760 240" width="100%" style="display:block;min-width:320px;"></svg></div>
   </div>
 
@@ -189,11 +190,12 @@ function socCruise10min(kw,s){const ps=Object.keys(SOC_CRUISE).map(Number).sort(
 function getIsaDev(oat,sAlt){return oat-(15-2*sAlt/1000);}
 
 /* ═══ PHASE CALCULATIONS ═══ */
-function calcClimb(from,to,oat,sohPct,vyKts,surfAlt){
+function calcClimb(from,to,oat,sohPct,vyKts,surfAlt,adjPct){
   if(to<=from)return{min:0,soc:0,nm:0,delta:0,bands:[],isaDev:0,refSoc:0};
   const delta=to-from,refSoc=interpSOH(SOC_CLIMB_1K,sohPct),isaDev=getIsaDev(oat,surfAlt);
+  const factor=1+(+adjPct||0)/100;
   let alt=from,tMin=0,tSoc=0,tNm=0;const bands=[];
-  while(alt<to){const top=Math.min(alt+1000,to),bd=top-alt,mid=(alt+top)/2,roc=interpROC(mid,isaDev),mn=bd/roc,nm=vyKts*(mn/60),sc=(bd/1000)*refSoc*(REF_ROC/roc);
+  while(alt<to){const top=Math.min(alt+1000,to),bd=top-alt,mid=(alt+top)/2,roc=interpROC(mid,isaDev)*factor,mn=bd/roc,nm=vyKts*(mn/60),sc=(bd/1000)*refSoc*(REF_ROC/roc);
     bands.push({from:alt,to:top,delta:bd,roc:Math.round(roc),min:mn,nm,soc:sc});tMin+=mn;tSoc+=sc;tNm+=nm;alt=top;}
   return{min:tMin,soc:tSoc,nm:tNm,delta,bands,isaDev,refSoc};
 }
@@ -312,11 +314,14 @@ function update(){
   const approach=document.querySelector('input[name="approach"]:checked').value;
   const approachSoc=approach==='pattern'?12:5;
   const sohPct=soh*100, usable=NOM*soh;
+  const perfAdj=+document.getElementById('perf-adj').value;
 
   // Save to localStorage for other pages
   localStorage.setItem('velis_soh',Math.round(sohPct));
   localStorage.setItem('velis_oat',oat);
   localStorage.setItem('velis_dep_alt',depAlt);
+  localStorage.setItem('velis_perf_adj',perfAdj);
+  document.getElementById('perf-adj-v').textContent=(perfAdj>0?'+':'')+perfAdj+'%';
 
   // Display
   document.getElementById('soh-v').textContent=Math.round(sohPct)+'%';
@@ -331,7 +336,8 @@ function update(){
   document.getElementById('perf-tags').innerHTML=
     `<span class="perf-tag">Cruise ${cruiseKw} kW · ${cruiseKts.toFixed(0)} kts</span>`+
     `<span class="perf-tag">V<sub>y</sub> ${vyKts} kts</span>`+
-    `<span class="perf-tag">Glide ${glideR}:1</span>`;
+    `<span class="perf-tag">Glide ${glideR}:1</span>`+
+    (perfAdj>0?`<span class="perf-tag" style="background:#EAF3DE;color:#27500A;">ROC +${perfAdj}%</span>`:'');
 
   // Chain notes for legs
   let prevAlt=depAlt;
@@ -354,7 +360,7 @@ function update(){
   // Intermediate legs
   legs.forEach((leg,i)=>{
     let trans;
-    if(leg.alt>prevAlt) trans=calcClimb(prevAlt,leg.alt,oat,sohPct,vyKts,depAlt);
+    if(leg.alt>prevAlt) trans=calcClimb(prevAlt,leg.alt,oat,sohPct,vyKts,depAlt,perfAdj);
     else trans=calcDescent(prevAlt,leg.alt,glideR,vglideKts);
     const cruDist=Math.max(0,leg.dist-trans.nm);
     const cru=calcCruise(cruDist,cruiseKw,cruiseKts,sohPct);
@@ -610,6 +616,7 @@ function getFullState(){
     arrDist:document.getElementById('arr-dist').value,
     depName:document.getElementById('dep-name').value,
     arrName:document.getElementById('arr-name').value,
+    perfAdj:document.getElementById('perf-adj').value,
     approach:document.querySelector('input[name="approach"]:checked').value,
     legs:JSON.parse(JSON.stringify(legs))};
 }
@@ -624,6 +631,7 @@ function applyFullState(s){
   if(s.arrDist!==undefined)document.getElementById('arr-dist').value=s.arrDist;
   if(s.depName!==undefined)document.getElementById('dep-name').value=s.depName;
   if(s.arrName!==undefined)document.getElementById('arr-name').value=s.arrName;
+  if(s.perfAdj!==undefined)document.getElementById('perf-adj').value=s.perfAdj;
   if(s.approach)document.querySelector(`input[name="approach"][value="${s.approach}"]`).checked=true;
   if(s.legs&&Array.isArray(s.legs)&&s.legs.length>0) legs=s.legs.map(l=>({alt:l.alt,dist:l.dist,name:l.name||''}));
   renderLegs(); saveState(); update();
@@ -643,6 +651,7 @@ function loadState(){
     if(s.arrDist!==undefined)document.getElementById('arr-dist').value=s.arrDist;
     if(s.depName!==undefined)document.getElementById('dep-name').value=s.depName;
     if(s.arrName!==undefined)document.getElementById('arr-name').value=s.arrName;
+    if(s.perfAdj!==undefined)document.getElementById('perf-adj').value=s.perfAdj;
     if(s.approach)document.querySelector(`input[name="approach"][value="${s.approach}"]`).checked=true;
     if(s.legs&&Array.isArray(s.legs)&&s.legs.length>0) legs=s.legs.map(l=>({alt:l.alt,dist:l.dist,name:l.name||''}));
   }catch(e){}
@@ -656,14 +665,15 @@ function loadState(){
    that waypoint's cumulative distance, capped at peakAlt (uses POH ROC).
    Descent phase: glide from peak at the configured glide ratio, level off at
    arrAlt if the descent reaches it before DEST. */
-function maxAltAtDistance(fromAlt,availNm,capAlt,oat,vyKts){
+function maxAltAtDistance(fromAlt,availNm,capAlt,oat,vyKts,adjPct){
   if(availNm<=0||capAlt<=fromAlt) return Math.min(fromAlt,capAlt);
   const isaDev=getIsaDev(oat,fromAlt);
+  const factor=1+(+adjPct||0)/100;
   let alt=fromAlt,nmUsed=0;
   while(alt<capAlt&&nmUsed<availNm){
     const top=Math.min(alt+1000,capAlt);
     const bd=top-alt,mid=(alt+top)/2;
-    const roc=interpROC(mid,isaDev);
+    const roc=interpROC(mid,isaDev)*factor;
     const mn=bd/roc, nm=vyKts*(mn/60);
     if(nmUsed+nm<=availNm){alt=top;nmUsed+=nm;}
     else{const remNm=availNm-nmUsed,remMin=(remNm/vyKts)*60;alt+=remMin*roc;nmUsed=availNm;break;}
@@ -677,6 +687,7 @@ function optimizeAltitudes(){
   const arrDist=+document.getElementById('arr-dist').value;
   const oat=+document.getElementById('oat').value;
   const vyKts=parseFloat(localStorage.getItem('velis_vy')??'75');
+  const perfAdj=+document.getElementById('perf-adj').value;
 
   const N=legs.length, cumDist=[];
   let acc=0; for(let i=0;i<N;i++){acc+=legs[i].dist;cumDist.push(acc);}
@@ -703,7 +714,7 @@ function optimizeAltitudes(){
     if(d<=peakEndDist){
       // Climb phase: max altitude achievable from DEP at this distance
       // (Vy + POH ROC), capped at peakAlt — once climb finishes, level cruise.
-      newAlt=maxAltAtDistance(depAlt,d,peakAlt,oat,vyKts);
+      newAlt=maxAltAtDistance(depAlt,d,peakAlt,oat,vyKts,perfAdj);
     } else {
       // Descent phase: linear from (peakEndDist, peakAlt) → (destDist, arrAlt).
       // Linear (not glide-ratio) so the profile lands exactly at arrAlt no
@@ -776,7 +787,7 @@ async function init(){
   await loadPOH();
   loadState();
   renderLegs();
-  ['soh','soc0','res','oat','cruise-kw','dep-alt','arr-alt','arr-dist'].forEach(id=>
+  ['soh','soc0','res','oat','cruise-kw','dep-alt','arr-alt','arr-dist','perf-adj'].forEach(id=>
     document.getElementById(id).addEventListener('input',()=>{saveState();update();}));
   ['dep-name','arr-name'].forEach(id=>
     document.getElementById(id).addEventListener('input',()=>saveState()));
