@@ -1095,7 +1095,8 @@ function applyImport(parsed){
     prevAlt=curAlt;
     return leg;
   });
-  state.meta.dirty=true;saveLocal();
+  state.meta = {...(state.meta||{id:null,name:'',dirty:false}), dirty:true};
+  saveLocal();
   window.velisPlan&&window.velisPlan.markDirty();
   renderWP();refreshEndurance();
   return true;

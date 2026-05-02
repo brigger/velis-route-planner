@@ -167,7 +167,14 @@
 
 <script>
 /* ═══ POH DATA ═══ */
-const NM_FT=6076.12, REF_ROC=600;
+const NM_FT=6076.12;     // feet per nautical mile
+const REF_ROC=600;       // reference ROC the POH per-1000-ft SOC values were calibrated to (100 sec / 1000 ft).
+                         // Climb SOC is scaled by REF_ROC / actualROC because climb time scales as 1/ROC.
+
+// SVG flight-profile dimensions. Single source of truth: drawSVG() destructures
+// these, and the SOC strip below the chart computes its bar x-positions from
+// PL / PR so it lines up with the chart's waypoint dots.
+const SVG_DIMS = {W:760, H:240, PL:52, PR:20, PT:28, PB:78};
 let NOM,ROC_ALT,ROC_ISA,ROC_DATA,PWR,SOH_PTS,SOC_CLIMB_1K,SOC_TAKEOFF,SOC_CRUISE;
 
 async function loadPOH(){
@@ -442,7 +449,7 @@ function update(){
   document.getElementById('seg-grid').innerHTML=sgHTML;
 
   // SOC strip \u2014 bars are positioned by cumulative distance to align horizontally
-  // with the flight profile's x-axis. Padding matches the SVG's PL/PR (52/20 of 760).
+  // with the flight profile's x-axis. Padding matches the SVG's PL/PR.
   const wpNames=[depLabel(),...legs.map((_,i)=>wpLabel(i)),wpLabel(legs.length)];
   const strip=document.getElementById('soc-strip');
   strip.innerHTML='';
@@ -451,8 +458,8 @@ function update(){
   const cumNm=[0]; let acc=0;
   legs.forEach(l=>{acc+=l.dist;cumNm.push(acc);});
   cumNm.push(acc+arrDist);
-  // SVG inner area = PL=52 / 688 / PR=20 of total 760 \u2192 6.842% .. 97.368%
-  const PAD_L=6.842, PAD_R=2.632, INNER=100-PAD_L-PAD_R;
+  // Mirror the SVG inner-area horizontal bounds in % of strip width.
+  const PAD_L=SVG_DIMS.PL/SVG_DIMS.W*100, PAD_R=SVG_DIMS.PR/SVG_DIMS.W*100, INNER=100-PAD_L-PAD_R;
   socs.forEach((pct,i)=>{
     const cp=Math.max(0,Math.min(100,pct)),fillH=Math.round(cp*0.6),resH=Math.round(resPct*100*0.6),col=socColor(cp);
     const xPct=totalNm>0?PAD_L+(cumNm[i]/totalNm)*INNER:PAD_L;
@@ -512,7 +519,7 @@ function update(){
 /* ═══ SVG ═══ */
 function drawSVG(depAlt,arrAlt,results){
   const svg=document.getElementById('svg');
-  const W=760,H=240,PL=52,PR=20,PT=28,PB=78;
+  const {W,H,PL,PR,PT,PB} = SVG_DIMS;
   const IW=W-PL-PR,IH=H-PT-PB;
   const totalDist=results.reduce((s,r)=>s+r.dist,0);
   const allAlts=[depAlt,...results.map(r=>r.wpAlt)];
@@ -607,31 +614,28 @@ function drawSVG(depAlt,arrAlt,results){
   svg.innerHTML=h;
 }
 
-/* ═══ STATE ═══ */
+/* ═══ STATE ═══
+   STATE_FIELDS maps state-key → DOM input id. Drives serialize / restore.
+   Add a new slider here and it round-trips through saved plans automatically. */
+const STATE_FIELDS = {
+  soh:'soh', soc0:'soc0', res:'res', oat:'oat', cruiseKw:'cruise-kw',
+  depAlt:'dep-alt', arrAlt:'arr-alt', arrDist:'arr-dist',
+  depName:'dep-name', arrName:'arr-name', perfAdj:'perf-adj',
+};
 function getFullState(){
-  return{soh:document.getElementById('soh').value,soc0:document.getElementById('soc0').value,
-    res:document.getElementById('res').value,oat:document.getElementById('oat').value,
-    cruiseKw:document.getElementById('cruise-kw').value,
-    depAlt:document.getElementById('dep-alt').value,arrAlt:document.getElementById('arr-alt').value,
-    arrDist:document.getElementById('arr-dist').value,
-    depName:document.getElementById('dep-name').value,
-    arrName:document.getElementById('arr-name').value,
-    perfAdj:document.getElementById('perf-adj').value,
-    approach:document.querySelector('input[name="approach"]:checked').value,
-    legs:JSON.parse(JSON.stringify(legs))};
+  const s={
+    approach:document.querySelector('input[name="approach"]:checked')?.value||'pattern',
+    legs:JSON.parse(JSON.stringify(legs)),
+  };
+  for(const [k,id] of Object.entries(STATE_FIELDS)) s[k]=document.getElementById(id).value;
+  return s;
+}
+function _applyInputFields(s){
+  for(const [k,id] of Object.entries(STATE_FIELDS))
+    if(s[k]!==undefined) document.getElementById(id).value=s[k];
 }
 function applyFullState(s){
-  if(s.soh!==undefined)document.getElementById('soh').value=s.soh;
-  if(s.soc0!==undefined)document.getElementById('soc0').value=s.soc0;
-  if(s.res!==undefined)document.getElementById('res').value=s.res;
-  if(s.oat!==undefined)document.getElementById('oat').value=s.oat;
-  if(s.cruiseKw!==undefined)document.getElementById('cruise-kw').value=s.cruiseKw;
-  if(s.depAlt!==undefined)document.getElementById('dep-alt').value=s.depAlt;
-  if(s.arrAlt!==undefined)document.getElementById('arr-alt').value=s.arrAlt;
-  if(s.arrDist!==undefined)document.getElementById('arr-dist').value=s.arrDist;
-  if(s.depName!==undefined)document.getElementById('dep-name').value=s.depName;
-  if(s.arrName!==undefined)document.getElementById('arr-name').value=s.arrName;
-  if(s.perfAdj!==undefined)document.getElementById('perf-adj').value=s.perfAdj;
+  _applyInputFields(s);
   if(s.approach)document.querySelector(`input[name="approach"][value="${s.approach}"]`).checked=true;
   if(s.legs&&Array.isArray(s.legs)&&s.legs.length>0) legs=s.legs.map(l=>({alt:l.alt,dist:l.dist,name:l.name||''}));
   renderLegs(); saveState(); update();
@@ -642,18 +646,17 @@ function loadState(){
   const savedKw=localStorage.getItem('velis_cruise_kw');
   if(savedKw!==null) document.getElementById('cruise-kw').value=savedKw;
   const raw=localStorage.getItem('velis_route_state');if(!raw)return;
-  try{const s=JSON.parse(raw);
-    ['soh','soc0','res','oat'].forEach(id=>{if(s[id]!==undefined)document.getElementById(id).value=s[id];});
-    if(s.cruiseKw!==undefined)document.getElementById('cruise-kw').value=s.cruiseKw;
-    else{const saved=localStorage.getItem('velis_cruise_kw');if(saved!==null)document.getElementById('cruise-kw').value=saved;}
-    if(s.depAlt!==undefined)document.getElementById('dep-alt').value=s.depAlt;
-    if(s.arrAlt!==undefined)document.getElementById('arr-alt').value=s.arrAlt;
-    if(s.arrDist!==undefined)document.getElementById('arr-dist').value=s.arrDist;
-    if(s.depName!==undefined)document.getElementById('dep-name').value=s.depName;
-    if(s.arrName!==undefined)document.getElementById('arr-name').value=s.arrName;
-    if(s.perfAdj!==undefined)document.getElementById('perf-adj').value=s.perfAdj;
+  try{
+    const s=JSON.parse(raw);
+    _applyInputFields(s);
+    if(s.cruiseKw===undefined && savedKw!==null) document.getElementById('cruise-kw').value=savedKw;
     if(s.approach)document.querySelector(`input[name="approach"][value="${s.approach}"]`).checked=true;
-    if(s.legs&&Array.isArray(s.legs)&&s.legs.length>0) legs=s.legs.map(l=>({alt:l.alt,dist:l.dist,name:l.name||''}));
+    if(s.legs&&Array.isArray(s.legs)&&s.legs.length>0){
+      // Clamp to the slider ranges in case localStorage was hand-edited or
+      // a saved plan drifts outside the limits the UI enforces.
+      const cl=(n,lo,hi,fb)=>{const v=+n;return isFinite(v)?Math.max(lo,Math.min(hi,v)):fb;};
+      legs=s.legs.map(l=>({alt:cl(l.alt,500,15000,3000),dist:cl(l.dist,2,120,20),name:String(l.name||'')}));
+    }
   }catch(e){}
 }
 
@@ -782,8 +785,16 @@ async function init(){
   await loadPOH();
   loadState();
   renderLegs();
+  // Slider drags fire one input event per pixel — coalesce saveState + update
+  // so each animation frame does one full recompute, not 60 in a row.
+  let _scheduled=false;
+  function scheduleUpdate(){
+    if(_scheduled) return;
+    _scheduled=true;
+    requestAnimationFrame(()=>{_scheduled=false;saveState();update();});
+  }
   ['soh','soc0','res','oat','cruise-kw','dep-alt','arr-alt','arr-dist','perf-adj'].forEach(id=>
-    document.getElementById(id).addEventListener('input',()=>{saveState();update();}));
+    document.getElementById(id).addEventListener('input',scheduleUpdate));
   ['dep-name','arr-name'].forEach(id=>
     document.getElementById(id).addEventListener('input',()=>saveState()));
   document.querySelectorAll('input[name="approach"]').forEach(r=>r.addEventListener('change',()=>{saveState();update();}));

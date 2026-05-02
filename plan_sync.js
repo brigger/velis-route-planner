@@ -286,7 +286,15 @@ window.velisWp = (function(){
     const s=parseInt(localStorage.getItem(STIME_KEY)||'0',10);
     return m>s;
   }
-  function markBundleDirty(){safeSetItem(MTIME_KEY,String(Date.now()));repaint();}
+  // markBundleDirty is hammered on every keystroke (slider drags fire it once
+  // per pixel). Coalesce to one write per animation frame — same UX, way fewer
+  // localStorage writes and fewer 'storage' events bouncing to other tabs.
+  let _dirtyScheduled=false;
+  function markBundleDirty(){
+    if(_dirtyScheduled) return;
+    _dirtyScheduled=true;
+    requestAnimationFrame(()=>{_dirtyScheduled=false;safeSetItem(MTIME_KEY,String(Date.now()));repaint();});
+  }
   function markBundleSaved(){safeSetItem(STIME_KEY,String(Date.now()));repaint();}
 
   function currentMeta(){

@@ -259,7 +259,14 @@ def current_user():
     )
     row = cur.fetchone()
     if row:
-        cur.execute("UPDATE sessions SET last_seen_at = NOW() WHERE token = %s", (tok,))
+        # Throttled — every authed request would otherwise write to sessions.
+        # iPad pilots dragging sliders trigger plan_sync polls + plan saves
+        # multiple times a second; one write per minute is plenty for analytics.
+        cur.execute(
+            "UPDATE sessions SET last_seen_at = NOW() WHERE token = %s "
+            "AND (last_seen_at IS NULL OR last_seen_at < UTC_TIMESTAMP() - INTERVAL 60 SECOND)",
+            (tok,),
+        )
     cur.close(); c.close()
     return row or None
 
