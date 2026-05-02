@@ -39,6 +39,12 @@ body{margin:0;background:var(--bg-page);font-family:var(--font);color:var(--tx);
 .sync-btn{display:flex;align-items:center;gap:6px;border:1px solid #F2DDA0 !important;background:#FFF8E7 !important;color:#7A5700 !important;}
 .sync-btn:hover{border-color:#B78500 !important;background:#FFF1CB !important;}
 .sync-btn .sync-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#B78500;animation:sync-pulse 1.6s ease-in-out infinite;}
+.sync-btn.in-sync{border-color:#C0DD97 !important;background:#EAF3DE !important;color:#27500A !important;}
+.sync-btn.in-sync:hover{border-color:#3B6D11 !important;background:#DCEBC8 !important;}
+.sync-btn.in-sync .sync-dot{background:#3B6D11;animation:none;}
+.sync-caption{font-size:11px;color:var(--tx2);font-style:italic;line-height:1.2;}
+.sync-caption.in-sync{color:#27500A;}
+.sync-caption.out-of-sync{color:#7A5700;}
 @keyframes sync-pulse{0%,100%{opacity:0.5;}50%{opacity:1;}}
 
 /* ═══ IMPORT MODAL (Sky Demon paste / screenshot) — reuses plan_sync.js's .plan-modal shell ═══ */
@@ -232,11 +238,12 @@ textarea{border:none;background:transparent;outline:none;padding:0;margin:0;resi
     </div>
     <span class="sep">|</span>
     <button id="btn-import">Import…</button>
-    <button id="btn-sync-rp" class="sync-btn" hidden type="button" title="NAV Plan is out of sync with the Route Planner — click to update altitudes and distances">
+    <button id="btn-sync-rp" class="sync-btn" hidden type="button" title="Pulls altitudes and distances from the Route Planner. Names, frequencies and comments are preserved when the route shape matches.">
       <span class="sync-dot"></span>
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
       Sync
     </button>
+    <span class="sync-caption" id="sync-caption" hidden></span>
     <button id="btn-clear">Clear form</button>
     <button id="btn-print" class="primary">Print</button>
     <span class="grow"></span>
@@ -893,8 +900,9 @@ document.getElementById('btn-clear').addEventListener('click',()=>{
 document.getElementById('btn-print').addEventListener('click',()=>window.print());
 
 document.getElementById('btn-sync-rp').addEventListener('click',()=>{
-  const parsed=rpSyncDiff();
-  if(!parsed){refreshSyncIndicator();return;}
+  const {status,parsed}=rpSyncStatus();
+  if(status==='no-rp'){refreshSyncIndicator();return;}
+  if(status==='in-sync'){refreshSyncIndicator();return;} // already in sync — nothing to do
   if(applyRpImport(parsed)) refreshSyncIndicator();
 });
 
@@ -1144,27 +1152,44 @@ function rpStateToParsed(s){
   });
   return rows;
 }
-// Detect divergence between NAV Plan and Route Planner. Returns the parsed
-// RP rows when the sync button should appear, or null when in-sync (or RP
-// has no data — nothing to sync from).
-function rpSyncDiff(){
+// Compare NAV Plan with Route Planner. Returns:
+//   {status:'no-rp'} — Route Planner has no usable route yet
+//   {status:'in-sync', parsed} — names + alt + dist all match
+//   {status:'out-of-sync', parsed} — anything differs
+function rpSyncStatus(){
   const s=readRoutePlannerState();
   const parsed=rpStateToParsed(s);
-  if(!parsed||parsed.length<2) return null;
-  if(!rpRouteMatchesCurrent(parsed)) return parsed;
+  if(!parsed||parsed.length<2) return {status:'no-rp'};
+  if(!rpRouteMatchesCurrent(parsed)) return {status:'out-of-sync',parsed};
   let prevAlt=null;
   for(let i=0;i<parsed.length;i++){
     const {leg,curAlt}=wpFromSkyDemon(parsed[i],prevAlt);
-    if(String(state.route[i].alt||'').trim()!==String(leg.alt||'').trim()) return parsed;
-    if(String(state.route[i].dist||'').trim()!==String(leg.dist||'').trim()) return parsed;
+    if(String(state.route[i].alt||'').trim()!==String(leg.alt||'').trim()) return {status:'out-of-sync',parsed};
+    if(String(state.route[i].dist||'').trim()!==String(leg.dist||'').trim()) return {status:'out-of-sync',parsed};
     prevAlt=curAlt;
   }
-  return null;
+  return {status:'in-sync',parsed};
 }
 function refreshSyncIndicator(){
   const btn=document.getElementById('btn-sync-rp');
+  const cap=document.getElementById('sync-caption');
   if(!btn) return;
-  btn.hidden=!rpSyncDiff();
+  const {status}=rpSyncStatus();
+  if(status==='no-rp'){
+    btn.hidden=true;
+    if(cap){cap.hidden=true;cap.classList.remove('in-sync','out-of-sync');}
+    return;
+  }
+  btn.hidden=false;
+  btn.classList.toggle('in-sync',status==='in-sync');
+  if(cap){
+    cap.hidden=false;
+    cap.classList.toggle('in-sync',status==='in-sync');
+    cap.classList.toggle('out-of-sync',status==='out-of-sync');
+    cap.textContent = status==='in-sync'
+      ? 'In sync with Route Planner'
+      : 'Out of sync — click to pull altitudes and distances';
+  }
 }
 
 function setImportMode(mode){
