@@ -82,6 +82,15 @@ def conn():
 
 
 def bootstrap():
+    # Runs once per gunicorn worker at import time. Up to 60s of retries
+    # covers the cold-start case where MariaDB hasn't finished its own
+    # init yet. schema.sql uses CREATE TABLE IF NOT EXISTS, so multiple
+    # workers running this concurrently is harmless.
+    #
+    # Note: splitting on ";" works for the current schema (plain CREATE
+    # TABLE statements). If a stored procedure or trigger is ever added
+    # — they contain embedded semicolons — switch this loop to
+    # `cur.execute(sql, multi=True)` and consume the iterator.
     sql = pathlib.Path(__file__).with_name("schema.sql").read_text()
     last_err = None
     for _ in range(30):

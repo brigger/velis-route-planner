@@ -460,7 +460,10 @@ const DEFAULT_STATE=()=>({
   meta:{id:null,name:'',dirty:false}
 });
 
-// totalsRemark used to be a single string — promote to {u,l}
+// totalsRemark used to be a single string — promote to {u,l}.
+// Called from loadState() below; safe today because both are `function`
+// declarations (hoisted), but if either is ever switched to a const arrow
+// function, keep this declared above loadState.
 function normTotalsRemark(v){
   if(!v) return {u:'',l:''};
   if(typeof v==='string') return {u:v,l:''};
@@ -1335,7 +1338,7 @@ window.addEventListener('pageshow',renderToLdg);
 document.addEventListener('velis:after-load',renderToLdg);
 </script>
 <script src="takeoff_calc.js" defer></script>
-<script src="plan_sync.js?v=5" defer></script>
+<script src="plan_sync.js?v=6" defer></script>
 
 </body>
 </html>

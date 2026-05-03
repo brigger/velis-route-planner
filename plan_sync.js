@@ -28,6 +28,8 @@ window.velisWp = (function(){
     return isFinite(n) ? Math.round(n) : null;
   }
   function parseDist(v){
+    // Floor of 1 nm, not 2 — Sky Demon legs can be sub-2 nm. Callers that
+    // need to fit the Route Planner's 2–120 nm slider clamp on top of this.
     const n = parseFloat(dropQuote(v));
     return isFinite(n) ? Math.max(1, Math.round(n)) : null;
   }

@@ -780,6 +780,16 @@ function importFromNavPlan(){
   update();
 }
 
+// Re-read state after navigation or after plan_sync.js loads a bundle in-place.
+// Bound at module scope so a (hypothetical) double init() can't double-bind.
+// Guard against pageshow firing before POH is loaded — NOM is set in loadPOH.
+function _refreshFromState(){
+  if(typeof NOM==='undefined') return;
+  loadState();renderLegs();update();
+}
+window.addEventListener('pageshow',_refreshFromState);
+document.addEventListener('velis:after-load',_refreshFromState);
+
 /* ═══ INIT ═══ */
 async function init(){
   await loadPOH();
@@ -801,10 +811,6 @@ async function init(){
   document.getElementById('btn-import-navplan').addEventListener('click',importFromNavPlan);
   document.getElementById('btn-optimize-alt').addEventListener('click',optimizeAltitudes);
 
-  // Re-read state after navigation or after plan_sync.js loads a bundle in-place
-  window.addEventListener('pageshow',()=>{loadState();renderLegs();update();});
-  document.addEventListener('velis:after-load',()=>{loadState();renderLegs();update();});
-
   // First-ever visit: persist the on-screen defaults so other pages (NAV Plan
   // import) can read them without requiring the user to nudge a slider first.
   // Written directly — no markDirty, so a fresh visit doesn't look unsaved.
@@ -816,6 +822,6 @@ async function init(){
 }
 init();
 </script>
-<script src="plan_sync.js?v=5" defer></script>
+<script src="plan_sync.js?v=6" defer></script>
 </body>
 </html>
