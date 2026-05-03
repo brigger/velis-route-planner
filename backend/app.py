@@ -12,6 +12,9 @@ from email.mime.text import MIMEText
 from functools import wraps
 
 from flask import Flask, abort, jsonify, make_response, request
+from werkzeug.middleware.proxy_fix import ProxyFix
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 import mysql.connector
 from mysql.connector import errorcode
 
@@ -75,6 +78,42 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 log = logging.getLogger("velis-backend")
 
 app = Flask(__name__)
+
+# Behind nginx (`proxy_set_header X-Forwarded-For ...`), Flask sees the proxy
+# IP unless we trust the forwarded headers. ProxyFix rewrites request.remote_addr
+# to the leftmost X-Forwarded-For entry (the actual client) so rate-limit keys
+# and audit logs identify the right person.
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+
+
+def _limit_key():
+    """Per-user when authenticated (more accurate than per-IP NAT/IPv6 prefix);
+    fall back to client IP for unauthenticated endpoints."""
+    tok = request.cookies.get(SESSION_COOKIE_NAME)
+    if tok:
+        return f"user:{tok}"  # 32-byte session token, used only as a key
+    return f"ip:{get_remote_address()}"
+
+
+# Rate limits are per gunicorn worker (in-memory storage). With 2 workers the
+# effective rate is ~2× the number stated. Override via env if you need to
+# tighten further (e.g. RATELIMIT_IMPORT="5/hour" if Anthropic spend spikes).
+limiter = Limiter(
+    app=app,
+    key_func=_limit_key,
+    default_limits=[],  # opt-in per route
+    storage_uri="memory://",
+    headers_enabled=True,
+)
+
+
+@app.errorhandler(429)
+def _ratelimited(err):
+    # err.description carries the limit string (e.g. "5 per 1 hour"); surface a
+    # friendly version to the user so the frontend can render it as-is.
+    retry_after = getattr(err, "retry_after", None)
+    msg = "Too many requests — please slow down and try again in a few minutes."
+    return jsonify({"error": msg, "retry_after": retry_after}), 429
 
 
 def conn():
@@ -318,6 +357,7 @@ def set_session_cookie(resp, token):
 
 # ── auth routes ────────────────────────────────────────────────────────
 @app.post("/api/auth/register")
+@limiter.limit(os.getenv("RATELIMIT_REGISTER", "5/hour"))
 def auth_register():
     data = request.get_json(force=True, silent=True) or {}
     ok_e, email = valid_email(data.get("email"))
@@ -374,6 +414,7 @@ def auth_register():
 
 
 @app.post("/api/auth/login")
+@limiter.limit(os.getenv("RATELIMIT_LOGIN", "10/hour"))
 def auth_login():
     data = request.get_json(force=True, silent=True) or {}
     ok_e, email = valid_email(data.get("email"))
@@ -490,6 +531,7 @@ def auth_logout():
 
 # ── contact form ───────────────────────────────────────────────────────
 @app.post("/api/contact")
+@limiter.limit(os.getenv("RATELIMIT_CONTACT", "3/hour"))
 def contact():
     data = request.get_json(force=True, silent=True) or {}
     ok_e, email = valid_email(data.get("email"))
@@ -741,6 +783,7 @@ def _strip_code_fence(text):
 
 
 @app.post("/api/import/skydemon-image")
+@limiter.limit(os.getenv("RATELIMIT_IMPORT", "20/hour;200/day"))
 @require_user
 def import_skydemon_image():
     if not ANTHROPIC_API_KEY:
