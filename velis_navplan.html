@@ -36,17 +36,6 @@ body{margin:0;background:var(--bg-page);font-family:var(--font);color:var(--tx);
 .toolbar button:hover{border-color:var(--tx2);}
 .toolbar button.primary:hover{background:#124a82;}
 .toolbar .sep{color:var(--bd2);}
-.sync-btn{display:flex;align-items:center;gap:6px;border:1px solid #F2DDA0 !important;background:#FFF8E7 !important;color:#7A5700 !important;}
-.sync-btn:hover{border-color:#B78500 !important;background:#FFF1CB !important;}
-.sync-btn .sync-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#B78500;animation:sync-pulse 1.6s ease-in-out infinite;}
-.sync-btn.in-sync{border-color:#C0DD97 !important;background:#EAF3DE !important;color:#27500A !important;}
-.sync-btn.in-sync:hover{border-color:#3B6D11 !important;background:#DCEBC8 !important;}
-.sync-btn.in-sync .sync-dot{background:#3B6D11;animation:none;}
-.sync-caption{font-size:11px;color:var(--tx2);font-style:italic;line-height:1.2;}
-.sync-caption.in-sync{color:#27500A;}
-.sync-caption.out-of-sync{color:#7A5700;}
-@keyframes sync-pulse{0%,100%{opacity:0.5;}50%{opacity:1;}}
-
 /* ═══ IMPORT MODAL (Sky Demon paste / screenshot) — reuses plan_sync.js's .plan-modal shell ═══ */
 .import-ta{width:100%;min-height:280px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;line-height:1.45;border:1px solid var(--bd2);border-radius:6px;padding:8px 10px;color:var(--tx);background:#fafaf7;outline:none;resize:vertical;box-sizing:border-box;}
 .import-ta:focus{border-color:var(--blue);}
@@ -238,12 +227,6 @@ textarea{border:none;background:transparent;outline:none;padding:0;margin:0;resi
     </div>
     <span class="sep">|</span>
     <button id="btn-import">Import…</button>
-    <button id="btn-sync-rp" class="sync-btn" hidden type="button" title="Pulls altitudes and distances from the Route Planner. Names, frequencies and comments are preserved when the route shape matches.">
-      <span class="sync-dot"></span>
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-      Sync
-    </button>
-    <span class="sync-caption" id="sync-caption" hidden></span>
     <button id="btn-clear">Clear form</button>
     <button id="btn-print" class="primary">Print</button>
     <span class="grow"></span>
@@ -499,7 +482,24 @@ function loadState(){
       meta:{...d.meta,...(s.meta||{})}};
   }catch(e){return DEFAULT_STATE();}
 }
-function saveLocal(){localStorage.setItem(STATE_KEY,JSON.stringify(state));}
+function saveLocal(){
+  // plan_sync.js writes the plan id/name into state.meta via persistMeta(),
+  // but our in-memory `state.meta` was loaded at page boot and is stale by
+  // the time we save. Read the persisted meta back so we don't clobber the
+  // id and force Save into Save-as on the next save.
+  try{
+    const raw=localStorage.getItem(STATE_KEY);
+    if(raw){
+      const p=JSON.parse(raw);
+      if(p&&p.meta){
+        if(!state.meta) state.meta={id:null,name:'',dirty:false};
+        if(p.meta.id!=null) state.meta.id=p.meta.id;
+        if(p.meta.name)     state.meta.name=p.meta.name;
+      }
+    }
+  }catch(e){}
+  localStorage.setItem(STATE_KEY,JSON.stringify(state));
+}
 function saveState(){if(!state.meta)state.meta={id:null,name:'',dirty:false};state.meta.dirty=true;saveLocal();window.velisPlan&&window.velisPlan.markDirty();}
 
 /* ─── Parsers / formatters ─── */
@@ -601,7 +601,6 @@ function renderWP(){
   const tb=document.getElementById('wp-body');
   tb.innerHTML=buildRouteHTML()+totalsRow()+altnRow();
   wireRowInputs();
-  if(typeof refreshSyncIndicator==='function') refreshSyncIndicator();
 }
 
 function wireRowInputs(){
@@ -613,7 +612,6 @@ function wireRowInputs(){
         state.route[i][inp.dataset.f]=inp.value;
         saveState();
         if(inp.dataset.f==='dist'||inp.dataset.f==='eet') refreshTotals();
-        if(['ident','wp','alt','dist'].includes(inp.dataset.f)) refreshSyncIndicator();
       });
     });
   });
@@ -902,20 +900,6 @@ document.getElementById('btn-clear').addEventListener('click',()=>{
 });
 document.getElementById('btn-print').addEventListener('click',()=>window.print());
 
-document.getElementById('btn-sync-rp').addEventListener('click',()=>{
-  const {status,parsed}=rpSyncStatus();
-  if(status==='no-rp'){refreshSyncIndicator();return;}
-  if(status==='in-sync'){refreshSyncIndicator();return;} // already in sync — nothing to do
-  if(applyRpImport(parsed)) refreshSyncIndicator();
-});
-
-// Refresh whenever the user comes back to this tab — Route Planner may have
-// been edited on another page.
-window.addEventListener('pageshow',refreshSyncIndicator);
-window.addEventListener('storage',e=>{
-  if(e.key==='velis_route_state') refreshSyncIndicator();
-});
-
 /* ═══ View toggle (NAV Plan / Endurance) ═══ */
 const VIEW_KEY='velis_navplan_view';
 const sheetEl=document.getElementById('sheet');
@@ -941,6 +925,33 @@ document.querySelectorAll('#view-seg button').forEach(btn=>{
 
 // Fired just before plan_sync.js snapshots localStorage into the bundle.
 document.addEventListener('velis:before-save',()=>{saveLocal();});
+
+// Fired after a successful save — offer to push the freshly-saved NAV route
+// out to the Route Planner (only when the two pages have actually diverged).
+document.addEventListener('velis:after-save',()=>{
+  const _dbg=window.velisSyncDbg||function(m){try{console.log('[sync]',m);}catch(e){}};
+  _dbg('NAV after-save fired (routeLen='+(state&&state.route&&state.route.length)+', rp='+(!!localStorage.getItem('velis_route_state'))+', velisPlan='+(!!window.velisPlan)+')');
+  if(!window.velisPlan||!window.velisPlan.runAutoSync){_dbg('NAV: velisPlan.runAutoSync MISSING');return;}
+  window.velisPlan.runAutoSync({
+    isInSync: navIsInSyncWithRp,
+    onConfirm: pushNavToRoutePlanner,
+    title: 'Cleared to sync?',
+    bodyHtml: 'Push these waypoints to the <b>Route Planner</b> so its energy numbers reflect what you just saved?',
+    bodyHtmlOnMismatch: 'The Route Planner currently holds a different route. Syncing will <b>replace</b> it with this one — that’s safe; the planner only stores altitudes, distances and slider settings.'
+  });
+});
+// plan_sync.js is `defer` and runs after this inline script — register the
+// manual-sync item once the DOM is ready (defer scripts complete before
+// DOMContentLoaded fires).
+window.addEventListener('DOMContentLoaded',()=>{
+  if(window.velisPlan&&window.velisPlan.registerManualSync){
+    window.velisPlan.registerManualSync({
+      label: 'Sync to Route Planner now',
+      fn: pushNavToRoutePlanner,
+      available: ()=> Array.isArray(state&&state.route) && state.route.length>=3
+    });
+  }
+});
 
 // Fired after plan_sync.js writes the loaded bundle's localStorage keys.
 document.addEventListener('velis:after-load',()=>{
@@ -1041,7 +1052,15 @@ function wpFromSkyDemon(w,prevAlt){
 
 // Reconstruct the canonical name a NAV-Plan row would expose to imports —
 // "ICAO Name" when both ident + wp are filled, otherwise whichever is set.
-function navRowName(r){ return window.velisWp.joinName(r.ident, r.wp); }
+// The FREQ column's lower input is data-f="ident", so pilots often type
+// a frequency (e.g. "128.475") in there. Treat that as a non-ident — use
+// only r.wp — so the name we expose doesn't become "128.475 LSPG".
+function navRowName(r){
+  const id=(r&&r.ident||'').trim();
+  const wp=(r&&r.wp||'').trim();
+  if(/\d+\.\d+/.test(id)) return wp;
+  return window.velisWp.joinName(id, wp);
+}
 // Same shape + same names? Then importing from Route Planner should only
 // refresh the cells that the planner actually owns (alt + dist + altTrend),
 // preserving frequencies, comments, ATO, etc. that the pilot has typed in.
@@ -1075,10 +1094,6 @@ function applyRpImport(parsed){
       saveLocal();
       window.velisPlan&&window.velisPlan.markDirty();
       renderWP();refreshEndurance();
-    } else {
-      // Already in sync — make sure the indicator reflects that without
-      // dirtying the bundle.
-      refreshSyncIndicator();
     }
     return true;
   }
@@ -1146,21 +1161,24 @@ function readRoutePlannerState(){
 function rpStateToParsed(s){
   if(!s||!Array.isArray(s.legs)||s.legs.length===0) return null;
   const rows=[];
-  // Departure: alt comes via elev (no leg precedes DEP, so data is null)
+  // Departure: alt comes via elev (no leg precedes DEP, so data is null).
+  // Names are passed through verbatim — substituting placeholders like
+  // "Departure"/"Leg 2" would break the equality check against navRowName(),
+  // which can legitimately return '' for an unnamed waypoint.
   rows.push({
-    name:s.depName||'Departure',
+    name:s.depName||'',
     elev:s.depAlt?String(s.depAlt)+' ft':'',
     data:null
   });
-  s.legs.forEach((leg,i)=>{
+  s.legs.forEach((leg)=>{
     rows.push({
-      name:leg.name||('Leg '+(i+1)),
+      name:leg.name||'',
       elev:'',
       data:{msa:'',level:String(leg.alt||''),tas:'',trk:'',wind:'',hdg:'',gs:'',dist:String(leg.dist||''),eet:''}
     });
   });
   rows.push({
-    name:s.arrName||'Destination',
+    name:s.arrName||'',
     elev:'',
     data:{msa:'',level:String(s.arrAlt||''),tas:'',trk:'',wind:'',hdg:'',gs:'',dist:String(s.arrDist||''),eet:''}
   });
@@ -1175,37 +1193,83 @@ function rpSyncStatus(){
   const parsed=rpStateToParsed(s);
   if(!parsed||parsed.length<2) return {status:'no-rp'};
   if(!rpRouteMatchesCurrent(parsed)) return {status:'out-of-sync',parsed};
+  // Numeric comparison — NAV stores user-typed strings ("4,000") while RP
+  // stores integers (4000), so a textual `!==` falsely reports out-of-sync.
+  // Null on either side counts as in-sync for that field: an empty NAV cell
+  // means the pilot hasn't specified anything, so RP's slider default is fine.
+  // We also clamp NAV's value through RP's slider range — pushNavToRoutePlanner
+  // does that on the way in, so a NAV dist of 1 (below RP's 2 nm min) shows
+  // up as 2 in RP, and a raw `!==` would loop forever in Always mode.
+  const {parseAlt,parseDist}=window.velisWp;
+  const cl=(n,lo,hi)=>Math.max(lo,Math.min(hi,n));
+  const last=parsed.length-1;
   let prevAlt=null;
   for(let i=0;i<parsed.length;i++){
     const {leg,curAlt}=wpFromSkyDemon(parsed[i],prevAlt);
-    if(String(state.route[i].alt||'').trim()!==String(leg.alt||'').trim()) return {status:'out-of-sync',parsed};
-    if(String(state.route[i].dist||'').trim()!==String(leg.dist||'').trim()) return {status:'out-of-sync',parsed};
+    const navAlt=parseAlt(state.route[i].alt), rpAlt=parseAlt(leg.alt);
+    const isEnd=(i===0||i===last);
+    const altLo=isEnd?0:500, altHi=isEnd?8000:15000;
+    if(navAlt!=null && rpAlt!=null && cl(navAlt,altLo,altHi)!==rpAlt) return {status:'out-of-sync',parsed};
+    if(i>0){
+      const navDist=parseDist(state.route[i].dist), rpDist=parseDist(leg.dist);
+      if(navDist!=null && rpDist!=null && cl(navDist,1,120)!==rpDist) return {status:'out-of-sync',parsed};
+    }
     prevAlt=curAlt;
   }
   return {status:'in-sync',parsed};
 }
-function refreshSyncIndicator(){
-  const btn=document.getElementById('btn-sync-rp');
-  const cap=document.getElementById('sync-caption');
-  if(!btn) return;
-  const {status}=rpSyncStatus();
-  if(status==='no-rp'){
-    btn.hidden=true;
-    if(cap){cap.hidden=true;cap.classList.remove('in-sync','out-of-sync');}
-    return;
-  }
-  btn.hidden=false;
-  btn.classList.toggle('in-sync',status==='in-sync');
-  if(cap){
-    cap.hidden=false;
-    cap.classList.toggle('in-sync',status==='in-sync');
-    cap.classList.toggle('out-of-sync',status==='out-of-sync');
-    cap.textContent = status==='in-sync'
-      ? 'In sync with Route Planner'
-      : 'Out of sync — click to pull altitudes and distances';
-  }
-}
 
+/* ═══ NAV → Route Planner push (after save / manual sync) ═══════════════
+   The Route Planner stores velis_route_state as
+     {approach, legs:[{alt,dist,name}], soh, soc0, res, oat, cruiseKw,
+      depAlt, arrAlt, arrDist, depName, arrName, perfAdj}
+   pushNavToRoutePlanner() writes the route-shape fields from NAV's current
+   state without touching the planner's slider settings. */
+function pushNavToRoutePlanner(){
+  saveLocal();
+  const route=(state&&state.route)||[];
+  if(route.length<3) return false;            // RP needs at least 1 intermediate leg
+  const parseAlt=window.velisWp.parseAlt;
+  const parseDist=window.velisWp.parseDist;
+  const cl=(n,lo,hi,fb)=>{const v=+n;return isFinite(v)?Math.max(lo,Math.min(hi,v)):fb;};
+  let rp={};
+  try{const raw=localStorage.getItem('velis_route_state'); if(raw) rp=JSON.parse(raw)||{};}catch(e){rp={};}
+  const dep=route[0], arr=route[route.length-1];
+  const depAlt=parseAlt(dep.alt), arrAlt=parseAlt(arr.alt), arrDist=parseDist(arr.dist);
+  rp.depName=navRowName(dep);
+  rp.arrName=navRowName(arr);
+  if(depAlt!=null) rp.depAlt=cl(depAlt,0,8000,rp.depAlt!=null?+rp.depAlt:0);
+  if(arrAlt!=null) rp.arrAlt=cl(arrAlt,0,8000,rp.arrAlt!=null?+rp.arrAlt:0);
+  if(arrDist!=null) rp.arrDist=cl(arrDist,1,120,rp.arrDist!=null?+rp.arrDist:20);
+  const legs=[];
+  for(let i=1;i<route.length-1;i++){
+    const r=route[i];
+    const a=parseAlt(r.alt), d=parseDist(r.dist);
+    legs.push({
+      alt: a!=null ? cl(a,500,15000,3000) : 3000,
+      dist: d!=null ? cl(d,1,120,20) : 20,
+      name: navRowName(r)
+    });
+  }
+  rp.legs=legs;
+  localStorage.setItem('velis_route_state',JSON.stringify(rp));
+  window.velisPlan&&window.velisPlan.markDirty();
+  return true;
+}
+// Returns {inSync} or {inSync:false, mismatch:bool}.
+// 'mismatch' means route shape (waypoint names / count) differs — pushing will
+// replace RP's route. That's safe (RP has no pilot-only fields) but we use it
+// to soften the popup wording so the user knows what they're agreeing to.
+function navIsInSyncWithRp(){
+  if(!state||!Array.isArray(state.route)||state.route.length<3) return {inSync:true};
+  const rpRaw=localStorage.getItem('velis_route_state');
+  if(!rpRaw) return {inSync:true};            // first-time user: don't pester
+  const st=rpSyncStatus();
+  if(st.status==='no-rp') return {inSync:true};
+  if(st.status==='in-sync') return {inSync:true};
+  const shapeOk = !!(st.parsed && rpRouteMatchesCurrent(st.parsed));
+  return {inSync:false, mismatch:!shapeOk};
+}
 function setImportMode(mode){
   importMode=mode;
   document.querySelectorAll('[data-import-mode]').forEach(b=>{
@@ -1338,7 +1402,7 @@ window.addEventListener('pageshow',renderToLdg);
 document.addEventListener('velis:after-load',renderToLdg);
 </script>
 <script src="takeoff_calc.js" defer></script>
-<script src="plan_sync.js?v=6" defer></script>
+<script src="plan_sync.js?v=17" defer></script>
 
 </body>
 </html>

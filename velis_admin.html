@@ -47,6 +47,9 @@ h3{font-size:14px;font-weight:700;margin:0 0 12px;letter-spacing:-0.02em;display
 .hint{font-size:11.5px;color:var(--tx2);font-style:italic;}
 .empty{font-size:13px;color:var(--tx2);text-align:center;padding:20px;font-style:italic;}
 .err{font-size:13px;color:var(--red);background:#FCEBEB;border:0.5px solid #F7C1C1;border-radius:var(--rad-md);padding:10px 14px;}
+.tbl .del-btn{border:none;background:transparent;color:#B08888;cursor:pointer;font-size:16px;line-height:1;padding:4px 8px;border-radius:4px;}
+.tbl .del-btn:hover{color:#791F1F;background:#FCEBEB;}
+.tbl td.action{text-align:right;width:40px;padding:4px 8px;}
 .access-deny{text-align:center;padding:40px 20px;}
 .access-deny h3{justify-content:center;font-size:16px;}
 .access-deny p{font-size:13px;color:var(--tx2);margin:8px 0;}
@@ -108,9 +111,9 @@ h3{font-size:14px;font-weight:700;margin:0 0 12px;letter-spacing:-0.02em;display
       <div style="overflow-x:auto;">
         <table class="tbl" id="plans-tbl">
           <thead><tr>
-            <th>Plan name</th><th>Owner</th><th>Email</th><th>Updated</th>
+            <th>Plan name</th><th>Owner</th><th>Email</th><th>Updated</th><th></th>
           </tr></thead>
-          <tbody id="plans-body"><tr><td colspan="4" class="empty">Loading…</td></tr></tbody>
+          <tbody id="plans-body"><tr><td colspan="5" class="empty">Loading…</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -149,8 +152,8 @@ h3{font-size:14px;font-weight:700;margin:0 0 12px;letter-spacing:-0.02em;display
     return (Date.now()-d.getTime())/86400000;
   }
 
-  async function api(path){
-    const r=await fetch(API_BASE+path,{credentials:'include',headers:{'Content-Type':'application/json'}});
+  async function api(path, opts={}){
+    const r=await fetch(API_BASE+path,{credentials:'include',headers:{'Content-Type':'application/json'},...opts});
     if(!r.ok){
       const e=new Error(r.status+' '+r.statusText); e.status=r.status;
       throw e;
@@ -198,7 +201,7 @@ h3{font-size:14px;font-weight:700;margin:0 0 12px;letter-spacing:-0.02em;display
       bar.hidden=true;
     }
     if(!list.length){
-      body.innerHTML=`<tr><td colspan="4" class="empty">${filterUserId!=null?'No plans for this user.':'No saved plans yet.'}</td></tr>`;
+      body.innerHTML=`<tr><td colspan="5" class="empty">${filterUserId!=null?'No plans for this user.':'No saved plans yet.'}</td></tr>`;
       return;
     }
     body.innerHTML=list.map(p=>{
@@ -208,6 +211,7 @@ h3{font-size:14px;font-weight:700;margin:0 0 12px;letter-spacing:-0.02em;display
         <td>${esc(full)}</td>
         <td class="muted">${esc(p.user_email)}</td>
         <td class="muted">${esc(fmtDate(p.updated_at))}</td>
+        <td class="action"><button type="button" class="del-btn" data-del="${p.id}" title="Delete this plan">×</button></td>
       </tr>`;
     }).join('');
   }
@@ -266,7 +270,28 @@ h3{font-size:14px;font-weight:700;margin:0 0 12px;letter-spacing:-0.02em;display
   document.getElementById('plan-filter-clear').addEventListener('click',()=>{
     filterUserId=null; renderUsers(); renderPlans();
   });
-  document.getElementById('plans-body').addEventListener('click',ev=>{
+  document.getElementById('plans-body').addEventListener('click',async ev=>{
+    const delBtn=ev.target.closest('[data-del]');
+    if(delBtn){
+      ev.stopPropagation();
+      const pid=+delBtn.dataset.del;
+      const plan=plans.find(p=>p.id===pid);
+      const label=plan ? `"${plan.name}" (${plan.user_email})` : `plan #${pid}`;
+      if(!confirm(`Permanently delete ${label}? This cannot be undone.`)) return;
+      delBtn.disabled=true;
+      try{
+        await api(`/admin/plans/${pid}`,{method:'DELETE'});
+        plans=plans.filter(p=>p.id!==pid);
+        // Refresh per-user plan_count too, so the Users table stays accurate.
+        const u=users.find(x=>x.id===(plan&&plan.user_id));
+        if(u && typeof u.plan_count==='number' && u.plan_count>0) u.plan_count-=1;
+        renderPlans(); renderUsers(); updateStats();
+      }catch(e){
+        alert('Delete failed: '+e.message);
+        delBtn.disabled=false;
+      }
+      return;
+    }
     const tr=ev.target.closest('tr[data-uid]');
     if(!tr) return;
     const uid=+tr.dataset.uid;
@@ -277,6 +302,6 @@ h3{font-size:14px;font-weight:700;margin:0 0 12px;letter-spacing:-0.02em;display
   load();
 })();
 </script>
-<script src="plan_sync.js?v=6" defer></script>
+<script src="plan_sync.js?v=17" defer></script>
 </body>
 </html>

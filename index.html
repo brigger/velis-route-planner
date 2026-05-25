@@ -31,6 +31,14 @@
   .sr{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
   .sr label{font-size:12px;color:var(--tx2);min-width:200px;font-weight:500;}
   .sv{font-size:12px;font-weight:600;color:var(--tx);min-width:72px;text-align:right;}
+  /* Altitude slider with clickable 1000-ft tick row below the track. */
+  .alt-wrap{flex:1;display:flex;flex-direction:column;min-width:0;}
+  .alt-wrap input[type=range]{flex:initial;width:100%;}
+  .alt-ticks{position:relative;height:14px;margin:1px 9px 0;}
+  .alt-ticks button{position:absolute;top:0;transform:translateX(-50%);background:transparent;border:none;padding:0 3px;font:600 9px var(--font);color:var(--tx3,var(--tx2));cursor:pointer;display:flex;flex-direction:column;align-items:center;line-height:1;}
+  .alt-ticks button::before{content:'';display:block;width:1px;height:3px;background:var(--bd2);margin-bottom:2px;}
+  .alt-ticks button:hover{color:var(--blue);}
+  .alt-ticks button:hover::before{background:var(--blue);}
   .g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px;}
   .met{background:var(--bg-sec);border-radius:var(--rad-md);padding:9px 11px;}
   .met-l{font-size:10px;color:var(--tx2);margin:0 0 2px;}
@@ -66,7 +74,6 @@
   .det-total{font-size:12px;margin-bottom:3px;display:flex;justify-content:space-between;}
   .add-btn{display:block;margin:0 auto 14px;padding:6px 18px;font-size:12px;font-weight:600;font-family:var(--font);color:var(--blue);background:var(--bg-card);border:1.5px dashed var(--blue);border-radius:var(--rad-md);cursor:pointer;opacity:0.7;transition:opacity 0.15s;}
   .add-btn:hover{opacity:1;}
-  .tool-bar{display:flex;justify-content:flex-end;margin-bottom:8px;}
   .tool-btn{font-family:var(--font);font-size:11px;font-weight:600;padding:5px 12px;border:1px solid var(--bd);border-radius:6px;background:var(--bg-sec);color:var(--tx2);cursor:pointer;}
   .tool-btn:hover{border-color:var(--tx2);color:var(--tx);}
   .del-btn{font-size:14px;font-weight:700;color:var(--tx2);background:none;border:1px solid var(--bd);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;line-height:1;transition:all 0.15s;}
@@ -82,7 +89,6 @@
 <nav class="nav"><div class="nav-inner"></div></nav>
 
 <div class="page-wrap"><div class="wrap">
-  <div class="tool-bar"><button type="button" class="tool-btn" id="btn-import-navplan" title="Pull names, altitudes and leg distances from the NAV Plan">↓ Import from NAV Plan</button></div>
   <div style="font-size:10px;color:var(--tx2);text-align:center;margin-bottom:8px;font-style:italic;">Corrections for wind components not (yet) included in calculations</div>
   <div class="perf-banner"><div class="tags" id="perf-tags"></div></div>
 
@@ -99,7 +105,7 @@
   <!-- DEPARTURE -->
   <div class="card">
     <div class="leg-badge" style="background:#E6F1FB;color:#0C447C;margin-bottom:10px;"><input class="badge-name" id="dep-name" placeholder="Departure" maxlength="48" autocomplete="off" spellcheck="false"></div>
-    <div class="sr"><label>Departure altitude (ft AMSL)</label><input type="range" id="dep-alt" min="0" max="8000" step="25" value="1525"><span class="sv" id="dep-alt-v">1,525 ft</span></div>
+    <div class="sr"><label>Departure altitude (ft AMSL)</label><div class="alt-wrap"><input type="range" id="dep-alt" min="0" max="8000" step="25" value="1525"><div class="alt-ticks" data-for="dep-alt"></div></div><span class="sv" id="dep-alt-v">1,525 ft</span></div>
   </div>
 
   <!-- DYNAMIC LEG CARDS -->
@@ -112,8 +118,8 @@
   <div class="card" id="dest-card">
     <div class="leg-badge" style="background:#EAF3DE;color:#27500A;margin-bottom:10px;" id="dest-badge"><input class="badge-name" id="arr-name" placeholder="Destination" maxlength="48" autocomplete="off" spellcheck="false"></div>
     <div class="chain-note" id="dest-chain">Starting altitude: —</div>
-    <div class="sr"><label>Destination altitude (ft AMSL)</label><input type="range" id="arr-alt" min="0" max="8000" step="25" value="1525"><span class="sv" id="arr-alt-v">1,525 ft</span></div>
-    <div class="sr"><label>Distance to destination (nm)</label><input type="range" id="arr-dist" min="2" max="120" step="1" value="22"><span class="sv" id="arr-dist-v">22 nm</span></div>
+    <div class="sr"><label>Destination altitude (ft AMSL)</label><div class="alt-wrap"><input type="range" id="arr-alt" min="0" max="8000" step="25" value="1525"><div class="alt-ticks" data-for="arr-alt"></div></div><span class="sv" id="arr-alt-v">1,525 ft</span></div>
+    <div class="sr"><label>Distance to destination (nm)</label><input type="range" id="arr-dist" min="1" max="120" step="1" value="22"><span class="sv" id="arr-dist-v">22 nm</span></div>
     <div style="margin-top:8px;display:flex;align-items:center;gap:16px;">
       <span style="font-size:12px;color:var(--tx2);font-weight:500;">Arrival:</span>
       <label style="font-size:12px;color:var(--tx2);display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="radio" name="approach" value="straight" style="accent-color:#3B6D11;"> Straight-in (5 %SOC)</label>
@@ -247,8 +253,8 @@ function renderLegs(){
         ${canDel?`<button class="del-btn" data-idx="${i}" title="Remove leg">&times;</button>`:''}
       </div>
       <div class="chain-note leg-chain" data-idx="${i}">Starting altitude: —</div>
-      <div class="sr"><label>Leg ${legNum} altitude (ft AMSL)</label><input type="range" class="leg-alt" data-idx="${i}" min="500" max="15000" step="100" value="${leg.alt}"><span class="sv leg-alt-v" data-idx="${i}">${leg.alt.toLocaleString()} ft</span></div>
-      <div class="sr"><label>Leg ${legNum} distance (nm)</label><input type="range" class="leg-dist" data-idx="${i}" min="2" max="120" step="1" value="${leg.dist}"><span class="sv leg-dist-v" data-idx="${i}">${leg.dist} nm</span></div>
+      <div class="sr"><label>Leg ${legNum} altitude (ft AMSL)</label><div class="alt-wrap"><input type="range" class="leg-alt" data-idx="${i}" min="500" max="15000" step="100" value="${leg.alt}"><div class="alt-ticks" data-for-idx="${i}"></div></div><span class="sv leg-alt-v" data-idx="${i}">${leg.alt.toLocaleString()} ft</span></div>
+      <div class="sr"><label>Leg ${legNum} distance (nm)</label><input type="range" class="leg-dist" data-idx="${i}" min="1" max="120" step="1" value="${leg.dist}"><span class="sv leg-dist-v" data-idx="${i}">${leg.dist} nm</span></div>
     </div>`;
   });
   c.innerHTML=html;
@@ -256,6 +262,45 @@ function renderLegs(){
   c.querySelectorAll('.leg-alt,.leg-dist').forEach(el=>el.addEventListener('input',onLegInput));
   c.querySelectorAll('.del-btn').forEach(el=>el.addEventListener('click',onDeleteLeg));
   c.querySelectorAll('.leg-name').forEach(el=>el.addEventListener('input',onLegNameInput));
+  buildAltTicks(c);
+}
+
+// Populate the clickable 1000-ft tick row beneath each altitude slider.
+// Idempotent: skips ticks already built (marked via data-built).
+function buildAltTicks(scope){
+  const root = scope || document;
+  root.querySelectorAll('.alt-ticks').forEach(el=>{
+    if(el.dataset.built==='1') return;
+    let slider;
+    if(el.dataset.for){
+      slider = document.getElementById(el.dataset.for);
+    } else {
+      slider = el.parentElement.querySelector('input[type=range]');
+    }
+    if(!slider) return;
+    const min = +slider.min || 0;
+    const max = +slider.max || 0;
+    if(!(max>min)) return;
+    el.innerHTML='';
+    for(let ft=1000; ft<=max; ft+=1000){
+      if(ft<min) continue;
+      const pct=(ft-min)/(max-min)*100;
+      const btn=document.createElement('button');
+      btn.type='button';
+      btn.style.left=pct+'%';
+      btn.textContent=String(ft/1000);
+      btn.dataset.alt=String(ft);
+      btn.title=ft.toLocaleString()+' ft';
+      el.appendChild(btn);
+    }
+    el.addEventListener('click',ev=>{
+      const b=ev.target.closest('button[data-alt]');
+      if(!b) return;
+      slider.value=b.dataset.alt;
+      slider.dispatchEvent(new Event('input',{bubbles:true}));
+    });
+    el.dataset.built='1';
+  });
 }
 
 function onLegNameInput(e){
@@ -655,7 +700,7 @@ function loadState(){
       // Clamp to the slider ranges in case localStorage was hand-edited or
       // a saved plan drifts outside the limits the UI enforces.
       const cl=(n,lo,hi,fb)=>{const v=+n;return isFinite(v)?Math.max(lo,Math.min(hi,v)):fb;};
-      legs=s.legs.map(l=>({alt:cl(l.alt,500,15000,3000),dist:cl(l.dist,2,120,20),name:String(l.name||'')}));
+      legs=s.legs.map(l=>({alt:cl(l.alt,500,15000,3000),dist:cl(l.dist,1,120,20),name:String(l.name||'')}));
     }
   }catch(e){}
 }
@@ -731,58 +776,10 @@ function optimizeAltitudes(){
   renderLegs(); saveState(); update();
 }
 
-/* ═══ IMPORT FROM NAV PLAN ═══ */
-function importFromNavPlan(){
-  const raw=localStorage.getItem('velis_navplan_state');
-  if(!raw){alert('No NAV Plan found. Open NAV Plan first and set up a route.');return;}
-  let s;try{s=JSON.parse(raw);}catch(e){alert('Could not read NAV Plan state.');return;}
-  const route=Array.isArray(s.route)?s.route:[];
-  if(route.length<3){
-    alert('Add at least one waypoint between Departure and Destination in NAV Plan first.');
-    return;
-  }
-  if(!confirm(`Replace the current route with ${route.length} waypoints from NAV Plan?`)) return;
-
-  const {parseAlt, parseDist, joinName} = window.velisWp;
-  const clamp=(n,lo,hi)=>Math.max(lo,Math.min(hi,n));
-  const buildName = r => joinName(r.ident, r.wp);
-
-  const dep=route[0],dest=route[route.length-1];
-
-  document.getElementById('dep-name').value=buildName(dep);
-  const depAlt=parseAlt(dep.alt);
-  if(depAlt!=null) document.getElementById('dep-alt').value=clamp(depAlt,0,8000);
-
-  document.getElementById('arr-name').value=buildName(dest);
-  const arrAlt=parseAlt(dest.alt);
-  if(arrAlt!=null) document.getElementById('arr-alt').value=clamp(arrAlt,0,8000);
-  const arrDist=parseDist(dest.dist);
-  if(arrDist!=null) document.getElementById('arr-dist').value=clamp(arrDist,2,120);
-
-  legs=[];
-  for(let i=1;i<route.length-1;i++){
-    const r=route[i];
-    const a=parseAlt(r.alt), d=parseDist(r.dist);
-    legs.push({
-      alt:a!=null?clamp(a,500,15000):3000,
-      dist:d!=null?clamp(d,2,120):20,
-      name:buildName(r)
-    });
-  }
-
-  // Refresh slider value labels
-  document.getElementById('dep-alt-v').textContent=(+document.getElementById('dep-alt').value).toLocaleString()+' ft';
-  document.getElementById('arr-alt-v').textContent=(+document.getElementById('arr-alt').value).toLocaleString()+' ft';
-  document.getElementById('arr-dist-v').textContent=document.getElementById('arr-dist').value+' nm';
-
-  renderLegs();
-  saveState();
-  update();
-}
-
-// Re-read state after navigation or after plan_sync.js loads a bundle in-place.
-// Bound at module scope so a (hypothetical) double init() can't double-bind.
-// Guard against pageshow firing before POH is loaded — NOM is set in loadPOH.
+/* ═══ STATE REFRESH ═══
+   Re-read state after navigation or after plan_sync.js loads a bundle in-place.
+   Bound at module scope so a (hypothetical) double init() can't double-bind.
+   Guard against pageshow firing before POH is loaded — NOM is set in loadPOH. */
 function _refreshFromState(){
   if(typeof NOM==='undefined') return;
   loadState();renderLegs();update();
@@ -790,11 +787,178 @@ function _refreshFromState(){
 window.addEventListener('pageshow',_refreshFromState);
 document.addEventListener('velis:after-load',_refreshFromState);
 
+/* ═══ NAV PLAN ⇄ ROUTE PLANNER SYNC ═══
+   Post-save flow: after a successful save the user is asked whether to push the
+   freshly-edited altitudes & distances over to the NAV Plan. The NAV Plan owns
+   pilot-entered fields (winds, freqs, EET, remarks), so the push only runs when
+   the two routes share the same waypoint sequence — otherwise we'd clobber that
+   pilot data. Shape mismatch surfaces as a warning in the popup. */
+function rpAsWpList(){
+  const depName=document.getElementById('dep-name').value.trim();
+  const arrName=document.getElementById('arr-name').value.trim();
+  const depAlt=+document.getElementById('dep-alt').value;
+  const arrAlt=+document.getElementById('arr-alt').value;
+  const arrDist=+document.getElementById('arr-dist').value;
+  const wps=[{name:depName, alt:isFinite(depAlt)?depAlt:null, dist:null}];
+  for(const leg of legs){
+    wps.push({name:String(leg.name||'').trim(), alt:+leg.alt, dist:+leg.dist});
+  }
+  wps.push({name:arrName, alt:isFinite(arrAlt)?arrAlt:null, dist:isFinite(arrDist)?arrDist:null});
+  return wps;
+}
+function navAsWpList(){
+  const raw=localStorage.getItem('velis_navplan_state');
+  if(!raw) return null;
+  let nav; try{nav=JSON.parse(raw);}catch(e){return null;}
+  const route=Array.isArray(nav.route)?nav.route:[];
+  if(route.length<2) return null;
+  const {parseAlt,parseDist,joinName}=window.velisWp;
+  // NAV's FREQ column lower input is data-f="ident", so users sometimes type
+  // a frequency (e.g. "128.475") in there. Treat that as a non-ident — use
+  // only r.wp — so the comparison name doesn't become "128.475 LSPG".
+  const rowName = r => {
+    const id=(r&&r.ident||'').trim();
+    const wp=(r&&r.wp||'').trim();
+    return (/\d+\.\d+/.test(id) ? wp : joinName(id, wp)).trim();
+  };
+  return route.map((r,i)=>({
+    name: rowName(r),
+    alt:  parseAlt(r.alt),
+    dist: i===0 ? null : parseDist(r.dist)
+  }));
+}
+function rpIsInSyncWithNav(){
+  if(!Array.isArray(legs)||legs.length===0) return {inSync:true};
+  const navWps=navAsWpList();
+  if(!navWps) return {inSync:true};                      // no NAV yet → silent
+  const rpWps=rpAsWpList();
+  if(navWps.length!==rpWps.length) return {inSync:false, mismatch:true};
+  for(let i=0;i<navWps.length;i++){
+    const a=(navWps[i].name||'').toLowerCase();
+    const b=(rpWps[i].name||'').toLowerCase();
+    if(a!==b) return {inSync:false, mismatch:true};
+  }
+  // Null on either side counts as in-sync for that field — an empty NAV cell
+  // means the pilot hasn't specified, and RP's slider always has a default.
+  // Clamp NAV's value through RP's slider range — pushRouteToNavPlan would
+  // store the clamped value on NAV, so an out-of-range NAV value (dist=1
+  // below RP's 2 nm min) compares equal to RP's clamped value.
+  const _isNum = v => typeof v==='number' && !isNaN(v);
+  const _cl   = (n,lo,hi) => Math.max(lo, Math.min(hi, n));
+  const last  = navWps.length-1;
+  for(let i=0;i<navWps.length;i++){
+    const na=navWps[i].alt, ra=rpWps[i].alt;
+    if(_isNum(na) && _isNum(ra)){
+      const isEnd=(i===0||i===last);
+      const altLo=isEnd?0:500, altHi=isEnd?8000:15000;
+      if(_cl(na,altLo,altHi)!==ra) return {inSync:false, mismatch:false};
+    }
+    if(i>0){
+      const nd=navWps[i].dist, rd=rpWps[i].dist;
+      if(_isNum(nd) && _isNum(rd) && _cl(nd,1,120)!==rd) return {inSync:false, mismatch:false};
+    }
+  }
+  return {inSync:true};
+}
+function pushRouteToNavPlan(){
+  const rpWps=rpAsWpList();
+  const raw=localStorage.getItem('velis_navplan_state');
+  if(!raw) return false;
+  let nav; try{nav=JSON.parse(raw);}catch(e){return false;}
+  const route=Array.isArray(nav.route)?nav.route:[];
+
+  // Same-shape path (names match per position): refresh alt/dist only and
+  // leave pilot fields (freq, wind, EET, remark, etc.) untouched.
+  const sameShape = route.length===rpWps.length && rpWps.every((rp,i)=>{
+    const a=window.velisWp.joinName(route[i].ident,route[i].wp).trim().toLowerCase();
+    const b=(rp.name||'').trim().toLowerCase();
+    return a===b;
+  });
+
+  let prevAlt=null, changed=false;
+  if(sameShape){
+    for(let i=0;i<rpWps.length;i++){
+      const r=route[i];
+      const newAlt = rpWps[i].alt!=null ? String(rpWps[i].alt) : (r.alt||'');
+      const newDist = (i>0 && rpWps[i].dist!=null) ? String(rpWps[i].dist) : (r.dist||'');
+      let trend='';
+      if(prevAlt!=null && rpWps[i].alt!=null){
+        if(rpWps[i].alt>prevAlt) trend='up';
+        else if(rpWps[i].alt<prevAlt) trend='down';
+      }
+      if((r.alt||'')!==newAlt){r.alt=newAlt;changed=true;}
+      if(i>0 && (r.dist||'')!==newDist){r.dist=newDist;changed=true;}
+      if((r.altTrend||'')!==trend){r.altTrend=trend;changed=true;}
+      if(rpWps[i].alt!=null) prevAlt=rpWps[i].alt;
+    }
+    if(changed){
+      nav.meta = {...(nav.meta||{id:null,name:'',dirty:false}), dirty:true};
+      localStorage.setItem('velis_navplan_state',JSON.stringify(nav));
+      window.velisPlan&&window.velisPlan.markDirty();
+    }
+    return true;
+  }
+
+  // Different shape — rebuild the route from RP. Per position, keep whatever
+  // pilot fields exist on the same-index row (freq/wind/EET/remark/MSA/etc.),
+  // and overwrite name/alt/dist/altTrend from RP. Rows that don't exist yet
+  // start as empty waypoints.
+  const splitName=window.velisWp.splitName;
+  const EMPTY={ident:'',wp:'',alt:'',altTrend:'',freq:'',msa:'',level:'',tas:'',trk:'',wind:'',hdg:'',gs:'',dist:'',eet:'',remark:''};
+  const newRoute=rpWps.map((rp,i)=>{
+    const existing=route[i]||{};
+    const {ident,wp}=splitName(rp.name||'');
+    let trend='';
+    const prev=i>0?(rpWps[i-1].alt??null):null;
+    if(prev!=null && rp.alt!=null){
+      if(rp.alt>prev) trend='up';
+      else if(rp.alt<prev) trend='down';
+    }
+    return {
+      ...EMPTY, ...existing,
+      ident, wp,
+      alt: rp.alt!=null?String(rp.alt):'',
+      altTrend: trend,
+      dist: (i>0 && rp.dist!=null) ? String(rp.dist) : (i===0 ? '' : (existing.dist||''))
+    };
+  });
+  nav.route=newRoute;
+  nav.meta={...(nav.meta||{id:null,name:'',dirty:false}), dirty:true};
+  localStorage.setItem('velis_navplan_state',JSON.stringify(nav));
+  window.velisPlan&&window.velisPlan.markDirty();
+  return true;
+}
+document.addEventListener('velis:after-save',()=>{
+  const _dbg=window.velisSyncDbg||function(m){try{console.log('[sync]',m);}catch(e){}};
+  _dbg('RP after-save fired (legs='+(Array.isArray(legs)?legs.length:'?')+', nav='+(!!localStorage.getItem('velis_navplan_state'))+', velisPlan='+(!!window.velisPlan)+')');
+  if(!window.velisPlan||!window.velisPlan.runAutoSync){_dbg('RP: velisPlan.runAutoSync MISSING');return;}
+  window.velisPlan.runAutoSync({
+    isInSync: rpIsInSyncWithNav,
+    onConfirm: pushRouteToNavPlan,
+    title: 'Cleared to sync?',
+    bodyHtml: 'Push these altitudes &amp; distances to the <b>NAV Plan</b>? Pilot fields (winds, freqs, EET, remarks) stay untouched.',
+    bodyHtmlOnMismatch: 'The NAV Plan has a <b>different route</b>. Syncing will rebuild it from this one — pilot fields (winds, freqs, EET, remarks) are kept per position where rows still line up.'
+  });
+});
+// plan_sync.js is `defer` and runs after this inline script — register the
+// manual-sync item once the DOM is ready (defer scripts complete before
+// DOMContentLoaded fires).
+window.addEventListener('DOMContentLoaded',()=>{
+  if(window.velisPlan&&window.velisPlan.registerManualSync){
+    window.velisPlan.registerManualSync({
+      label: 'Sync to NAV Plan now',
+      fn: pushRouteToNavPlan,
+      available: ()=> !!localStorage.getItem('velis_navplan_state') && Array.isArray(legs) && legs.length>0
+    });
+  }
+});
+
 /* ═══ INIT ═══ */
 async function init(){
   await loadPOH();
   loadState();
   renderLegs();
+  buildAltTicks();
   // Slider drags fire one input event per pixel — coalesce saveState + update
   // so each animation frame does one full recompute, not 60 in a row.
   let _scheduled=false;
@@ -808,7 +972,6 @@ async function init(){
   ['dep-name','arr-name'].forEach(id=>
     document.getElementById(id).addEventListener('input',()=>saveState()));
   document.querySelectorAll('input[name="approach"]').forEach(r=>r.addEventListener('change',()=>{saveState();update();}));
-  document.getElementById('btn-import-navplan').addEventListener('click',importFromNavPlan);
   document.getElementById('btn-optimize-alt').addEventListener('click',optimizeAltitudes);
 
   // First-ever visit: persist the on-screen defaults so other pages (NAV Plan
@@ -822,6 +985,6 @@ async function init(){
 }
 init();
 </script>
-<script src="plan_sync.js?v=6" defer></script>
+<script src="plan_sync.js?v=17" defer></script>
 </body>
 </html>

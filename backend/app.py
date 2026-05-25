@@ -117,7 +117,14 @@ def _ratelimited(err):
 
 
 def conn():
-    return mysql.connector.connect(**DB)
+    # CLIENT_FOUND_ROWS makes cur.rowcount on UPDATE report MATCHED rows
+    # rather than CHANGED rows. Without this, a PUT /api/plans/:id whose
+    # body equals the current row returns 0 changed → we'd 404 even though
+    # the plan exists (and the frontend would wipe its id, forcing Save As).
+    return mysql.connector.connect(
+        **DB,
+        client_flags=[mysql.connector.ClientFlag.FOUND_ROWS],
+    )
 
 
 def bootstrap():
@@ -710,6 +717,18 @@ def admin_list_users():
             if r.get(k) is not None:
                 r[k] = r[k].isoformat()
     return jsonify(rows)
+
+
+@app.delete("/api/admin/plans/<int:pid>")
+@require_admin
+def admin_delete_plan(pid):
+    c = conn(); cur = c.cursor()
+    cur.execute("DELETE FROM flight_plans WHERE id = %s", (pid,))
+    ok = cur.rowcount > 0
+    cur.close(); c.close()
+    if not ok:
+        abort(404)
+    return {"ok": True}
 
 
 @app.get("/api/admin/plans")
